@@ -26,18 +26,45 @@
  ***************************************************************************/
 
 #include "ComicBookZIP.h"
+
+#if wxCHECK_VERSION(2, 5, 0)
+#include "wx/wfstream.h"
+#else
 #include <cstdlib>
+#endif
 
 ComicBookZIP::ComicBookZIP(wxString file, uint cachelen) : ComicBook()
 {
-	unzFile ZipFile;
-	static char namebuf[1024];
 	wxString page;
-	unz_file_info *fileInfo;
 	filename = file;
 	cacheLen = cachelen;
 	current = 0;
-	
+
+	wxLogVerbose("Contents of " + filename + ":");
+#if wxCHECK_VERSION(2, 5, 0)
+	wxZipInputStream *zipFile;
+    wxFFileInputStream *fs = new wxFFileInputStream(filename);
+    if (fs->Ok())
+        zipFile = new wxZipInputStream(*fs);
+    else
+        delete fs;
+	wxZipEntry *entry;
+	while ((entry = zipFile->GetNextEntry()) != NULL)
+	{
+		page = entry->GetName();
+		wxLogVerbose("%s\t%ld", page.c_str(), entry->GetSize());
+		if(	page.Right(5).Upper() == ".JPEG" || page.Right(4).Upper() == ".JPG" ||
+			page.Right(5).Upper() == ".TIFF" || page.Right(4).Upper() == ".TIF" ||
+			page.Right(4).Upper() == ".GIF" ||
+			page.Right(4).Upper() == ".PNG" )
+			filenames.push_back(page);
+	}
+	delete zipFile;
+	delete fs;
+#else
+	static char namebuf[1024];
+	unzFile ZipFile;
+	unz_file_info *fileInfo;	
 	ZipFile = unzOpen(filename.c_str());
 	fileInfo = (unz_file_info*) malloc(sizeof(unz_file_info_s));
 
@@ -47,10 +74,10 @@ ComicBookZIP::ComicBookZIP(wxString file, uint cachelen) : ComicBook()
 			ZipFile = NULL;
 			return;
 		}
-		wxLogVerbose("Contents of " + filename + ":");
 	} else {
 		return;
 	}
+
 	do {
 		unzGetCurrentFileInfo(ZipFile, fileInfo, namebuf, 1024, NULL, 0, NULL, 0);
 		page = namebuf;
@@ -61,7 +88,9 @@ ComicBookZIP::ComicBookZIP(wxString file, uint cachelen) : ComicBook()
 		page.Right(4).Upper() == ".PNG" )
 			filenames.push_back(page);
 	} while (unzGoToNextFile(ZipFile) == UNZ_OK);
-	
+
+	unzClose(ZipFile);	
+#endif	
 	vector<wxString>::iterator begin = filenames.begin();
 	vector<wxString>::iterator end = filenames.end();
 	sort(begin, end);  // I love the STL!
@@ -74,8 +103,6 @@ ComicBookZIP::ComicBookZIP(wxString file, uint cachelen) : ComicBook()
 	for (uint i = 0; i < pagecount; i++)
 		Orientations[i] = NORTH;
 	imageProtectors = new wxMutex[pagecount];
-	
-	unzClose(ZipFile);
 	
 	Create(); // create the wxThread
 }

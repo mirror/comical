@@ -50,7 +50,6 @@ END_EVENT_TABLE()
 ComicalCanvas::~ComicalCanvas()
 {
 	ClearBitmaps();
-	wxLogVerbose("Writing configuration...");
 	wxConfigBase *config = wxConfigBase::Get();
 	config->Write("/Comical/Zoom", zoom);
 	config->Write("/Comical/Mode", mode);
@@ -139,7 +138,6 @@ void ComicalCanvas::GoToPage(int pagenumber)
 	int xImage, yImage;
 	float rImage;
 	
-	wxLogVerbose("GoToPage %i...", pagenumber);
 	if (theBook == NULL) return;
 	if (pagenumber >= int(theBook->pagecount) || pagenumber < 0) return;
 	theBook->current = pagenumber;
@@ -405,7 +403,6 @@ void ComicalCanvas::CreateBitmaps()
 	}
 	else
 	{
-		wxLogVerbose("CreateBitmaps double...");
 		if (leftPage) if ((left = leftPage->Ok()))
 		{
 			xScroll += leftPage->GetWidth();
@@ -419,12 +416,10 @@ void ComicalCanvas::CreateBitmaps()
 		if (!left || !right) // if only one page is active
 			xScroll *= 2;
 	}
-	wxLogVerbose("CreateBitmaps scrolling xScroll=%i yScroll=%i xWindow=%i", xScroll, yScroll, xWindow);
 
 	SetScrollbars(10, 10, xScroll / 10, yScroll / 10);
 	Scroll((xScroll / 20) - (xWindow / 20), 0);
 	Refresh();
-	wxLogVerbose("CreateBitmaps done.");
 
 }
 
@@ -462,13 +457,11 @@ void ComicalCanvas::SetParams()
 {
 	int xCanvas, yCanvas;
 	GetClientSize(&xCanvas, &yCanvas);
-	wxLogVerbose("Set Parameters: mode=%i filter=%i zoom=%i x=%i y=%i", mode, filter, zoom, xCanvas, yCanvas);
 	theBook->SetParams(mode, filter, zoom, xCanvas, yCanvas);
 }
 
 void ComicalCanvas::Rotate(COMICAL_ROTATE rotate)
 {
-	wxLogVerbose("Rotate = " + rotate);
 	switch (rotate)
 	{
 	case NORTH:
@@ -480,7 +473,6 @@ void ComicalCanvas::Rotate(COMICAL_ROTATE rotate)
 	case WEST:
 	
 	default:
-		wxLogVerbose("Undefined rotation."); // we should not be here
 		break;
 	}
 }
@@ -494,7 +486,6 @@ void ComicalCanvas::OnPaint( wxPaintEvent &WXUNUSED(event) )
 	PrepareDC( dc );
 
 	GetVirtualSize(&xCanvas, &yCanvas);
-	wxLogVerbose("OnPaint xCanvas=%i yCanvas=%i", xCanvas, yCanvas);
 	/* I can't properly initialize x and y until the constructors are done, but
 		 if I just leave the values uninitialized, the very first image will be
 		 resized twice.	Here, when OnPaint is called for the first time, the values
@@ -511,7 +502,6 @@ void ComicalCanvas::OnPaint( wxPaintEvent &WXUNUSED(event) )
 		{
 			x = xCanvas;
 			y = yCanvas;
-			wxLogVerbose("Window size has changed, rescaling to %i x %i", x, y);
 			SetParams();
 			GoToPage(theBook->current);
 			return;

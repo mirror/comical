@@ -5,11 +5,17 @@
 #	the sfx module
 #
 
-# Linux using GCC
+# MacOSX using GCC
 CXX=g++
 CXXFLAGS=-O2
-DEFINES=-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE
+DEFINES=-DBIG_ENDIAN -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_BSD_COMPAT
 STRIP=strip
+
+# Linux using GCC
+#CXX=g++
+#CXXFLAGS=-O2
+#DEFINES=-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE
+#STRIP=strip
 
 # Linux using LCC
 #CXX=lcc
@@ -116,5 +122,5 @@ sfx:	$(OBJECTS)
 
 lib:	WHAT=RARDLL -DSILENT
 lib:	$(OBJECTS) $(LIB_OBJ)
-	@rm -f libunrar.so
-	$(LINK) -shared -o libunrar.so $(LDFLAGS) $(OBJECTS) $(LIB_OBJ)
+	@rm -f libunrar.dylib
+	$(LINK) -dynamiclib -o libunrar.dylib $(LDFLAGS) $(OBJECTS) $(LIB_OBJ)

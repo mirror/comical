@@ -43,7 +43,6 @@ ComicPage::ComicPage(wxInputStream * source)
 
 void ComicPage::Create(wxInputStream * source)
 {
-	wxLogVerbose("Loading image from wxInputStream...");
 	if (original.LoadFile(*source))
 		ready = true;
 	else
@@ -83,7 +82,5 @@ wxBitmap * ComicPage::GetPage(COMICAL_ROTATE rotate, FREE_IMAGE_FILTER fi_filter
 
 void ComicPage::ScaleImage(wxImage src, uint width, uint height, FREE_IMAGE_FILTER fi_filter)
 {
-	wxStartTimer();
 	resampled = FreeImage_Rescale(src, width, height, fi_filter);
-	wxLogVerbose("Scaled image with filter %i in %ld milliseconds.", fi_filter, wxGetElapsedTime());
 }

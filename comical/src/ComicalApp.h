@@ -55,9 +55,7 @@
 #include "ComicBookRAR.h"
 #include "ComicBookZIP.h"
 
-wxLog *ComicalLog;
-wxLogStderr *ComicalLogStderr;
-wxLogWindow *ComicalLogWindow;
+wxLogGui *ComicalLog;
 
 class ComicalApp : public wxApp {
 
@@ -80,23 +78,22 @@ class ComicalFrame : public wxFrame {
 
     void OnQuit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
-    void OnOpen();
-    void OnClose();
+    void OnOpen(wxCommandEvent& event);
+    void OnClose(wxCloseEvent& event);
 
-    void OnFirst();
-    void OnLast();
-    void OnPrevTurn();
-    void OnNextTurn();
-    void OnPrevSlide();
-    void OnNextSlide();
-    void OnGoTo();
+    void OnFirst(wxCommandEvent& event);
+    void OnLast(wxCommandEvent& event);
+    void OnPrevTurn(wxCommandEvent& event);
+    void OnNextTurn(wxCommandEvent& event);
+    void OnPrevSlide(wxCommandEvent& event);
+    void OnNextSlide(wxCommandEvent& event);
+    void OnGoTo(wxCommandEvent& event);
     void OnZoom(wxCommandEvent& event);
     void OnFilter(wxCommandEvent& event);
     void OnFull(wxCommandEvent& event);
     void OnSingle(wxCommandEvent& event);
     void OnDouble(wxCommandEvent& event);
     void OnRotate(wxCommandEvent& event);
-    void OnShowLog();
 
     void OpenFile(wxString);
 
@@ -141,7 +138,6 @@ ID_PrevSlide,
 ID_NextSlide,
 ID_GoTo,
 ID_Full,
-ID_ShowLog,
 ID_North,
 ID_East,
 ID_South,

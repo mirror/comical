@@ -42,7 +42,10 @@
 #include <wx/zipstrm.h>
 #endif
 
+#if wxCHECK_VERSION(2, 5, 0)
+#else
 #include "unzip.h"
+#endif
 
 class ComicBookZIP : public ComicBook {
 

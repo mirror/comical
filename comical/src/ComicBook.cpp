@@ -43,8 +43,8 @@ void ComicBook::RotatePage(uint pagenumber, COMICAL_ROTATE direction)
 	if (Orientations[pagenumber] != direction)
 	{
 		wxMutexLocker lock(imageProtectors[pagenumber]);
-		Resamples[pagenumber].Destroy();
 		Orientations[pagenumber] = direction;
+		Resamples[pagenumber].Destroy();
 	}
 }
 
@@ -70,10 +70,10 @@ void ComicBook::SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COM
 wxBitmap * ComicBook::GetPage(uint pagenumber)
 {
 	wxBusyCursor busy;
-	wxLogVerbose("GetPage %i", pagenumber);
-	// do I need to lock/condition the mutex somewhere in here?
 	while (!Resamples[pagenumber].Ok())
-		wxUsleep(50); // is this a good number (or a good idea?)
+	{
+		Sleep(50);
+	}
 	return new wxBitmap(Resamples[pagenumber]);
 }
 
@@ -82,7 +82,6 @@ void * ComicBook::Entry()
 	uint i;
 	int low, high, target, currentPage, pageBytes;
 
-	wxLogVerbose("ComicBook thread started.");
 	while (!TestDestroy())
 	{
 		currentPage = int(current); // in case this value changes midloop
@@ -133,21 +132,20 @@ void * ComicBook::Entry()
 			{
 				if (!Originals[target].Ok())
 				{
-					wxLogVerbose("Loading page %i.", target);
 					wxInputStream * is = ExtractStream(target);
 					pageBytes = is->GetSize();
 					if (is->IsOk() && is->GetSize() > 0)
 					{
-						wxLogVerbose("Got page %i, size %d bytes.", target, pageBytes);
 						Originals[target].LoadFile(*is);
 					}
 					else
 					{
-						wxLogError("Couldn't extract page %i.", target);
 						Originals[target] = new wxImage(1,1);
 					}
 				}
 				ScaleImage(target);
+				if (!Resamples[target].Ok())
+					wxLogError("Failed to scale page %d.", target);
 				imageProtectors[target].Unlock();
 				break;
 			}
@@ -165,7 +163,6 @@ void * ComicBook::Entry()
 					if(Resamples[i].Ok())
 						Resamples[i].Destroy();
 					if(Originals[i].Ok())
-						wxLogVerbose("Destroying page %i.", i);
 						Originals[i].Destroy();
 					imageProtectors[i].Unlock();
 				}
@@ -176,7 +173,6 @@ void * ComicBook::Entry()
 					if(Resamples[i].Ok())
 						Resamples[i].Destroy();
 					if(Originals[i].Ok())
-						wxLogVerbose("Destroying page %i.", i);
 						Originals[i].Destroy();
 					imageProtectors[i].Unlock();
 				}
@@ -185,7 +181,6 @@ void * ComicBook::Entry()
 
 		Sleep(20);
 	}
-	wxLogVerbose("ComicBook thread stopped.");
 	return 0;
 }
 
@@ -213,17 +208,14 @@ void ComicBook::ScaleImage(uint pagenumber)
 	{
 
 	case THREEQ:
-		wxLogVerbose("scalingFactor = 0.75");
 		scalingFactor = 0.75f;
 		break;
 
 	case HALF:
-		wxLogVerbose("scalingFactor = 0.5");
 		scalingFactor = 0.5f;
 		break;
 
 	case ONEQ:
-		wxLogVerbose("scalingFactor = 0.25");
 		scalingFactor = 0.25f;
 		break;
 
@@ -246,7 +238,6 @@ void ComicBook::ScaleImage(uint pagenumber)
 				scalingFactor = (float(width)/2.0f) / float(xImage);
 		}
 
-		wxLogVerbose("Image:%ix%i, Canvas:%ix%i, rCanvas:%f, rImage:%f, scalingFactor=%f", xImage, yImage, width, height, rCanvas, rImage, scalingFactor);
 		break;
 
 	case FITH: // fit horizontally
@@ -256,23 +247,19 @@ void ComicBook::ScaleImage(uint pagenumber)
 			scalingFactor = float(width) / float(xImage);
 		else
 			scalingFactor = (float(width)/2.0f) / float(xImage);
-		wxLogVerbose("Image:%ix%i, rImage:%f, scalingFactor=%f", xImage, yImage, rImage, scalingFactor);
 		break;
 
 	case FITV: // fit vertically
 
 		scalingFactor = float(height) / float(yImage);
-		wxLogVerbose("scalingFactor = %f", scalingFactor);
 		break;
 
 	case FULL: // no resize
 	default:
 		scalingFactor = 1.0f;
-		wxLogVerbose("scalingFactor = %f", scalingFactor);
 		break;
 	}
-	
-	wxStartTimer();
+
 	switch (Orientations[pagenumber])
 	{
 	case NORTH:
@@ -288,9 +275,7 @@ void ComicBook::ScaleImage(uint pagenumber)
 		Resamples[pagenumber] = FreeImage_Rescale(orig, int(yImage * scalingFactor), int(xImage * scalingFactor), fiFilter).Rotate90(true);
 		break;
 	default:
-		wxLogError("Undefined orientation %i.", Orientations[pagenumber]);
 		break;
 	}
-	wxLogVerbose("Scaled image %i with filter %i in %ld milliseconds.", pagenumber, fiFilter, wxGetElapsedTime());
 
 }
