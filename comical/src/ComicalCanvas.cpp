@@ -13,13 +13,19 @@
  *   the Free Software Foundation; either version 2 of the License, or     *
  *   (at your option) any later version.                                   *
  *                                                                         *
+ *   In addition, as a special exception, the author gives permission to   *
+ *   link the code of his release of Comical with Rarlabs' "unrar"         *
+ *   library (or with modified versions of it that use the same license    *
+ *   as the "unrar" library), and distribute the linked executables. You   *
+ *   must obey the GNU General Public License in all respects for all of   *
+ *   the code used other than "unrar". If you modify this file, you may    *
+ *   extend this exception to your version of the file, but you are not    *
+ *   obligated to do so. If you do not wish to do so, delete this          *
+ *   exception statement from your version.                                *
+ *                                                                         *
  ***************************************************************************/
 
 #include "ComicalCanvas.h"
-#include "ComicBook.h"
-#include "Resize.h"
-
-using namespace std;
 
 IMPLEMENT_DYNAMIC_CLASS(ComicalCanvas, wxScrolledWindow)
 
@@ -27,11 +33,13 @@ ComicalCanvas::ComicalCanvas( wxWindow *prnt, wxWindowID id, const wxPoint &pos,
 {
   parent = prnt;
   SetBackgroundColour(* wxBLACK);
-  scaled = FIT;
-  mode = DOUBLE;
+  wxConfigBase *config = wxConfigBase::Get();
+  // Each of the long values is followed by the letter L not the number one
+  zoom = (COMICAL_ZOOM) config->Read("/Comical/Zoom", 2l); // Fit-to-Width is default
+  mode = (COMICAL_MODE) config->Read("/Comical/Mode", 1l); // Double-Page is default
+  filter = (FREE_IMAGE_FILTER) config->Read("/Comical/Filter", 4l); // Catmull-Rom is default
   leftPage = rightPage = centerPage = NULL;
   x = -1; y = -1;
-  SetFocus(); // This is so we can grab keydown events right away
 }
 
 BEGIN_EVENT_TABLE(ComicalCanvas, wxScrolledWindow)
@@ -42,467 +50,341 @@ END_EVENT_TABLE()
 ComicalCanvas::~ComicalCanvas()
 {
   ClearBitmaps();
-  ClearImages();
+  wxLogVerbose("Writing configuration...");
+  wxConfigBase *config = wxConfigBase::Get();
+  config->Write("/Comical/Zoom", zoom);
+  config->Write("/Comical/Mode", mode);
+  config->Write("/Comical/Filter", filter);
+}
+
+void ComicalCanvas::ClearBitmap(wxBitmap *&bitmap)
+{
+	if (bitmap) {
+		if (bitmap->Ok()) {
+			delete bitmap;
+			bitmap = NULL;
+		}
+	}
 }
 
 void ComicalCanvas::ClearBitmaps()
 {
-  if (leftPage) {
-    if (leftPage->Ok()) {
-      delete leftPage;
-      leftPage = NULL;
-   }
-  }
-  if (rightPage) {
-    if (rightPage->Ok()) {
-      delete rightPage;
-      rightPage = NULL;
-    }
-  }
-  if (centerPage) {
-    if (centerPage->Ok()) {
-      delete centerPage;
-      centerPage = NULL;
-    }
-  }
+  ClearBitmap(leftPage);
+  ClearBitmap(centerPage);
+  ClearBitmap(rightPage);
 }
-
-void ComicalCanvas::ClearImages()
-{
-  if (leftImage.Ok()) leftImage.Destroy();
-  if (leftImageScaled.Ok()) leftImageScaled.Destroy();
-  if (rightImage.Ok()) rightImage.Destroy();
-  if (rightImageScaled.Ok()) rightImageScaled.Destroy();
-  if (centerImage.Ok()) centerImage.Destroy();
-  if (centerImageScaled.Ok()) centerImageScaled.Destroy();
-}
-
-wxImage ComicalCanvas::GetPage(int pagenumber)
-{
-  wxImage image;
-  char *data;
-  unsigned int pagecount = theBook->pages.size();
-
-  if (pagecount > 0 && pagenumber >= 0 && pagenumber < (int)pagecount) {
-
-    data = new char[theBook->sizes[pagenumber]];
-
-    wxLogVerbose("Extracting image %i of %i...", pagenumber, (pagecount - 1));
-    if (theBook->Extract(pagenumber, data)) {
-      wxLogVerbose("Loading data into wxMemoryInputStream...");
-      wxMemoryInputStream mis(data, theBook->sizes[pagenumber]);
-      if (mis.IsOk()) {
-        wxLogVerbose("Loading image from wxMemoryInputStream...");
-        if (!image.LoadFile(mis))
-	  wxLogError("Successfully extracted the file %s, but could not create an image from it.  It may be corrupted.", theBook->pages[pagenumber].c_str());
-      }
-      else {
-        wxLogError("Extraction succeeded, but could not load the data into a wxMemoryInputStream.");
-      }
-    }
-    else
-      wxLogError("Could not extract %s.", theBook->pages[pagenumber].c_str());
-
-    delete[] data;
-
-  }
-
-  return image;
-
-}
-
 
 void ComicalCanvas::FirstPage()
 {
-  wxBusyCursor wait;
-  wxImage image;
+  wxBitmap *bitmap;
   int xImage, yImage;
   float rImage;
+  
+  if (theBook == NULL) return;
+  theBook->current = 0;
+  
+  bitmap = theBook->GetPage(0);
 
-  image = GetPage(0);
+  if (bitmap->Ok()) {
+    ClearBitmaps();
+    xImage = bitmap->GetWidth();
+    yImage = bitmap->GetHeight();
 
-  if (image.Ok()) {
-    ClearImages();
-    xImage = image.GetWidth();
-    yImage = image.GetHeight();
-
-    // Here we assume that jpgs that are taller than they are wide are single
-    // pages, and jpgs that are wider than they are tall are double pages.
+    // Here we assume that portrait pages are single pages and that landscape
+    // pages are double pages.
     rImage = float(xImage)/float(yImage);
     if (rImage >= 1.0f || mode == SINGLE) {
-      centerImage = image;
-      if (scaled != FULL) centerImageScaled = ScaleImage(image);
+      centerPage = bitmap;
     }
     else {
-      rightImage = image;
-      if (scaled != FULL) rightImageScaled = ScaleImage(image);
+      rightPage = bitmap;
     }
 
-    theBook->current = 0;
     CreateBitmaps();
 
   }
-
-  Refresh();
-
 }
 
 void ComicalCanvas::LastPage()
 {
-
-  wxBusyCursor wait;
-  wxImage image;
+  wxBitmap *bitmap;
   int xImage, yImage;
   float rImage;
-  unsigned int pagecount = theBook->pages.size();
+  
+  if (theBook == NULL) return;
+  theBook->current = theBook->pagecount - 1;
+  
+  bitmap = theBook->GetPage(theBook->current);
 
-  image = GetPage(pagecount - 1);
+  if (bitmap->Ok()) {
+    ClearBitmaps();
+    xImage = bitmap->GetWidth();
+    yImage = bitmap->GetHeight();
 
-  if (image.Ok()) {
-    ClearImages();
-    xImage = image.GetWidth();
-    yImage = image.GetHeight();
-
-    // Here we assume that jpgs that are taller than they are wide are single
-    // pages, and jpgs that are wider than they are tall are double pages.
+    // Here we assume that portrait pages are single pages and that landscape
+    // pages are double pages.
     rImage = float(xImage)/float(yImage);
     if (rImage >= 1.0f || mode == SINGLE) {
-      if (leftImage.Ok()) leftImage.Destroy();
-      if (leftImageScaled.Ok()) leftImageScaled.Destroy();
-      centerImage = image;
-      if (scaled != FULL) centerImageScaled = ScaleImage(image);
+      centerPage = bitmap;
     }
     else {
-      if (centerImage.Ok()) centerImage.Destroy();
-      if (centerImageScaled.Ok()) centerImageScaled.Destroy();
-      leftImage = image;
-      if (scaled != FULL) leftImageScaled = ScaleImage(image);
+      leftPage = bitmap;
     }
 
-    theBook->current = pagecount - 1;
     CreateBitmaps();
 
   }
-
-  Refresh();
-
 }
 
 void ComicalCanvas::GoToPage(int pagenumber)
 {
-
-  wxBusyCursor wait;
-  wxImage image_l, image_r;
+  wxBitmap *bitmap;
   int xImage, yImage;
   float rImage;
+  
+  wxLogVerbose("GoToPage %i...", pagenumber);
+  if (theBook == NULL) return;
+  if (pagenumber >= int(theBook->pagecount) || pagenumber < 0) return;
+  theBook->current = pagenumber;
+  
+  bitmap = theBook->GetPage(theBook->current);
 
-  image_l = GetPage(pagenumber);
+  if (bitmap)  if (bitmap->Ok()) {
+    ClearBitmaps();
+    xImage = bitmap->GetWidth();
+    yImage = bitmap->GetHeight();
 
-  if (image_l.Ok()) {
-    ClearImages();
-    xImage = image_l.GetWidth();
-    yImage = image_l.GetHeight();
-
-    // Here we assume that jpgs that are taller than they are wide are single
-    // pages, and jpgs that are wider than they are tall are double pages.
+    // Here we assume that portrait pages are single pages and that landscape
+    // pages are double pages.
     rImage = float(xImage)/float(yImage);
     if (rImage >= 1.0f || mode == SINGLE) {
-      centerImage = image_l;
-      if (scaled != FULL) centerImageScaled = ScaleImage(image_l);
-      theBook->current = pagenumber;
+      centerPage = bitmap;
     }
     else {
-      leftImage = image_l;
-      leftImageScaled = ScaleImage(image_l);
-      image_r = GetPage(pagenumber + 1);
-      if (image_r.Ok()) {
-        xImage = image_r.GetWidth();
-        yImage = image_r.GetHeight();
-        rImage = float(xImage)/float(yImage);
-        if (rImage < 1.0f) { // Only if this page is also not a double do we display it
-          rightImage = image_r;
-	  if (scaled != FULL) rightImageScaled = ScaleImage(image_r);
-          theBook->current = pagenumber + 1;
+      rightPage = bitmap;
+      if (theBook->current > 0) {
+        bitmap = theBook->GetPage(theBook->current - 1);
+        if (bitmap->Ok()) {
+          xImage = bitmap->GetWidth();
+          yImage = bitmap->GetHeight();
+          rImage = float(xImage)/float(yImage);
+          if (rImage < 1.0f) { // Only if this page is also not a double do we display it
+            leftPage = bitmap;
+          }
         }
-        else {
-          theBook->current = pagenumber;
-        }
-      }
-      else {
-        theBook->current = pagenumber;
       }
     }
 
     CreateBitmaps();
 
   }
-
-  Refresh();
-
 }
 
 void ComicalCanvas::PrevPageTurn()
 {
-
-  wxBusyCursor wait;
-  wxImage image_l, image_r;
-  int pagenumber, xImage, yImage;
+  wxBitmap *bitmap;
+  int xImage, yImage;
   float rImage;
 
-  if (!leftPage || !rightPage)
-    pagenumber = theBook->current - 1;
+  if (theBook == NULL) return;
+  if (theBook->current <= 0) return;
+  if (!leftPage || !rightPage || theBook->current == 1)
+    theBook->current -= 1;
   else
-    pagenumber = theBook->current - 2;
+    theBook->current -= 2;
 
-  image_r = GetPage(pagenumber);
+  bitmap = theBook->GetPage(theBook->current);
 
-  if (image_r.Ok()) {
-    ClearImages();
-    xImage = image_r.GetWidth();
-    yImage = image_r.GetHeight();
+  if (bitmap->Ok()) {
+    ClearBitmaps();
+    xImage = bitmap->GetWidth();
+    yImage = bitmap->GetHeight();
 
-    // Here we assume that jpgs that are taller than they are wide are single
-    // pages, and jpgs that are wider than they are tall are double pages.
+    // Here we assume that portrait pages are single pages and that landscape
+    // pages are double pages.
 
     rImage = float(xImage)/float(yImage);
     if (rImage >= 1.0f || mode == SINGLE) {
-      centerImage = image_r;
-      if (scaled != FULL) centerImageScaled = ScaleImage(image_r);
-      theBook->current = pagenumber;
+      centerPage = bitmap;
     }
     else {
-      rightImage = image_r;
-      rightImageScaled = ScaleImage(image_r);
-      image_l = GetPage(pagenumber - 1);
-      if (image_l.Ok()) {
-        xImage = image_l.GetWidth();
-        yImage = image_l.GetHeight();
-        rImage = float(xImage)/float(yImage);
-        if (rImage < 1.0f) { // Only if this page is also not a double do we display it
-          leftImage = image_l;
-	  if (scaled != FULL) leftImageScaled = ScaleImage(image_l);
+      rightPage = bitmap;
+      if (theBook->current > 0) {
+        bitmap = theBook->GetPage(theBook->current - 1);
+        if (bitmap->Ok()) {
+          xImage = bitmap->GetWidth();
+          yImage = bitmap->GetHeight();
+          rImage = float(xImage)/float(yImage);
+          if (rImage < 1.0f) { // Only if this page is also not a double do we display it
+            leftPage = bitmap;
+          } else {
+            ClearBitmap(bitmap);
+          }
         }
       }
     }
 
-    theBook->current = pagenumber;
-
     CreateBitmaps();
 
   }
-
-  Refresh();
-
 }
 
 void ComicalCanvas::NextPageTurn()
 {
-
-  wxBusyCursor wait;
-  wxImage image_l, image_r;
-  int pagenumber, xImage, yImage;
+  wxBitmap *bitmap;
+  int xImage, yImage;
   float rImage;
 
-  pagenumber = theBook->current + 1;
+  if (theBook == NULL) return;
+  if (theBook->current >= theBook->pagecount - 1) return;
+  if (theBook->current == theBook->pagecount - 2) {
+  	NextPageSlide();
+	return;
+  }
 
-  image_l = GetPage(pagenumber);
+  theBook->current++;
+  bitmap = theBook->GetPage(theBook->current);
 
-  if (image_l.Ok()) {
-    ClearImages();
-    xImage = image_l.GetWidth();
-    yImage = image_l.GetHeight();
+  if (bitmap->Ok()) {
+    ClearBitmaps();
+    xImage = bitmap->GetWidth();
+    yImage = bitmap->GetHeight();
 
-    // Here we assume that jpgs that are taller than they are wide are single
-    // pages, and jpgs that are wider than they are tall are double pages.
+    // Here we assume that portrait pages are single pages and that landscape
+    // pages are double pages.
+
     rImage = float(xImage)/float(yImage);
     if (rImage >= 1.0f || mode == SINGLE) {
-      centerImage = image_l;
-      if (scaled != FULL) centerImageScaled = ScaleImage(image_l);
-      theBook->current = pagenumber;
+      centerPage = bitmap;
     }
     else {
-      leftImage = image_l;
-      leftImageScaled = ScaleImage(image_l);
-      image_r = GetPage(pagenumber + 1);
-      if (image_r.Ok()) {
-        xImage = image_r.GetWidth();
-        yImage = image_r.GetHeight();
-        rImage = float(xImage)/float(yImage);
-        if (rImage < 1.0f) { // Only if this page is also not a double do we display it
-          rightImage = image_r;
-	  if (scaled != FULL) rightImageScaled = ScaleImage(image_r);
-          theBook->current = pagenumber + 1;
-        }
-        else {
-          theBook->current = pagenumber;
-        }
-      }
-      else {
-        theBook->current = pagenumber;
+      leftPage = bitmap;
+      if (theBook->current + 1 < theBook->pagecount) {
+        bitmap = theBook->GetPage(++theBook->current);
+        if (bitmap->Ok()) {
+          xImage = bitmap->GetWidth();
+          yImage = bitmap->GetHeight();
+          rImage = float(xImage)/float(yImage);
+          if (rImage < 1.0f) { // Only if this page is also not a double do we display it
+            rightPage = bitmap;
+          } else {
+	    theBook->current--;
+	    ClearBitmap(bitmap);
+	  }
+	}
       }
     }
 
     CreateBitmaps();
 
   }
-
-  Refresh();
-
 }
 
 void ComicalCanvas::PrevPageSlide()
 {
-
-  wxBusyCursor wait;
-  wxImage image;
-  int pagenumber, xImage, yImage;
+  wxBitmap *bitmap;
+  int xImage, yImage;
   float rImage;
 
-  if (centerImage.Ok()) {
+  if (theBook == NULL) return;
+  if (theBook->current <= 0) return;
+  if (centerPage) {
 	PrevPageTurn();
 	return;
   }
 
-  pagenumber = theBook->current - 2;
+  theBook->current--;
 
-  image = GetPage(pagenumber);
+  if (mode == SINGLE)
+    bitmap = theBook->GetPage(theBook->current);
+  else
+    bitmap = theBook->GetPage(theBook->current - 1);
 
-  if (image.Ok() || mode == SINGLE) {
+  if (bitmap->Ok()) {
 
-    if (rightImage.Ok()) rightImage.Destroy();
-    if (rightImageScaled.Ok()) rightImageScaled.Destroy();
-    if (centerImage.Ok()) centerImage.Destroy();
-    if (centerImageScaled.Ok()) centerImageScaled.Destroy();
+    ClearBitmap(rightPage);
+    ClearBitmap(centerPage);
 
-    xImage = image.GetWidth();
-    yImage = image.GetHeight();
+    xImage = bitmap->GetWidth();
+    yImage = bitmap->GetHeight();
 
-    // Here we assume that jpgs that are taller than they are wide are single
-    // pages, and jpgs that are wider than they are tall are double pages.
+    // Here we assume that portrait pages are single pages and that landscape
+    // pages are double pages.
     rImage = float(xImage)/float(yImage);
-    if (rImage >= 1.0f) {
-      centerImage = image;
-      if (scaled != FULL) centerImageScaled = ScaleImage(image);
-      if (leftImage.Ok()) leftImage.Destroy();
-      if (leftImageScaled.Ok()) leftImageScaled.Destroy();
-      theBook->current = pagenumber;
+    if (rImage >= 1.0f || mode == SINGLE) {
+      centerPage = bitmap;
+      if (mode == DOUBLE) {
+        theBook->current--;
+        ClearBitmap(leftPage);
+      }
     }
     else {
-      if (leftImage.Ok()) {
-        xImage = leftImage.GetWidth();
-        yImage = leftImage.GetHeight();
-        rImage = float(xImage)/float(yImage);
-        if (rImage < 1.0f) { // Only if this page is also not a double do we display it
-          rightImage = leftImage;
-	  if (scaled != FULL) rightImageScaled = leftImageScaled;
+      if (leftPage) {
+        if (leftPage->Ok()) {
+	  rightPage = leftPage;
+	  leftPage = bitmap;
         }
       }
-      leftImage = image;
-      leftImageScaled = ScaleImage(image);
-      theBook->current--;
     }
 
     CreateBitmaps();
 
   }
-
-  Refresh();
-
 }
 
 void ComicalCanvas::NextPageSlide()
 {
-
-  wxBusyCursor wait;
-  wxImage image;
-  int pagenumber, xImage, yImage;
+  wxBitmap *bitmap;
+  int xImage, yImage;
   float rImage;
 
-  if (centerImage.Ok()) {
-	NextPageTurn();
-	return;
+  if (theBook == NULL) return;
+  if (theBook->current >= theBook->pagecount - 1) return;
+  if (centerPage) {
+    if (centerPage->Ok() && theBook->current < theBook->pagecount - 1) {
+      NextPageTurn();
+      return;
+    }
   }
+  theBook->current++;
+  
+  bitmap = theBook->GetPage(theBook->current);
+  
+  if (bitmap->Ok()) {
+    
+    ClearBitmap(leftPage);
+    ClearBitmap(centerPage);
 
-  pagenumber = theBook->current + 1;
+    xImage = bitmap->GetWidth();
+    yImage = bitmap->GetHeight();
 
-  image = GetPage(pagenumber);
-
-  if (image.Ok()) {
-
-    if (leftImage.Ok()) leftImage.Destroy();
-    if (leftImageScaled.Ok()) leftImageScaled.Destroy();
-    if (centerImage.Ok()) centerImage.Destroy();
-    if (centerImageScaled.Ok()) centerImageScaled.Destroy();
-
-    xImage = image.GetWidth();
-    yImage = image.GetHeight();
-
-    // Here we assume that jpgs that are taller than they are wide are single
-    // pages, and jpgs that are wider than they are tall are double pages.
-
+    // Here we assume that portrait pages are single pages and that landscape
+    // pages are double pages.
     rImage = float(xImage)/float(yImage);
     if (rImage >= 1.0f || mode == SINGLE) {
-      centerImage = image;
-      if (scaled != FULL) centerImageScaled = ScaleImage(image);
-      if (rightImage.Ok()) rightImage.Destroy();
-      if (rightImageScaled.Ok()) rightImageScaled.Destroy();
+      centerPage = bitmap;
+      ClearBitmap(rightPage);
     }
     else {
-      if (rightImage.Ok()) {
-        xImage = rightImage.GetWidth();
-        yImage = rightImage.GetHeight();
-        rImage = float(xImage)/float(yImage);
-        if (rImage < 1.0f) { // Only if this page is also not a double do we display it
-          leftImage = rightImage;
-	  if (scaled != FULL) leftImageScaled = rightImageScaled;
+      if (rightPage) {
+        if (rightPage->Ok()) {
+          leftPage = rightPage;
+	  rightPage = bitmap;  
         }
       }
-      rightImage = image;
-      rightImageScaled = ScaleImage(image);
     }
-
-    theBook->current++;
-
     CreateBitmaps();
 
   }
-
-  Refresh();
-
 }
 
 void ComicalCanvas::CreateBitmaps()
 {
-
   int xScroll = 0, yScroll = 0, xWindow, yWindow;
   bool left = false, right = false;
-
-  wxLogVerbose("Creating bitmaps from images.");
-
+  
   GetClientSize(&xWindow, &yWindow);
-  ClearBitmaps();
-
-  if (scaled != FULL)  {
-    if (centerImageScaled.Ok())
-      centerPage = new wxBitmap(centerImageScaled);
-    else {
-      if ((left = leftImageScaled.Ok()))
-        leftPage = new wxBitmap(leftImageScaled);
-      if ((right = rightImageScaled.Ok()))
-        rightPage = new wxBitmap(rightImageScaled);
-    }
-  }
-  else {
-    if (centerImage.Ok())
-      centerPage = new wxBitmap(centerImage);
-    else {
-      if ((left = leftImage.Ok()))
-        leftPage = new wxBitmap(leftImage);
-      if ((right = rightImage.Ok()))
-        rightPage = new wxBitmap(rightImage);
-    }
-  }
-
+  
   if (centerPage) {
     if (centerPage->Ok()) {
       xScroll = centerPage->GetWidth();
@@ -510,183 +392,123 @@ void ComicalCanvas::CreateBitmaps()
     }
   }
   else {
-    if (leftPage) if (leftPage->Ok()) {
+    wxLogVerbose("CreateBitmaps double...");
+    if (leftPage) if ((left = leftPage->Ok())) {
       xScroll += leftPage->GetWidth();
       yScroll = leftPage->GetHeight();
     }
-    if (rightPage) if (rightPage->Ok()) {
+    if (rightPage) if ((right = rightPage->Ok())) {
       xScroll += rightPage->GetWidth();
       yScroll = (rightPage->GetHeight() > yScroll) ? rightPage->GetHeight() : yScroll;
     }
     if (!left || !right) // if only one page is active
       xScroll *= 2;
   }
+  wxLogVerbose("CreateBitmaps scrolling xScroll=%i yScroll=%i xWindow=%i", xScroll, yScroll, xWindow);
 
-  SetScrollbars( 10, 10, xScroll / 10, yScroll / 10 );
-  Scroll ((xScroll / 20) - (xWindow / 20), 0);
-
-}
-
-void ComicalCanvas::Scale(int value) {
-
-  wxBusyCursor wait;
-  scaled = value;
-  if (scaled != FULL) {
-    if (leftImage.Ok()) leftImageScaled = ScaleImage(leftImage);
-    if (rightImage.Ok()) rightImageScaled = ScaleImage(rightImage);
-    if (centerImage.Ok()) centerImageScaled = ScaleImage(centerImage);
-  }
-  CreateBitmaps();
+  SetScrollbars(10, 10, xScroll / 10, yScroll / 10);
+  Scroll((xScroll / 20) - (xWindow / 20), 0);
   Refresh();
+  wxLogVerbose("CreateBitmaps done.");
 
 }
 
-void ComicalCanvas::Mode(int newmode) {
-
-  wxLogVerbose("Mode = %i", newmode);
-  switch (newmode) {
-
-  case SINGLE:
-  case DOUBLE:
-
-    mode = newmode;
-    GoToPage(theBook->current);
-    break;
-
-  default:
-    wxLogVerbose("Undefined page mode."); // we shouldn't be here
-    break;
-
-  }
-
+void ComicalCanvas::Zoom(COMICAL_ZOOM value)
+{
+	zoom = value;
+	if (theBook) {
+		SetParams();
+		GoToPage(theBook->current);
+	}
 }
+
+void ComicalCanvas::Filter(FREE_IMAGE_FILTER value)
+{
+	filter = value;
+	if (theBook) {
+		SetParams();
+		GoToPage(theBook->current);
+	}
+}
+
+void ComicalCanvas::Mode(COMICAL_MODE newmode)
+{
+	mode = newmode;
+	if (theBook) {
+		SetParams();
+		GoToPage(theBook->current);
+	}
+}
+
+void ComicalCanvas::SetParams()
+{
+	int xCanvas, yCanvas;
+	GetClientSize(&xCanvas, &yCanvas);
+	wxLogVerbose("Set Parameters: mode=%i filter=%i zoom=%i x=%i y=%i", mode, filter, zoom, xCanvas, yCanvas);
+	theBook->SetParams(mode, filter, zoom, xCanvas, yCanvas);
+}
+
+void ComicalCanvas::Rotate(COMICAL_ROTATE rotate)
+{
+	wxLogVerbose("Rotate = " + rotate);
+	switch (rotate) {
+	
+	case NORTH:
+	
+	case EAST:
+	
+	case SOUTH:
+	
+	case WEST:
+	
+	default:
+		wxLogVerbose("Undefined rotation."); // we should not be here
+		break;
+	}
+}
+
 
 void ComicalCanvas::OnPaint( wxPaintEvent &WXUNUSED(event) )
 {
-
   int xCanvas, yCanvas;
 
   wxPaintDC dc( this );
   PrepareDC( dc );
 
   GetVirtualSize(&xCanvas, &yCanvas);
-
+  wxLogVerbose("OnPaint xCanvas=%i yCanvas=%i", xCanvas, yCanvas);
   /* I can't properly initialize x and y until the constructors are done, but
      if I just leave the values uninitialized, the very first image will be
      resized twice.  Here, when OnPaint is called for the first time, the values
-     will be initialized. */
+     will be initialized.  */
   if (x == -1 && y == -1) {
     x = xCanvas;
     y = yCanvas;
   }
 
-  if (scaled == FIT || scaled == FITH || scaled == FITV) {
-    if (xCanvas != x && yCanvas != y) {
+  if (zoom == FIT || zoom == FITH || zoom == FITV) {
+    if (xCanvas != x || yCanvas != y) {
       x = xCanvas;
       y = yCanvas;
       wxLogVerbose("Window size has changed, rescaling to %i x %i", x, y);
-      Scale(scaled);
+      SetParams();
+      GoToPage(theBook->current);
+      return;
     }
   }
 
   if (centerPage) {
     if (centerPage->Ok())
-      dc.DrawBitmap(*centerPage, xCanvas/2 - centerPage->GetWidth()/2, 0);
+      dc.DrawBitmap(*centerPage, (xCanvas/2) - centerPage->GetWidth()/2, 0, false);
   }
   else {
     if (leftPage) if (leftPage->Ok())
-      dc.DrawBitmap(*leftPage, xCanvas/2 - leftPage->GetWidth(), 0);
+      dc.DrawBitmap(*leftPage, xCanvas/2 - leftPage->GetWidth(), 0, false);
     if (rightPage) if (rightPage->Ok())
-      dc.DrawBitmap(*rightPage, xCanvas/2, 0);
+      dc.DrawBitmap(*rightPage, xCanvas/2, 0, false);
   }
 
-}
-
-/* Resizes an image to fit within half of the Comical window. */
-wxImage ComicalCanvas::ScaleImage(wxImage orig) {
-
-  int xCanvas, yCanvas, xImage, yImage;
-  float rCanvas, rImage;  // width/height ratios
-  float scalingFactor;
-
-  xImage = orig.GetWidth();
-  yImage = orig.GetHeight();
-
-  switch(scaled) {
-
-  case THREEQ:
-    wxLogVerbose("scalingFactor = 0.75");
-    scalingFactor = 0.75f;
-    break;
-
-  case HALF:
-    wxLogVerbose("scalingFactor = 0.5");
-    scalingFactor = 0.5f;
-    break;
-
-  case ONEQ:
-    wxLogVerbose("scalingFactor = 0.25");
-    scalingFactor = 0.25f;
-    break;
-
-  case FIT:
-
-    GetClientSize(&xCanvas, &yCanvas);
-
-    rImage = float(xImage) / float(yImage);
-
-    // This seems like an ugly hack to me.  If the centerImage is present,
-    // then we assume we're dealing with a double page or we're in single
-    // page mode.
-    if (centerImage.Ok()) {
-      rCanvas = float(xCanvas) / float(yCanvas);
-      if (rCanvas > rImage)
-        scalingFactor = float(yCanvas) / float(yImage);
-      else
-        scalingFactor = float(xCanvas) / float(xImage);
-    }
-    else {
-      rCanvas = (float(xCanvas)/2.0f) / float(yCanvas);
-      if (rCanvas > rImage)
-        scalingFactor = float(yCanvas) / float(yImage);
-      else
-        scalingFactor = (float(xCanvas)/2.0f) / float(xImage);
-    }
-
-    wxLogVerbose("Image:%ix%i, Canvas:%ix%i, rCanvas:%f, rImage:%f, scalingFactor=%f", xImage, yImage, xCanvas, yCanvas, rCanvas, rImage, scalingFactor);
-    break;
-
-  case FITH: // fit horizontally
-
-    GetClientSize(&xCanvas, &yCanvas);
-
-    if (centerImage.Ok())
-      scalingFactor = float(xCanvas) / float(xImage);
-    else
-      scalingFactor = (float(xCanvas)/2.0f) / float(xImage);
-
-    wxLogVerbose("scalingFactor = %f", scalingFactor);
-
-    break;
-
-  case FITV: // fit vertically
-
-    GetClientSize(&xCanvas, &yCanvas);
-    scalingFactor = float(yCanvas) / float(yImage);
-    wxLogVerbose("scalingFactor = %f", scalingFactor);
-
-    break;
-
-  default:
-    wxLogVerbose("scalingFactor = %f", scalingFactor);
-    return orig;
-    break;
-
-  }
-
-  wxLogVerbose("Scaling image with filter %i.", FILTER_LANCZOS3);
-  wxImage scaled = FreeImage_Rescale(orig, int(xImage * scalingFactor), int(yImage * scalingFactor), FILTER_LANCZOS3);
-  return scaled;
+  SetFocus(); // This is so we can grab keydown events
 
 }
 
@@ -710,12 +532,6 @@ void ComicalCanvas::OnKeyDown(wxKeyEvent& event)
   case WXK_RIGHT:
   case WXK_SPACE:
     NextPageSlide();
-    break;
-
-  case WXK_UP:
-
-  case WXK_DOWN:
-
     break;
 
   case WXK_HOME:

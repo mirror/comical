@@ -13,81 +13,72 @@
  *   the Free Software Foundation; either version 2 of the License, or     *
  *   (at your option) any later version.                                   *
  *                                                                         *
+ *   In addition, as a special exception, the author gives permission to   *
+ *   link the code of his release of Comical with Rarlabs' "unrar"         *
+ *   library (or with modified versions of it that use the same license    *
+ *   as the "unrar" library), and distribute the linked executables. You   *
+ *   must obey the GNU General Public License in all respects for all of   *
+ *   the code used other than "unrar". If you modify this file, you may    *
+ *   extend this exception to your version of the file, but you are not    *
+ *   obligated to do so. If you do not wish to do so, delete this          *
+ *   exception statement from your version.                                *
+ *                                                                         *
  ***************************************************************************/
 
 #include "ComicBookZIP.h"
 
-ComicBookZIP::ComicBookZIP(wxString file) {
+ComicBookZIP::ComicBookZIP(wxString file, uint cachelen) : ComicBook()
+{
+	unzFile ZipFile;
+	static char namebuf[1024];
+	wxString page;
+	
+	filename = file;
+	cacheLen = cachelen;
+	current = 0;
+	
+	ZipFile = unzOpen(filename.c_str());
 
-  unsigned int i;
-  unsigned long size;
-  char line[256];
-  wxString command;
-  vector<wxString> entries;
-  filename = file;
-  current = -1;
-  command = "unzip -l -qq \"" + filename + "\"";
-  wxLogVerbose("Opening PStream with command: %s", command.c_str());
-  redi::ipstream list(command.c_str());
-  for (i = 0; list.getline(line, 256) && line[0] != '\0'; i++) {
-    wxString wline = line;
-    wxStringTokenizer tokens(wline);
-    wxString size_str = tokens.GetNextToken();
-    size_str.ToULong(&size, 10);
-    tokens.GetNextToken(); // date field
-    tokens.GetNextToken(); // time field
-    wxString page = line + tokens.GetPosition() + 2;
-
-    /* Now some CBZ contributors are lazy and don't order their pages
-       inside the archive.  By putting the filename and the size into the same
-       entry, we can use the STL's sort() algorithm and split them up later. */
-    if (	page.Right(5).Upper() == ".JPEG" || page.Right(4).Upper() == ".JPG" ||
+	if (ZipFile) {
+		if (unzGoToFirstFile(ZipFile) != UNZ_OK) {
+			unzClose(ZipFile);
+			ZipFile = NULL;
+			return;
+		}
+		wxLogVerbose("Contents of " + filename + ":");
+	} else {
+		return;
+	}
+	do {
+		unzGetCurrentFileInfo(ZipFile, NULL, namebuf, 1024, NULL, 0, NULL, 0);
+		page = namebuf;
+		wxLogVerbose(page);
+		if(page.Right(5).Upper() == ".JPEG" || page.Right(4).Upper() == ".JPG" ||
 		page.Right(5).Upper() == ".TIFF" || page.Right(4).Upper() == ".TIF" ||
 		page.Right(4).Upper() == ".GIF" ||
-		page.Right(4).Upper() == ".PNG" ) {
-      if (size > 0) {
-        entries.push_back(page + "\t" + size_str);
-      }
-    }
-  }
+		page.Right(4).Upper() == ".PNG" )
+			filenames.push_back(page);
+	} while (unzGoToNextFile(ZipFile) == UNZ_OK);
+	
+	vector<wxString>::iterator begin = filenames.begin();
+	vector<wxString>::iterator end = filenames.end();
+	sort(begin, end);  // I love the STL!
 
-  list.close();
-
-  vector<wxString>::iterator begin = entries.begin();
-  vector<wxString>::iterator end = entries.end();
-  sort(begin, end);  // I love the STL!
-
-  if (entries.size() != 0)
-  {
-    wxLogVerbose("Contents of %s:", filename.c_str());
-    for (i = 0; i < entries.size(); i++) {
-      wxLogVerbose("smushed entry %i : %s", i, entries[i].c_str());
-      wxStringTokenizer tokens(entries[i], "\t");
-      pages.push_back(tokens.GetNextToken());
-      tokens.GetNextToken().ToULong(&size, 10);
-      sizes.push_back(size); // get the length
-    }
-  }
-  else
-    wxLogError("There are no supported images in %s.", filename.c_str());
-
+	pagecount = filenames.size();
+	
+	Originals = new wxImage[pagecount];
+	Resamples = new wxImage[pagecount];
+	Orientations = new COMICAL_ROTATE[pagecount];
+	for (uint i = 0; i < pagecount; i++)
+		Orientations[i] = NORTH;
+	imageProtectors = new wxMutex[pagecount];
+	
+	unzClose(ZipFile);
+	
+	Create(); // create the wxThread
 }
 
-ComicBookZIP::~ComicBookZIP() {
-
-
-}
-
-bool ComicBookZIP::Extract(unsigned int pageindex, char *data) {
-
-  wxString command;
-
-  if (pageindex >= pages.size()) return false;
-  command = "unzip -p \"" + filename + "\" \"" + pages[pageindex] + "\"";
-  wxLogVerbose("Opening PStream with command: %s", command.c_str());
-  redi::ipstream pipe(command.c_str());
-  pipe.read(data, sizes[pageindex]);
-  pipe.close();
-  return true;
-
+wxInputStream * ComicBookZIP::ExtractStream(unsigned int pageindex)
+{
+	return new wxZipInputStream(filename, filenames[pageindex]);
 }

@@ -13,6 +13,16 @@
  *   the Free Software Foundation; either version 2 of the License, or     *
  *   (at your option) any later version.                                   *
  *                                                                         *
+ *   In addition, as a special exception, the author gives permission to   *
+ *   link the code of his release of Comical with Rarlabs' "unrar"         *
+ *   library (or with modified versions of it that use the same license    *
+ *   as the "unrar" library), and distribute the linked executables. You   *
+ *   must obey the GNU General Public License in all respects for all of   *
+ *   the code used other than "unrar". If you modify this file, you may    *
+ *   extend this exception to your version of the file, but you are not    *
+ *   obligated to do so. If you do not wish to do so, delete this          *
+ *   exception statement from your version.                                *
+ *                                                                         *
  ***************************************************************************/
 
 #ifndef _ComicalApp_h
@@ -37,16 +47,16 @@
 #include <wx/textdlg.h>
 #include <wx/tokenzr.h>
 #include <wx/log.h>
+#include <wx/config.h>
 #endif
 
 #include "ComicalCanvas.h"
 #include "ComicBook.h"
 #include "ComicBookRAR.h"
 #include "ComicBookZIP.h"
-#include "ComicBookBZ2.h"
 
-ComicBook *theBook;
 wxLog *ComicalLog;
+wxLogStderr *ComicalLogStderr;
 wxLogWindow *ComicalLogWindow;
 
 class ComicalApp : public wxApp {
@@ -59,11 +69,11 @@ public:
 
 DECLARE_APP(ComicalApp)
 
-class MainFrame : public wxFrame {
+class ComicalFrame : public wxFrame {
 
   public:
 
-    MainFrame(const wxString& title,
+    ComicalFrame(const wxString& title,
               const wxPoint& pos,
               const wxSize& size,
               long style = wxDEFAULT_FRAME_STYLE);
@@ -71,6 +81,7 @@ class MainFrame : public wxFrame {
     void OnQuit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
     void OnOpen();
+    void OnClose();
 
     void OnFirst();
     void OnLast();
@@ -80,37 +91,48 @@ class MainFrame : public wxFrame {
     void OnNextSlide();
     void OnGoTo();
     void OnZoom(wxCommandEvent& event);
+    void OnFilter(wxCommandEvent& event);
     void OnFull(wxCommandEvent& event);
     void OnSingle(wxCommandEvent& event);
     void OnDouble(wxCommandEvent& event);
+    void OnRotate(wxCommandEvent& event);
     void OnShowLog();
 
-    bool OpenFile(wxString);
+    void OpenFile(wxString);
 
     ComicalCanvas *theCanvas;
+    ComicBook *theBook;
 
   private:
 
     wxMenuBar *menuBar;
-    wxMenu *menuFile, *menuView, *menuHelp, *menuZoom, *menuMode;
-
+    wxMenu *menuFile, *menuGo, *menuView, *menuHelp, *menuZoom, *menuMode, *menuFilter, *menuRotate;
+    wxConfig *config;
+    
     DECLARE_EVENT_TABLE()
 
 };
 
 enum
 {
-ID_ZFull = FULL,
-ID_Z3Q = THREEQ,
-ID_ZHalf = HALF,
-ID_Z1Q = ONEQ,
-ID_ZFit = FIT,
-ID_ZFitV = FITV,
-ID_ZFitH = FITH,
-ID_Z,
+ID_Unzoomed,
+ID_3Q,
+ID_Half,
+ID_1Q,
+ID_Fit,
+ID_FitV,
+ID_FitH,
+ID_S,
 ID_M,
 ID_Single,
 ID_Double,
+ID_F,
+ID_Box,
+ID_Bicubic,
+ID_Bilinear,
+ID_BSpline,
+ID_CatmullRom,
+ID_Lanczos,
 ID_First,
 ID_Last,
 ID_PrevTurn,
@@ -119,7 +141,11 @@ ID_PrevSlide,
 ID_NextSlide,
 ID_GoTo,
 ID_Full,
-ID_ShowLog
+ID_ShowLog,
+ID_North,
+ID_East,
+ID_South,
+ID_West
 };
 
 #endif
