@@ -1,3 +1,15 @@
+0.5 -
+bzip2 support has been dropped until someone actually needs it
+Now using the non-GPL libunrar library for cbr's
+Added exception to GPL to use libunrar
+Now using zlib and wxZipInputStream for cbz's
+6 selectable scaling algorithms
+Moved page navigation features to "Go" menu
+Functions renamed for consistency (Zoom, Mode, and Filter)
+View settings and current working directory are now saved
+Read-ahead caching
+Rotation
+
 0.4 -
 Added support for bzip2 archives, with extension .bz2 or .cbb
 Added more sensical keyboard shortcuts

@@ -13,9 +13,14 @@
     </keywords>
     <projectdirectory>.</projectdirectory>
     <absoluteprojectpath>false</absoluteprojectpath>
-    <description/>
-    <ignoreparts/>
-    <secondaryLanguages/>
+    <description></description>
+    <ignoreparts>
+      <part>KDevdistpart</part>
+      <part>KDevPerforce</part>
+    </ignoreparts>
+    <secondaryLanguages>
+      <language>C</language>
+    </secondaryLanguages>
   </general>
   <kdevautoproject>
     <general>
@@ -30,6 +35,9 @@
       <terminal>false</terminal>
       <autocompile>true</autocompile>
       <envvars/>
+      <runarguments>
+        <comical/>
+      </runarguments>
     </run>
     <configurations>
       <optimized>
@@ -75,10 +83,12 @@
       <group pattern="*.png;*.xpm" name="Icons" />
       <group pattern="*" name="Others" />
       <hidenonprojectfiles>false</hidenonprojectfiles>
+      <hidenonlocation>false</hidenonlocation>
     </groups>
     <tree>
       <hidepatterns>*.o,*.lo,CVS</hidepatterns>
       <hidenonprojectfiles>false</hidenonprojectfiles>
+      <showvcsfields>false</showvcsfields>
     </tree>
   </kdevfileview>
   <kdevdoctreeview>
@@ -101,11 +111,11 @@
   <kdevdebugger>
     <general>
       <dbgshell>libtool</dbgshell>
-      <programargs/>
-      <gdbpath/>
-      <configGdbScript/>
-      <runShellScript/>
-      <runGdbScript/>
+      <programargs></programargs>
+      <gdbpath></gdbpath>
+      <configGdbScript></configGdbScript>
+      <runShellScript></runShellScript>
+      <runGdbScript></runGdbScript>
       <breakonloadinglibs>true</breakonloadinglibs>
       <separatetty>false</separatetty>
       <floatingtoolbar>false</floatingtoolbar>
@@ -143,4 +153,11 @@
     </codecompletion>
     <references/>
   </kdevcppsupport>
+  <kdevcvsservice>
+    <recursivewhenupdate>true</recursivewhenupdate>
+    <prunedirswhenupdate>true</prunedirswhenupdate>
+    <createdirswhenupdate>true</createdirswhenupdate>
+    <recursivewhencommitremove>true</recursivewhencommitremove>
+    <revertoptions>-C</revertoptions>
+  </kdevcvsservice>
 </kdevelop>

@@ -1,8 +1,13 @@
-pStreams error handling
-Rotation
-Caching
-Save settings
-Box Zoom/Magnifying Glass
+images should only resize once when window changes
+current images should be resized first when window changes
+fix one cbr per execution bug
 about window crashes mac version
-detect presence of unrar, unzip, bunzip2, correct versions?
-Selectable scaling algorithms, not just Lanczos
+Fix Mac OS X document types
+Add logging levels so that logging works as designed
+fix or ditch the configure script
+run everything through code beautifier
+
+Long Term:
+User-configurable keybindings
+Page turning animation
+Box Zoom/Magnifying Glass

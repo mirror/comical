@@ -8,41 +8,60 @@ in-your-face double page display!
 
 Nifty Features:
 Several zoom modes - 100%, 75%, 50%, 25%, Fit, Fit-to-Width, and Fit-to-Height.
-Crisp image scaling with the Lanczos 3 algorithm, adapted from FreeImage 3.
+Crisp image scaling with algorithms adapted from FreeImage 3.
 Autodetects double pages scanned together and displays it accordingly.
-Full-Screen mode (not working on MacOS X).
+Full-Screen mode (not on MacOS X).
 Single-Page or Double-Page display modes.
 Displays JPG, GIF, PNG, and TIFF images.
-Supports RAR(.cbr), ZIP(.cbz), and bzip2'ed tar(.cbb) archives
+Supports RAR(.cbr) and ZIP(.cbz) comic book archives
 
-About:
-This program is the result of me, the author, scratching my own itch.  I felt
-somehow dirty using CDisplay through Wine, and I really wanted to share the fun
-of CBRs with a Mac-using friend of mine.  The demand for both a Linux and a Mac
-OS X version of CDisplay on the Mutant Liberation Front Forums also spurred me
-on.
-This program uses command-line decompressors because it's the only way to open
-RARs later than version 2.0 on Unix.  I would use unrarlib, but the unrarlib
-team has no plans to support anything later than 2.0, ever.  Besides, connecting
-small programs with pipes to create larger applications is the Unix Way^TM. :-)
+Rationale:
+Comical came to be because I felt somehow dirty using CDisplay through Wine,
+and I really wanted to share the fun of CBRs with a Mac-using friend of mine.
+The demand for both a Linux and a Mac OS X version of CDisplay on the Mutant
+Liberation Front Forums also spurred me on.
 
 Requirements:
 It should be possible to build Comical on any platform which supports
-wxWindows 2.4.x,
-unrar 3.20 or later,
-unzip 5.50 or later,
-the POSIX.2 functions popen(3) and pclose(3), for PStreams,
+wxWidgets 2.4.2 with zlib support
 and a recent ISO/C98 compliant C++ compiler, like gcc 3.x.
 
 Thanks:
-- wxWindows (http://www.wxwindows.org) is robust and featureful.  Many thanks
-to the wxWindows team.
-- pStreams (http://pstreams.sourceforge.net/) made this program possible, since
-I'm too lazy to do that nasty fork()/execvp() stuff myself.
-- I'm using image resizing from FreeImage (http://freeimage.sourceforge.net/).
-Thanks for GPLing your work so I could use it!
 
-Notice:
-This program is provided AS IS.  You are granted many freedoms under the GPL,
-the license this software uses.  Nevertheless, there are still some restrictions
-on how you may use this software.  See the COPYING file for more details.
+Cross-platform magic and GUI Widgets provided by:
+wxWidgets (http://www.wxwindows.org)
+
+Image resizing provided by:
+FreeImage (http://freeimage.sourceforge.net/).
+
+JPEG support provided by:
+Independent JPEG Group (http://www.ijg.org/)
+
+TIFF support provided by:
+Copyright (c) 1988-1997 Sam Leffler
+Copyright (c) 1991-1997 Silicon Graphics, Inc.
+
+Copyright (c) 2004 James Athey
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+In addition, as a special exception, the author gives permission to link the
+code of his release of Comical with Rarlabs' "unrar" library (or with modified
+versions of it that use the same license as the "unrar" library), and
+distribute the linked executables. You must obey the GNU General Public License
+in all respects for all of the code used other than "unrar". If you modify this
+file, you may extend this exception to your version of the file, but you are
+not obligated to do so. If you do not wish to do so, delete this exception
+statement from your version.

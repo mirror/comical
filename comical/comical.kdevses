@@ -1,63 +1,88 @@
 <?xml version = '1.0' encoding = 'UTF-8'?>
 <!DOCTYPE KDevPrjSession>
 <KDevPrjSession>
- <DocsAndViews NumberOfDocuments="10" >
+ <DocsAndViews NumberOfDocuments="15" >
   <Doc0 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/ComicalApp.cpp" >
-   <View0 line="288" Type="???" >
-    <AdditionalSettings Top="2" Width="1219" Attach="1" Height="675" Left="2" MinMaxMode="0" />
+   <View0 line="236" Type="???" >
+    <AdditionalSettings Top="2" Width="966" Attach="1" Height="696" Left="2" MinMaxMode="0" />
    </View0>
   </Doc0>
-  <Doc1 NumberOfViews="1" URL="file:/home/jathey/dev/comical/README" >
-   <View0 line="34" Type="???" >
-    <AdditionalSettings Top="2" Width="1218" Attach="1" Height="682" Left="2" MinMaxMode="0" />
+  <Doc1 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/ComicalApp.h" >
+   <View0 line="109" Type="???" >
+    <AdditionalSettings Top="2" Width="1200" Attach="1" Height="703" Left="2" MinMaxMode="0" />
    </View0>
   </Doc1>
-  <Doc2 NumberOfViews="1" URL="file:/home/jathey/dev/comical/ChangeLog" >
-   <View0 line="8" Type="???" >
-    <AdditionalSettings Top="2" Width="1218" Attach="1" Height="573" Left="2" MinMaxMode="0" />
+  <Doc2 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/ComicalCanvas.cpp" >
+   <View0 line="42" Type="???" >
+    <AdditionalSettings Top="2" Width="966" Attach="1" Height="696" Left="2" MinMaxMode="0" />
    </View0>
   </Doc2>
-  <Doc3 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/ComicalCanvas.cpp" >
-   <View0 line="21" Type="???" >
-    <AdditionalSettings Top="2" Width="1220" Attach="1" Height="675" Left="2" MinMaxMode="0" />
+  <Doc3 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/ComicalCanvas.h" >
+   <View0 line="70" Type="???" >
+    <AdditionalSettings Top="2" Width="1201" Attach="1" Height="696" Left="2" MinMaxMode="0" />
    </View0>
   </Doc3>
-  <Doc4 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/ComicalCanvas.h" >
-   <View0 line="34" Type="???" >
-    <AdditionalSettings Top="2" Width="1219" Attach="1" Height="675" Left="2" MinMaxMode="0" />
+  <Doc4 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/ComicBook.h" >
+   <View0 line="83" Type="???" >
+    <AdditionalSettings Top="2" Width="966" Attach="1" Height="696" Left="2" MinMaxMode="0" />
    </View0>
   </Doc4>
-  <Doc5 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/ComicalApp.h" >
-   <View0 line="46" Type="???" >
-    <AdditionalSettings Top="2" Width="1219" Attach="1" Height="675" Left="2" MinMaxMode="0" />
+  <Doc5 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/ComicBook.cpp" >
+   <View0 line="90" Type="???" >
+    <AdditionalSettings Top="2" Width="1210" Attach="1" Height="696" Left="2" MinMaxMode="0" />
    </View0>
   </Doc5>
   <Doc6 NumberOfViews="1" URL="file:/home/jathey/dev/comical/TODO" >
-   <View0 line="7" Type="???" >
-    <AdditionalSettings Top="2" Width="1096" Attach="1" Height="675" Left="2" MinMaxMode="0" />
+   <View0 line="2" Type="???" >
+    <AdditionalSettings Top="2" Width="1200" Attach="1" Height="696" Left="2" MinMaxMode="0" />
    </View0>
   </Doc6>
-  <Doc7 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/pstream.h" >
-   <View0 line="0" Type="???" >
-    <AdditionalSettings Top="2" Width="1219" Attach="1" Height="675" Left="2" MinMaxMode="0" />
+  <Doc7 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/ComicBookRAR.cpp" >
+   <View0 line="152" Type="???" >
+    <AdditionalSettings Top="2" Width="1200" Attach="1" Height="696" Left="2" MinMaxMode="0" />
    </View0>
   </Doc7>
-  <Doc8 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/ComicBookRAR.cpp" >
-   <View0 line="36" Type="???" >
-    <AdditionalSettings Top="2" Width="1218" Attach="1" Height="573" Left="2" MinMaxMode="0" />
+  <Doc8 NumberOfViews="1" URL="file:/home/jathey/dev/comical/ChangeLog" >
+   <View0 line="8" Type="???" >
+    <AdditionalSettings Top="2" Width="1201" Attach="1" Height="696" Left="2" MinMaxMode="0" />
    </View0>
   </Doc8>
-  <Doc9 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/ComicBookBZ2.cpp" >
-   <View0 line="32" Type="???" >
-    <AdditionalSettings Top="2" Width="1218" Attach="1" Height="573" Left="2" MinMaxMode="0" />
+  <Doc9 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/ComicBookRAR.h" >
+   <View0 line="38" Type="???" >
+    <AdditionalSettings Top="2" Width="966" Attach="1" Height="696" Left="2" MinMaxMode="0" />
    </View0>
   </Doc9>
+  <Doc10 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/ComicBookZIP.h" >
+   <View0 line="50" Type="???" >
+    <AdditionalSettings Top="2" Width="966" Attach="1" Height="696" Left="2" MinMaxMode="0" />
+   </View0>
+  </Doc10>
+  <Doc11 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/ComicBookZIP.cpp" >
+   <View0 line="0" Type="???" >
+    <AdditionalSettings Top="2" Width="966" Attach="1" Height="696" Left="2" MinMaxMode="0" />
+   </View0>
+  </Doc11>
+  <Doc12 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/rarstrm.cpp" >
+   <View0 line="42" Type="???" >
+    <AdditionalSettings Top="2" Width="1200" Attach="1" Height="696" Left="2" MinMaxMode="0" />
+   </View0>
+  </Doc12>
+  <Doc13 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/rarstrm.h" >
+   <View0 line="46" Type="???" >
+    <AdditionalSettings Top="2" Width="1200" Attach="1" Height="696" Left="2" MinMaxMode="0" />
+   </View0>
+  </Doc13>
+  <Doc14 NumberOfViews="1" URL="file:/home/jathey/dev/unrar-3.3.6/dll.hpp" >
+   <View0 line="34" Type="???" >
+    <AdditionalSettings Top="2" Width="1200" Attach="1" Height="696" Left="2" MinMaxMode="0" />
+   </View0>
+  </Doc14>
  </DocsAndViews>
  <pluginList>
   <kdevbookmarks>
    <bookmarks>
     <bookmark url="/home/jathey/dev/comical/src/ComicBookRAR.cpp" >
-     <mark line="93" />
+     <mark line="29" />
     </bookmark>
    </bookmarks>
   </kdevbookmarks>
