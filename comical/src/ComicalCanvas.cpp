@@ -18,7 +18,6 @@
 #include "ComicalCanvas.h"
 #include "ComicBook.h"
 #include "Resize.h"
-#include <iostream>
 
 using namespace std;
 
@@ -29,16 +28,15 @@ ComicalCanvas::ComicalCanvas( wxWindow *prnt, wxWindowID id, const wxPoint &pos,
   parent = prnt;
   SetBackgroundColour(* wxBLACK);
   scaled = FIT;
+  mode = DOUBLE;
   leftPage = rightPage = centerPage = NULL;
-  x = size.GetWidth();
-  y = size.GetHeight();
+  x = -1; y = -1;
   SetFocus(); // This is so we can grab keydown events right away
 }
 
 BEGIN_EVENT_TABLE(ComicalCanvas, wxScrolledWindow)
   EVT_PAINT(ComicalCanvas::OnPaint)
   EVT_KEY_DOWN(ComicalCanvas::OnKeyDown)
-  EVT_MOUSEWHEEL(ComicalCanvas::OnWheel)
 END_EVENT_TABLE()
 
 ComicalCanvas::~ComicalCanvas()
@@ -89,24 +87,21 @@ wxImage ComicalCanvas::GetPage(int pagenumber)
 
     data = new char[theBook->sizes[pagenumber]];
 
-    cerr << "Extracting image " << pagenumber << " of " << (pagecount - 1) << "." << endl;
+    wxLogVerbose("Extracting image %i of %i...", pagenumber, (pagecount - 1));
     if (theBook->Extract(pagenumber, data)) {
-      cerr << "Extraction done, loading image into stream";
+      wxLogVerbose("Loading data into wxMemoryInputStream...");
       wxMemoryInputStream mis(data, theBook->sizes[pagenumber]);
-      cerr << "...";
-      #ifdef __WXMAC__
       if (mis.IsOk()) {
-      #else
-      if (mis.IsOk() && mis.LastError() == wxSTREAM_NO_ERROR) {
-      #endif
-        cerr << "done, size = " << mis.GetSize() << endl;
+        wxLogVerbose("Loading image from wxMemoryInputStream...");
         if (!image.LoadFile(mis))
-          cerr << "Can't load image from stream" << endl;
+	  wxLogError("Successfully extracted the file %s, but could not create an image from it.  It may be corrupted.", theBook->pages[pagenumber].c_str());
       }
       else {
-        cerr << "failed." << endl;
+        wxLogError("Extraction succeeded, but could not load the data into a wxMemoryInputStream.");
       }
     }
+    else
+      wxLogError("Could not extract %s.", theBook->pages[pagenumber].c_str());
 
     delete[] data;
 
@@ -134,7 +129,7 @@ void ComicalCanvas::FirstPage()
     // Here we assume that jpgs that are taller than they are wide are single
     // pages, and jpgs that are wider than they are tall are double pages.
     rImage = float(xImage)/float(yImage);
-    if (rImage >= 1.0f) {
+    if (rImage >= 1.0f || mode == SINGLE) {
       centerImage = image;
       if (scaled != FULL) centerImageScaled = ScaleImage(image);
     }
@@ -171,7 +166,7 @@ void ComicalCanvas::LastPage()
     // Here we assume that jpgs that are taller than they are wide are single
     // pages, and jpgs that are wider than they are tall are double pages.
     rImage = float(xImage)/float(yImage);
-    if (rImage >= 1.0f) {
+    if (rImage >= 1.0f || mode == SINGLE) {
       if (leftImage.Ok()) leftImage.Destroy();
       if (leftImageScaled.Ok()) leftImageScaled.Destroy();
       centerImage = image;
@@ -185,6 +180,59 @@ void ComicalCanvas::LastPage()
     }
 
     theBook->current = pagecount - 1;
+    CreateBitmaps();
+
+  }
+
+  Refresh();
+
+}
+
+void ComicalCanvas::GoToPage(int pagenumber)
+{
+
+  wxBusyCursor wait;
+  wxImage image_l, image_r;
+  int xImage, yImage;
+  float rImage;
+
+  image_l = GetPage(pagenumber);
+
+  if (image_l.Ok()) {
+    ClearImages();
+    xImage = image_l.GetWidth();
+    yImage = image_l.GetHeight();
+
+    // Here we assume that jpgs that are taller than they are wide are single
+    // pages, and jpgs that are wider than they are tall are double pages.
+    rImage = float(xImage)/float(yImage);
+    if (rImage >= 1.0f || mode == SINGLE) {
+      centerImage = image_l;
+      if (scaled != FULL) centerImageScaled = ScaleImage(image_l);
+      theBook->current = pagenumber;
+    }
+    else {
+      leftImage = image_l;
+      leftImageScaled = ScaleImage(image_l);
+      image_r = GetPage(pagenumber + 1);
+      if (image_r.Ok()) {
+        xImage = image_r.GetWidth();
+        yImage = image_r.GetHeight();
+        rImage = float(xImage)/float(yImage);
+        if (rImage < 1.0f) { // Only if this page is also not a double do we display it
+          rightImage = image_r;
+	  if (scaled != FULL) rightImageScaled = ScaleImage(image_r);
+          theBook->current = pagenumber + 1;
+        }
+        else {
+          theBook->current = pagenumber;
+        }
+      }
+      else {
+        theBook->current = pagenumber;
+      }
+    }
+
     CreateBitmaps();
 
   }
@@ -217,7 +265,7 @@ void ComicalCanvas::PrevPageTurn()
     // pages, and jpgs that are wider than they are tall are double pages.
 
     rImage = float(xImage)/float(yImage);
-    if (rImage >= 1.0f) {
+    if (rImage >= 1.0f || mode == SINGLE) {
       centerImage = image_r;
       if (scaled != FULL) centerImageScaled = ScaleImage(image_r);
       theBook->current = pagenumber;
@@ -267,7 +315,7 @@ void ComicalCanvas::NextPageTurn()
     // Here we assume that jpgs that are taller than they are wide are single
     // pages, and jpgs that are wider than they are tall are double pages.
     rImage = float(xImage)/float(yImage);
-    if (rImage >= 1.0f) {
+    if (rImage >= 1.0f || mode == SINGLE) {
       centerImage = image_l;
       if (scaled != FULL) centerImageScaled = ScaleImage(image_l);
       theBook->current = pagenumber;
@@ -319,7 +367,7 @@ void ComicalCanvas::PrevPageSlide()
 
   image = GetPage(pagenumber);
 
-  if (image.Ok()) {
+  if (image.Ok() || mode == SINGLE) {
 
     if (rightImage.Ok()) rightImage.Destroy();
     if (rightImageScaled.Ok()) rightImageScaled.Destroy();
@@ -393,7 +441,7 @@ void ComicalCanvas::NextPageSlide()
     // pages, and jpgs that are wider than they are tall are double pages.
 
     rImage = float(xImage)/float(yImage);
-    if (rImage >= 1.0f) {
+    if (rImage >= 1.0f || mode == SINGLE) {
       centerImage = image;
       if (scaled != FULL) centerImageScaled = ScaleImage(image);
       if (rightImage.Ok()) rightImage.Destroy();
@@ -429,7 +477,7 @@ void ComicalCanvas::CreateBitmaps()
   int xScroll = 0, yScroll = 0, xWindow, yWindow;
   bool left = false, right = false;
 
-  cerr << "CreateBitmaps()...";
+  wxLogVerbose("Creating bitmaps from images.");
 
   GetClientSize(&xWindow, &yWindow);
   ClearBitmaps();
@@ -476,7 +524,6 @@ void ComicalCanvas::CreateBitmaps()
 
   SetScrollbars( 10, 10, xScroll / 10, yScroll / 10 );
   Scroll ((xScroll / 20) - (xWindow / 20), 0);
-  cerr << "done." << endl;
 
 }
 
@@ -494,6 +541,26 @@ void ComicalCanvas::Scale(int value) {
 
 }
 
+void ComicalCanvas::Mode(int newmode) {
+
+  wxLogVerbose("Mode = %i", newmode);
+  switch (newmode) {
+
+  case SINGLE:
+  case DOUBLE:
+
+    mode = newmode;
+    GoToPage(theBook->current);
+    break;
+
+  default:
+    wxLogVerbose("Undefined page mode."); // we shouldn't be here
+    break;
+
+  }
+
+}
+
 void ComicalCanvas::OnPaint( wxPaintEvent &WXUNUSED(event) )
 {
 
@@ -503,11 +570,23 @@ void ComicalCanvas::OnPaint( wxPaintEvent &WXUNUSED(event) )
   PrepareDC( dc );
 
   GetVirtualSize(&xCanvas, &yCanvas);
-  if (xCanvas != x && yCanvas != y && scaled == FIT) {
+
+  /* I can't properly initialize x and y until the constructors are done, but
+     if I just leave the values uninitialized, the very first image will be
+     resized twice.  Here, when OnPaint is called for the first time, the values
+     will be initialized. */
+  if (x == -1 && y == -1) {
     x = xCanvas;
     y = yCanvas;
-    cerr << "Rescaling to " << x << "x" << y << endl;
-    Scale(scaled);
+  }
+
+  if (scaled == FIT || scaled == FITH || scaled == FITV) {
+    if (xCanvas != x && yCanvas != y) {
+      x = xCanvas;
+      y = yCanvas;
+      wxLogVerbose("Window size has changed, rescaling to %i x %i", x, y);
+      Scale(scaled);
+    }
   }
 
   if (centerPage) {
@@ -527,27 +606,26 @@ void ComicalCanvas::OnPaint( wxPaintEvent &WXUNUSED(event) )
 wxImage ComicalCanvas::ScaleImage(wxImage orig) {
 
   int xCanvas, yCanvas, xImage, yImage;
-  float rCanvas, rImage;  // ratios of width/height
+  float rCanvas, rImage;  // width/height ratios
   float scalingFactor;
 
   xImage = orig.GetWidth();
   yImage = orig.GetHeight();
 
-  cerr << "scaled = " << scaled << " ";
   switch(scaled) {
 
   case THREEQ:
-    cerr << "scalingFactor = 0.75" << endl;
+    wxLogVerbose("scalingFactor = 0.75");
     scalingFactor = 0.75f;
     break;
 
   case HALF:
-    cerr << "scalingFactor = 0.5" << endl;
+    wxLogVerbose("scalingFactor = 0.5");
     scalingFactor = 0.5f;
     break;
 
   case ONEQ:
-    cerr << "scalingFactor = 0.25" << endl;
+    wxLogVerbose("scalingFactor = 0.25");
     scalingFactor = 0.25f;
     break;
 
@@ -555,46 +633,65 @@ wxImage ComicalCanvas::ScaleImage(wxImage orig) {
 
     GetClientSize(&xCanvas, &yCanvas);
 
-    // Here we assume that jpgs that are taller than they are wide are single
-    // pages, and jpgs that are wider than they are tall are double pages.
-    // Single pages only get half of the canvas to work with; doubles get the
-    // whole thing. (A little like tennis.)
-
     rImage = float(xImage) / float(yImage);
-    if (rImage < 1.0f) // single page
-      rCanvas = (float(xCanvas)/2.0f) / float(yCanvas);
-    else // double page
-      rCanvas = float(xCanvas) / float(yCanvas);
 
-    if (rCanvas > rImage)
-      scalingFactor = float(yCanvas) / float(yImage);
+    // This seems like an ugly hack to me.  If the centerImage is present,
+    // then we assume we're dealing with a double page or we're in single
+    // page mode.
+    if (centerImage.Ok()) {
+      rCanvas = float(xCanvas) / float(yCanvas);
+      if (rCanvas > rImage)
+        scalingFactor = float(yCanvas) / float(yImage);
+      else
+        scalingFactor = float(xCanvas) / float(xImage);
+    }
+    else {
+      rCanvas = (float(xCanvas)/2.0f) / float(yCanvas);
+      if (rCanvas > rImage)
+        scalingFactor = float(yCanvas) / float(yImage);
+      else
+        scalingFactor = (float(xCanvas)/2.0f) / float(xImage);
+    }
+
+    wxLogVerbose("Image:%ix%i, Canvas:%ix%i, rCanvas:%f, rImage:%f, scalingFactor=%f", xImage, yImage, xCanvas, yCanvas, rCanvas, rImage, scalingFactor);
+    break;
+
+  case FITH: // fit horizontally
+
+    GetClientSize(&xCanvas, &yCanvas);
+
+    if (centerImage.Ok())
+      scalingFactor = float(xCanvas) / float(xImage);
     else
       scalingFactor = (float(xCanvas)/2.0f) / float(xImage);
 
-    cerr << "Image:" << xImage << "x" << yImage
-       << ", Canvas:" << xCanvas << "x" << yCanvas
-       << ", rCanvas=" << rCanvas << ", rImage=" << rImage
-       << ", scalingFactor=" << scalingFactor << endl;
+    wxLogVerbose("scalingFactor = %f", scalingFactor);
+
+    break;
+
+  case FITV: // fit vertically
+
+    GetClientSize(&xCanvas, &yCanvas);
+    scalingFactor = float(yCanvas) / float(yImage);
+    wxLogVerbose("scalingFactor = %f", scalingFactor);
+
     break;
 
   default:
-    cerr << "scalingFactor = 1.0" << endl;
+    wxLogVerbose("scalingFactor = %f", scalingFactor);
     return orig;
     break;
 
   }
 
-  cerr << "scaling ..."; cerr.flush();
+  wxLogVerbose("Scaling image with filter %i.", FILTER_LANCZOS3);
   wxImage scaled = FreeImage_Rescale(orig, int(xImage * scalingFactor), int(yImage * scalingFactor), FILTER_LANCZOS3);
-  cerr << "done." << endl;
   return scaled;
 
 }
 
 void ComicalCanvas::OnKeyDown(wxKeyEvent& event)
 {
-
-  cerr << "KeyDown " << endl;
 
   switch(event.GetKeyCode()) {
 
@@ -633,8 +730,4 @@ void ComicalCanvas::OnKeyDown(wxKeyEvent& event)
     event.Skip();
   }
 
-}
-
-void ComicalCanvas::OnWheel(wxMouseEvent& event)
-{
 }

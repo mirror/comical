@@ -30,10 +30,9 @@
 // Include your minimal set of headers here, or wx.h
 #include <wx/string.h>
 #include <wx/tokenzr.h>
+#include <wx/log.h>
 #endif
 
-#include <string>
-#include <iostream>
 #include <vector>
 #include <algorithm>
 #include "pstream.h"
@@ -46,7 +45,7 @@ public:
 
   virtual ~ComicBook() = 0;
   virtual bool Extract(unsigned int pageindex, char *data) = 0;
-  
+
   wxString filename;
   vector<wxString> pages;
   vector<unsigned long> sizes;

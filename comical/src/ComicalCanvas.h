@@ -32,10 +32,11 @@
 #include <wx/dcclient.h>
 #include <wx/dcmemory.h>
 #include <wx/mstream.h>
+#include <wx/log.h>
 #endif
 
-enum pagetypes {FIRST, LAST, PREV, NEXT, DOUBLE};
-enum zooms {FULL = 10, THREEQ = 9, HALF = 8, ONEQ = 7, FIT = 11};
+enum zooms {ONEQ = 7, HALF, THREEQ, FULL, FIT, FITV, FITH};
+enum modes {SINGLE = 1, DOUBLE = 2};
 
 class ComicalCanvas : public wxScrolledWindow {
 
@@ -46,17 +47,18 @@ class ComicalCanvas : public wxScrolledWindow {
 
     void OnPaint(wxPaintEvent &event);
     void OnKeyDown(wxKeyEvent &event);
-    void OnWheel(wxMouseEvent &event);
-    
+
     void ClearBitmaps();
     void ClearImages();
     void FirstPage();
     void LastPage();
+    void GoToPage(int pagenumber);
     void PrevPageTurn();
     void NextPageTurn();
     void PrevPageSlide();
     void NextPageSlide();
     void Scale(int value);
+    void Mode(int mode);
 
   private:
     wxImage GetPage(int pagenumber);
@@ -66,7 +68,7 @@ class ComicalCanvas : public wxScrolledWindow {
     wxImage leftImage, leftImageScaled, rightImage, rightImageScaled, centerImage, centerImageScaled;
 
     wxWindow *parent;
-    int scaled;
+    int scaled, mode;
     int x,y;
 
     DECLARE_DYNAMIC_CLASS(ComicalCanvas)

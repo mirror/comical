@@ -1,21 +1,65 @@
 <?xml version = '1.0' encoding = 'UTF-8'?>
 <!DOCTYPE KDevPrjSession>
 <KDevPrjSession>
- <DocsAndViews NumberOfDocuments="2" >
+ <DocsAndViews NumberOfDocuments="10" >
   <Doc0 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/ComicalApp.cpp" >
-   <View0 line="5" Type="???" >
-    <AdditionalSettings Top="2" Width="1220" Attach="1" Height="706" Left="2" MinMaxMode="0" />
+   <View0 line="288" Type="???" >
+    <AdditionalSettings Top="2" Width="1219" Attach="1" Height="675" Left="2" MinMaxMode="0" />
    </View0>
   </Doc0>
   <Doc1 NumberOfViews="1" URL="file:/home/jathey/dev/comical/README" >
-   <View0 line="21" Type="???" >
-    <AdditionalSettings Top="2" Width="1219" Attach="1" Height="680" Left="2" MinMaxMode="0" />
+   <View0 line="34" Type="???" >
+    <AdditionalSettings Top="2" Width="1218" Attach="1" Height="682" Left="2" MinMaxMode="0" />
    </View0>
   </Doc1>
+  <Doc2 NumberOfViews="1" URL="file:/home/jathey/dev/comical/ChangeLog" >
+   <View0 line="8" Type="???" >
+    <AdditionalSettings Top="2" Width="1218" Attach="1" Height="573" Left="2" MinMaxMode="0" />
+   </View0>
+  </Doc2>
+  <Doc3 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/ComicalCanvas.cpp" >
+   <View0 line="21" Type="???" >
+    <AdditionalSettings Top="2" Width="1220" Attach="1" Height="675" Left="2" MinMaxMode="0" />
+   </View0>
+  </Doc3>
+  <Doc4 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/ComicalCanvas.h" >
+   <View0 line="34" Type="???" >
+    <AdditionalSettings Top="2" Width="1219" Attach="1" Height="675" Left="2" MinMaxMode="0" />
+   </View0>
+  </Doc4>
+  <Doc5 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/ComicalApp.h" >
+   <View0 line="46" Type="???" >
+    <AdditionalSettings Top="2" Width="1219" Attach="1" Height="675" Left="2" MinMaxMode="0" />
+   </View0>
+  </Doc5>
+  <Doc6 NumberOfViews="1" URL="file:/home/jathey/dev/comical/TODO" >
+   <View0 line="7" Type="???" >
+    <AdditionalSettings Top="2" Width="1096" Attach="1" Height="675" Left="2" MinMaxMode="0" />
+   </View0>
+  </Doc6>
+  <Doc7 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/pstream.h" >
+   <View0 line="0" Type="???" >
+    <AdditionalSettings Top="2" Width="1219" Attach="1" Height="675" Left="2" MinMaxMode="0" />
+   </View0>
+  </Doc7>
+  <Doc8 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/ComicBookRAR.cpp" >
+   <View0 line="36" Type="???" >
+    <AdditionalSettings Top="2" Width="1218" Attach="1" Height="573" Left="2" MinMaxMode="0" />
+   </View0>
+  </Doc8>
+  <Doc9 NumberOfViews="1" URL="file:/home/jathey/dev/comical/src/ComicBookBZ2.cpp" >
+   <View0 line="32" Type="???" >
+    <AdditionalSettings Top="2" Width="1218" Attach="1" Height="573" Left="2" MinMaxMode="0" />
+   </View0>
+  </Doc9>
  </DocsAndViews>
  <pluginList>
   <kdevbookmarks>
-   <bookmarks/>
+   <bookmarks>
+    <bookmark url="/home/jathey/dev/comical/src/ComicBookRAR.cpp" >
+     <mark line="93" />
+    </bookmark>
+   </bookmarks>
   </kdevbookmarks>
   <kdevsubversion>
    <subversion recurseresolve="1" recurserelocate="1" recursemerge="1" recursecommit="1" base="" recursepropget="1" recurseswitch="1" recurseupdate="1" recursepropset="1" recursediff="1" recurserevert="1" forcemove="1" recursecheckout="1" forceremove="1" recurseadd="1" recurseproplist="1" forcemerge="1" />

@@ -13,4 +13,4 @@ bin_PROGRAMS = comical
 comical_LDFLAGS = $(WX_LIBS) 
 
 comical_SOURCES =  ComicalApp.cpp ComicalCanvas.cpp ComicBook.cpp ComicBookBZ2.cpp ComicBookRAR.cpp ComicBookZIP.cpp Resize.cpp
-noinst_HEADERS =  ComicalApp.h ComicalCanvas.h ComicBook.h ComicBookBZ2.h ComicBookRAR.h ComicBookZIP.h Filters.h pstream.h Resize.h
+noinst_HEADERS = ComicalApp.h ComicalCanvas.h ComicBook.h ComicBookBZ2.h ComicBookRAR.h ComicBookZIP.h Filters.h pstream.h Resize.h ComicalLog.h

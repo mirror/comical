@@ -34,13 +34,20 @@
 #include <wx/menu.h>
 #include <wx/textctrl.h>
 #include <wx/msgdlg.h>
+#include <wx/textdlg.h>
 #include <wx/tokenzr.h>
+#include <wx/log.h>
 #endif
 
 #include "ComicalCanvas.h"
 #include "ComicBook.h"
+#include "ComicBookRAR.h"
+#include "ComicBookZIP.h"
+#include "ComicBookBZ2.h"
 
 ComicBook *theBook;
+wxLog *ComicalLog;
+wxLogWindow *ComicalLogWindow;
 
 class ComicalApp : public wxApp {
 
@@ -71,14 +78,22 @@ class MainFrame : public wxFrame {
     void OnNextTurn();
     void OnPrevSlide();
     void OnNextSlide();
+    void OnGoTo();
     void OnZoom(wxCommandEvent& event);
     void OnFull(wxCommandEvent& event);
+    void OnSingle(wxCommandEvent& event);
+    void OnDouble(wxCommandEvent& event);
+    void OnShowLog();
 
     bool OpenFile(wxString);
 
     ComicalCanvas *theCanvas;
 
   private:
+
+    wxMenuBar *menuBar;
+    wxMenu *menuFile, *menuView, *menuHelp, *menuZoom, *menuMode;
+
     DECLARE_EVENT_TABLE()
 
 };
@@ -90,13 +105,21 @@ ID_Z3Q = THREEQ,
 ID_ZHalf = HALF,
 ID_Z1Q = ONEQ,
 ID_ZFit = FIT,
+ID_ZFitV = FITV,
+ID_ZFitH = FITH,
+ID_Z,
+ID_M,
+ID_Single,
+ID_Double,
 ID_First,
 ID_Last,
 ID_PrevTurn,
 ID_NextTurn,
 ID_PrevSlide,
 ID_NextSlide,
-ID_Full
+ID_GoTo,
+ID_Full,
+ID_ShowLog
 };
 
 #endif

@@ -26,6 +26,7 @@ ComicBookBZ2::ComicBookBZ2(wxString file) {
   filename = file;
   current = -1;
   command = "tar -tjvf \"" + filename + "\"";
+  wxLogVerbose("Opening PStream with command: %s", command.c_str());
   redi::ipstream list(command.c_str());
 /*
   if (list.exited())
@@ -43,8 +44,8 @@ ComicBookBZ2::ComicBookBZ2(wxString file) {
 
     wxString page = line + tokens.GetPosition();
 
-    /* Now some contributors are lazy and don't order their pages inside the
-       archive. By putting the filename and the size into the same entry, we
+    /* Now some CBB contributors are lazy and don't order their pages inside
+       the archive. By putting the filename and the size into the same entry, we
        can use the STL's sort() algorithm and split them up later. */
     if (page.Right(5).Upper() == ".JPEG" || page.Right(4).Upper() == ".JPG" ||
 	page.Right(5).Upper() == ".TIFF" || page.Right(4).Upper() == ".TIF" ||
@@ -62,13 +63,19 @@ ComicBookBZ2::ComicBookBZ2(wxString file) {
   vector<wxString>::iterator end = entries.end();
   sort(begin, end);  // I love the STL!
 
-  for (i = 0; i < entries.size(); i++) {
-    cerr << "smushed entry " << i << ":" << entries[i] << endl;
-    wxStringTokenizer tokens(entries[i], "\t");
-    pages.push_back(tokens.GetNextToken());
-    tokens.GetNextToken().ToULong(&size, 10);
-    sizes.push_back(size); // get the length
+  if (entries.size() != 0)
+  {
+    wxLogVerbose("Contents of %s:", filename.c_str());
+    for (i = 0; i < entries.size(); i++) {
+      wxLogVerbose("smushed entry %i : %s", i, entries[i].c_str());
+      wxStringTokenizer tokens(entries[i], "\t");
+      pages.push_back(tokens.GetNextToken());
+      tokens.GetNextToken().ToULong(&size, 10);
+      sizes.push_back(size); // get the length
+    }
   }
+  else
+    wxLogError("There are no supported images in %s.", filename.c_str());
 
 }
 
@@ -82,6 +89,7 @@ bool ComicBookBZ2::Extract(unsigned int pageindex, char *data) {
 
   if (pageindex >= pages.size()) return false;
   command = "tar -jOx \"" + pages[pageindex] + "\" -f \"" + filename + "\"";
+  wxLogVerbose("Opening PStream with command: %s", command.c_str());
   redi::ipstream pipe(command.c_str());
   pipe.read(data, sizes[pageindex]);
   pipe.close();

@@ -16,9 +16,6 @@
  ***************************************************************************/
 
 #include "ComicalApp.h"
-#include "ComicBookRAR.h"
-#include "ComicBookZIP.h"
-#include "ComicBookBZ2.h"
 
 #ifndef __WXMAC__
 #include "Comical.xpm"  // the icon!
@@ -42,9 +39,7 @@ bool ComicalApp::OnInit()
   MainFrame *frame = new MainFrame(_T("Comical"), wxPoint(50, 50), wxSize(600, 400));
 
   frame->SetIcon(wxICON(Comical));
-  cerr << "Showing MainFrame...";
   frame->Show(TRUE);
-  cerr << "done." << endl;
   SetTopWindow(frame);
   theBook = NULL;
 
@@ -62,13 +57,19 @@ bool ComicalApp::OnInit()
 
 MainFrame::MainFrame(const wxString& title, const wxPoint& pos, const wxSize& size, long style) : wxFrame(NULL, -1, title, pos, size, style)
 {
-  cerr << "Creating MainFrame...";
-  wxMenu *menuFile = new wxMenu;
+
+  ComicalLog = new wxLogGui();
+  ComicalLogWindow = new wxLogWindow(this, "Comical Log", false, true);
+  ComicalLogWindow->SetVerbose();
+
+  wxLogVerbose("Creating menus...");
+
+  menuFile = new wxMenu;
   menuFile->Append(wxID_OPEN, _T("&Open\tAlt-O"), _T("Open a Comic Book."));
   menuFile->AppendSeparator();
   menuFile->Append(wxID_EXIT, _T("E&xit\tAlt-X"), _T("Quit Comical."));
 
-  wxMenu *menuView = new wxMenu;
+  menuView = new wxMenu;
   menuView->Append(ID_PrevSlide, _T("Previous Page"), _T("Display the previous page."));
   menuView->Append(ID_NextSlide, _T("Next Page"), _T("Display the next page."));
   menuView->AppendSeparator();
@@ -77,26 +78,32 @@ MainFrame::MainFrame(const wxString& title, const wxPoint& pos, const wxSize& si
   menuView->AppendSeparator();
   menuView->Append(ID_First, _T("&First Page"), _T("Display the first page."));
   menuView->Append(ID_Last, _T("&Last Page"), _T("Display the last page."));
+  menuView->Append(ID_GoTo, _T("&Go to page..."), _T("Jump to another page number."));
 #ifndef __WXMAC__
   menuView->AppendSeparator();
   menuView->Append(ID_Full, _T("Full &Screen\tAlt-Return"), _T("Display Full Screen."));
 #endif
-  wxMenu *menuZoom = new wxMenu;
+  menuZoom = new wxMenu;          // a better place for this.
   menuZoom->AppendRadioItem(ID_ZFit, _T("Fit"), _T("Scale pages to fit the window."));
+  menuZoom->AppendRadioItem(ID_ZFitV, _T("Fit to Height"), _T("Scale pages to fit the window's height."));
+  menuZoom->AppendRadioItem(ID_ZFitH, _T("Fit to Width"), _T("Scale pages to fit the window's width."));
+  menuZoom->AppendSeparator();
   menuZoom->AppendRadioItem(ID_ZFull, _T("100%"), _T("Original Size"));
   menuZoom->AppendRadioItem(ID_Z3Q, _T("75%"), _T("75% Zoom."));
   menuZoom->AppendRadioItem(ID_ZHalf, _T("50%"), _T("50% Zoom."));
   menuZoom->AppendRadioItem(ID_Z1Q, _T("25%"), _T("25% Zoom."));
-  menuView->Append(wxID_ANY, _T("&Zoom"), menuZoom);
+  menuView->Append(ID_Z, _T("&Zoom"), menuZoom);
 
-#ifdef __WXMAC__
-  menuFile->Append(wxID_ABOUT, _T("&About...\tF1"), _T("Show about dialog"));
-#else
-  wxMenu *menuHelp = new wxMenu;
-  menuHelp->Append(wxID_ABOUT, _T("&About...\tF1"), _T("Show about dialog"));
-#endif
+  menuMode = new wxMenu;
+  menuMode->AppendRadioItem(ID_Double, _T("Double Page"), _T("Show two pages at a time."));
+  menuMode->PrependRadioItem(ID_Single, _T("Single Page"), _T("Show only a single page at a time."));
+  menuView->Append(ID_M, _T("&Mode"), menuMode);
 
-  wxMenuBar *menuBar = new wxMenuBar();
+  menuHelp = new wxMenu;
+  menuHelp->Append(ID_ShowLog, _T("&Log Window\tF12"), _T("Show Log Window."));
+  menuHelp->Append(wxID_ABOUT, _T("&About...\tF1"), _T("Show about dialog."));
+
+  menuBar = new wxMenuBar();
   menuBar->Append(menuFile, _T("&File"));
   menuBar->Append(menuView, _T("&View"));
 #ifndef __WXMAC__
@@ -105,8 +112,10 @@ MainFrame::MainFrame(const wxString& title, const wxPoint& pos, const wxSize& si
 
   SetMenuBar(menuBar);
 
+  wxLogVerbose("Creating the canvas...");
   theCanvas = new ComicalCanvas( this, -1, wxPoint(0,0), wxSize(10,10) );
-  cerr << "done." << endl;
+  wxLogVerbose("done.");
+
 }
 
 BEGIN_EVENT_TABLE(MainFrame, wxFrame)
@@ -119,6 +128,7 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
   EVT_MENU(ID_NextTurn,	MainFrame::OnNextTurn)
   EVT_MENU(ID_PrevSlide,	MainFrame::OnPrevSlide)
   EVT_MENU(ID_NextSlide,	MainFrame::OnNextSlide)
+  EVT_MENU(ID_GoTo,	MainFrame::OnGoTo)
 #ifndef __WXMAC__
   EVT_MENU(ID_Full,	MainFrame::OnFull)
 #endif
@@ -127,6 +137,11 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
   EVT_MENU(ID_ZHalf,	MainFrame::OnZoom)
   EVT_MENU(ID_Z1Q,	MainFrame::OnZoom)
   EVT_MENU(ID_ZFit,	MainFrame::OnZoom)
+  EVT_MENU(ID_ZFitH,	MainFrame::OnZoom)
+  EVT_MENU(ID_ZFitV,	MainFrame::OnZoom)
+  EVT_MENU(ID_Double,	MainFrame::OnDouble)
+  EVT_MENU(ID_Single,	MainFrame::OnSingle)
+  EVT_MENU(ID_ShowLog,	MainFrame::OnShowLog)
 END_EVENT_TABLE()
 
 void MainFrame::OnQuit(wxCommandEvent& event)
@@ -195,46 +210,80 @@ bool MainFrame::OpenFile(wxString filename) {
 
 void MainFrame::OnFirst()
 {
-  cerr << "First" << endl;
   if (theBook != NULL) theCanvas->FirstPage();
 }
 
 void MainFrame::OnLast()
 {
-  cerr << "Last" << endl;
   if (theBook != NULL) theCanvas->LastPage();
 }
 
 void MainFrame::OnPrevTurn()
 {
-  cerr << "Prev " << endl;
   if (theBook != NULL) theCanvas->PrevPageTurn();
 }
 
 void MainFrame::OnNextTurn()
 {
-  cerr << "Next " << endl;
   if (theBook != NULL) theCanvas->NextPageTurn();
 }
 
 void MainFrame::OnPrevSlide()
 {
-  cerr << "SlidePrev " << endl;
   if (theBook != NULL) theCanvas->PrevPageSlide();
 }
 
 void MainFrame::OnNextSlide()
 {
-  cerr << "SlideNext " << endl;
   if (theBook != NULL) theCanvas->NextPageSlide();
+}
+
+void MainFrame::OnGoTo()
+{
+	wxString message;
+	long pagecount, pagenumber;
+	if (theBook != NULL)
+	{
+		pagecount = theBook->pages.size() - 1;
+		message = "Enter a page number from 0 to ";
+		pagenumber = wxGetNumberFromUser(message, "Page", "Go To Page", 0, 0, pagecount, this);
+		if (pagenumber != -1)
+			theCanvas->GoToPage(pagenumber);
+	}
+
 }
 
 void MainFrame::OnFull(wxCommandEvent& event)
 {
+  if (IsFullScreen()) wxLogVerbose("Leaving FullScreen.");
+  else wxLogVerbose("Going FullScreen.");
   ShowFullScreen(!(IsFullScreen()), wxFULLSCREEN_ALL);
 }
 
 void MainFrame::OnZoom(wxCommandEvent& event)
 {
   theCanvas->Scale(event.GetId());
+}
+
+void MainFrame::OnSingle(wxCommandEvent& event)
+{
+	wxMenuItem *prev = menuView->FindItemByPosition(3);
+	wxMenuItem *next = menuView->FindItemByPosition(4);
+	prev->Enable(false);
+	next->Enable(false);
+	theCanvas->Mode(SINGLE);
+}
+
+void MainFrame::OnDouble(wxCommandEvent& event)
+{
+	wxMenuItem *prev = menuView->FindItemByPosition(3);
+	wxMenuItem *next = menuView->FindItemByPosition(4);
+	prev->Enable(true);
+	next->Enable(true);
+	theCanvas->Mode(DOUBLE);
+}
+
+void MainFrame::OnShowLog()
+{
+	ComicalLogWindow->Show(true);
 }

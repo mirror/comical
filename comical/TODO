@@ -1,5 +1,8 @@
-Add pStreams error handling
-Add error handling and logging, wxWindows style
-Add rotation
-configure script!
+pStreams error handling
+Rotation
+Caching
+Save settings
+Box Zoom/Magnifying Glass
 about window crashes mac version
+detect presence of unrar, unzip, bunzip2, correct versions?
+Selectable scaling algorithms, not just Lanczos

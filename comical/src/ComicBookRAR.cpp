@@ -1,5 +1,5 @@
 /***************************************************************************
-                          ComicBookRAR.cpp  -  description
+                              ComicBookRAR.cpp
                              -------------------
     begin                : Wed Oct 29 2003
     copyright            : (C) 2003 by James Athey
@@ -27,8 +27,9 @@ ComicBookRAR::ComicBookRAR(wxString file) {
   filename = file;
   current = -1;
   command = "unrar v -c- \"" + filename + "\"";
+  wxLogVerbose("Opening PStream with command: %s", command.c_str());
   redi::ipstream list(command.c_str());
-/*
+/*  // Why doesn't this work?  grrrr....
   if (list.exited())
   	cerr << "status = " << list.status() << ", error = " << list.error() << endl;
 */
@@ -46,7 +47,7 @@ ComicBookRAR::ComicBookRAR(wxString file) {
     wxString size_str = tokens.GetNextToken();
     size_str.ToULong(&size, 10);
 
-    /* Now some CBR and CBZ contributors are lazy and don't order their pages
+    /* Now some CBR contributors are lazy and don't order their pages
        inside the archive.  By putting the filename and the size into the same
        entry, we can use the STL's sort() algorithm and split them up later. */
     if (page.Right(5).Upper() == ".JPEG" || page.Right(4).Upper() == ".JPG" ||
@@ -64,13 +65,19 @@ ComicBookRAR::ComicBookRAR(wxString file) {
   vector<wxString>::iterator end = entries.end();
   sort(begin, end);  // I love the STL!
 
-  for (i = 0; i < entries.size(); i++) {
-    cerr << "smushed entry " << i << ":" << entries[i] << endl;
-    wxStringTokenizer tokens(entries[i], "\t");
-    pages.push_back(tokens.GetNextToken());
-    tokens.GetNextToken().ToULong(&size, 10);
-    sizes.push_back(size); // get the length
+  if (entries.size() != 0)
+  {
+    wxLogVerbose("Contents of %s:", filename.c_str());
+    for (i = 0; i < entries.size(); i++) {
+      wxLogVerbose("smushed entry %i : %s", i, entries[i].c_str());
+      wxStringTokenizer tokens(entries[i], "\t");
+      pages.push_back(tokens.GetNextToken());
+      tokens.GetNextToken().ToULong(&size, 10);
+      sizes.push_back(size); // get the length
+    }
   }
+  else
+    wxLogError("There are no supported images in %s.", filename.c_str());
 
 }
 
@@ -84,6 +91,7 @@ bool ComicBookRAR::Extract(unsigned int pageindex, char *data) {
 
   if (pageindex >= pages.size()) return false;
   command = "unrar -inul p \"" + filename + "\" \"" + pages[pageindex] + "\"";
+  wxLogVerbose("Opening PStream with command: %s", command.c_str());
   redi::ipstream pipe(command.c_str());
   pipe.read(data, sizes[pageindex]);
   pipe.close();

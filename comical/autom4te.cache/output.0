@@ -8247,13 +8247,13 @@ echo "$as_me: error: wxWindows is required. Try --with-wx-config." >&2;}
 fi
 
 vers=`echo $wxversion | awk 'BEGIN { FS = "."; } { printf "% d", ($1 * 1000 + $2) * 1000 + $3;}'`
-if test -n "$vers" && test "$vers" -ge 2003003; then
+if test -n "$vers" && test "$vers" -ge 2004000; then
 	WX_CPPFLAGS="`$WXCONFIG --cppflags`"
 	WX_CXXFLAGS="`$WXCONFIG --cxxflags | sed -e 's/-fno-exceptions//'`"
 	WX_LIBS="`$WXCONFIG --libs`"
 else
-	{ { echo "$as_me:$LINENO: error: wxWindows 2.3.3 or newer is required" >&5
-echo "$as_me: error: wxWindows 2.3.3 or newer is required" >&2;}
+	{ { echo "$as_me:$LINENO: error: wxWindows 2.4.0 or newer is required" >&5
+echo "$as_me: error: wxWindows 2.4.0 or newer is required" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
