@@ -70,8 +70,8 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	theBook = NULL;
 
 	ComicalLog = new wxLogGui();
-	wxLog::SetActiveTarget(ComicalLog);
 	ComicalLogWindow = new wxLogWindow(this, "Comical Log", false, true);
+	wxLog::SetActiveTarget(ComicalLogWindow);
 	ComicalLogWindow->SetVerbose(true);
 	ComicalLogWindow->GetFrame()->SetSize(600, 450);
 	
