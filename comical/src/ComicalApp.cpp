@@ -2,7 +2,7 @@
               ComicalApp.cpp - ComicalApp class and gui functions
                              -------------------
     begin                : Wed Oct 22 2003
-    copyright            : (C) 2003 by James Athey
+    copyright            : (C) 2005 by James Athey
     email                : jathey@comcast.net
  ***************************************************************************/
 
@@ -28,7 +28,7 @@
 #include "ComicalApp.h"
 
 #ifndef __WXMAC__
-#include "Comical.xpm"  // the icon!
+#include "../Comical Icons/comical.xpm"  // the icon!
 #endif
 
 #define COMICAL_VERSION 0.5
@@ -38,265 +38,267 @@ IMPLEMENT_APP(ComicalApp)
 
 bool ComicalApp::OnInit()
 {
-  wxImage::AddHandler(new wxJPEGHandler);
-  wxImage::AddHandler(new wxPNGHandler);
-  wxImage::AddHandler(new wxGIFHandler);
-  wxImage::AddHandler(new wxTIFFHandler);
+	wxImage::AddHandler(new wxJPEGHandler);
+	wxImage::AddHandler(new wxPNGHandler);
+	wxImage::AddHandler(new wxGIFHandler);
+	wxImage::AddHandler(new wxTIFFHandler);
 
-  ComicalFrame *frame = new ComicalFrame(_T("Comical"), wxPoint(50, 50), wxSize(600, 400));
-
+	ComicalFrame *frame = new ComicalFrame(_T("Comical"), wxPoint(50, 50), wxSize(600, 400));
+	
 #ifndef __WXMAC__
-  frame->SetIcon(wxICON(Comical));
+	frame->SetIcon(wxICON(Comical));
 #endif
-  frame->Show(TRUE);
-  SetTopWindow(frame);
+	frame->Show(TRUE);
+	SetTopWindow(frame);
 
-  if (argc == 1)
-    frame->OnOpen();
-  else {
-    if (wxFileExists(argv[1])) {
-      frame->OpenFile(wxString(argv[1]));
-    }
-  }
-  
-  return TRUE;
+	if (argc == 1)
+		frame->OnOpen();
+	else
+	{
+		if (wxFileExists(argv[1]))
+		{
+			frame->OpenFile(wxString(argv[1]));
+		}
+	}
+	
+	return TRUE;
 
 }
 
 ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSize& size, long style) : wxFrame(NULL, -1, title, pos, size, style)
 {
-  theBook = NULL;
+	theBook = NULL;
 
-  ComicalLog = new wxLogGui();
-  ComicalLogStderr = new wxLogStderr();
-  wxLog::SetActiveTarget(ComicalLogStderr);
-  ComicalLogWindow = new wxLogWindow(this, "Comical Log", false, true);
-  ComicalLogWindow->SetVerbose(true);
-  ComicalLogWindow->GetFrame()->SetSize(600, 450);
-  
-  config = new wxConfig("Comical");
-  wxConfigBase::Set(config); // Registers config globally
-  
-  
-  wxLogVerbose("Creating menus...");
+	ComicalLog = new wxLogGui();
+	wxLog::SetActiveTarget(ComicalLog);
+	ComicalLogWindow = new wxLogWindow(this, "Comical Log", false, true);
+	ComicalLogWindow->SetVerbose(true);
+	ComicalLogWindow->GetFrame()->SetSize(600, 450);
+	
+	config = new wxConfig("Comical");
+	wxConfigBase::Set(config); // Registers config globally
+	
+	
+	wxLogVerbose("Creating menus...");
 
-  menuFile = new wxMenu;
-  menuFile->Append(wxID_OPEN, _T("&Open\tAlt-O"), _T("Open a Comic Book."));
-  menuFile->AppendSeparator();
-  menuFile->Append(wxID_EXIT, _T("E&xit\tAlt-X"), _T("Quit Comical."));
+	menuFile = new wxMenu;
+	menuFile->Append(wxID_OPEN, _T("&Open\tAlt-O"), _T("Open a Comic Book."));
+	menuFile->AppendSeparator();
+	menuFile->Append(wxID_EXIT, _T("E&xit\tAlt-X"), _T("Quit Comical."));
 
-  menuGo = new wxMenu;
-  menuGo->Append(ID_PrevSlide, _T("Previous Page"), _T("Display the previous page."));
-  menuGo->Append(ID_NextSlide, _T("Next Page"), _T("Display the next page."));
-  menuGo->AppendSeparator();
-  menuGo->Append(ID_PrevTurn, _T("&Previous Page Turn"), _T("Display the previous two pages."));
-  menuGo->Append(ID_NextTurn, _T("&Next Page Turn"), _T("Display the next two pages."));
-  menuGo->AppendSeparator();
-  menuGo->Append(ID_First, _T("&First Page"), _T("Display the first page."));
-  menuGo->Append(ID_Last, _T("&Last Page"), _T("Display the last page."));
-  menuGo->Append(ID_GoTo, _T("&Go to page..."), _T("Jump to another page number."));
+	menuGo = new wxMenu;
+	menuGo->Append(ID_PrevSlide, _T("Previous Page"), _T("Display the previous page."));
+	menuGo->Append(ID_NextSlide, _T("Next Page"), _T("Display the next page."));
+	menuGo->AppendSeparator();
+	menuGo->Append(ID_PrevTurn, _T("&Previous Page Turn"), _T("Display the previous two pages."));
+	menuGo->Append(ID_NextTurn, _T("&Next Page Turn"), _T("Display the next two pages."));
+	menuGo->AppendSeparator();
+	menuGo->Append(ID_First, _T("&First Page"), _T("Display the first page."));
+	menuGo->Append(ID_Last, _T("&Last Page"), _T("Display the last page."));
+	menuGo->Append(ID_GoTo, _T("&Go to page..."), _T("Jump to another page number."));
 
-  menuView = new wxMenu;
-  menuZoom = new wxMenu;
-  menuZoom->AppendRadioItem(ID_Fit, _T("Fit"), _T("Scale pages to fit the window."));
-  menuZoom->AppendRadioItem(ID_FitV, _T("Fit to Height"), _T("Scale pages to fit the window's height."));
-  menuZoom->AppendRadioItem(ID_FitH, _T("Fit to Width"), _T("Scale pages to fit the window's width."));
-  menuZoom->AppendSeparator();
-  menuZoom->AppendRadioItem(ID_Unzoomed, _T("100%"), _T("Original Size"));
-  menuZoom->AppendRadioItem(ID_3Q, _T("75%"), _T("75% Zoom."));
-  menuZoom->AppendRadioItem(ID_Half, _T("50%"), _T("50% Zoom."));
-  menuZoom->AppendRadioItem(ID_1Q, _T("25%"), _T("25% Zoom."));
-  menuView->Append(ID_S, _T("&Zoom"), menuZoom);
+	menuView = new wxMenu;
+	menuZoom = new wxMenu;
+	menuZoom->AppendRadioItem(ID_Fit, _T("Fit"), _T("Scale pages to fit the window."));
+	menuZoom->AppendRadioItem(ID_FitV, _T("Fit to Height"), _T("Scale pages to fit the window's height."));
+	menuZoom->AppendRadioItem(ID_FitH, _T("Fit to Width"), _T("Scale pages to fit the window's width."));
+	menuZoom->AppendSeparator();
+	menuZoom->AppendRadioItem(ID_Unzoomed, _T("100%"), _T("Original Size"));
+	menuZoom->AppendRadioItem(ID_3Q, _T("75%"), _T("75% Zoom."));
+	menuZoom->AppendRadioItem(ID_Half, _T("50%"), _T("50% Zoom."));
+	menuZoom->AppendRadioItem(ID_1Q, _T("25%"), _T("25% Zoom."));
+	menuView->Append(ID_S, _T("&Zoom"), menuZoom);
 
-  menuMode = new wxMenu;
-  menuMode->AppendRadioItem(ID_Single, _T("Single Page"), _T("Show only a single page at a time."));
-  menuMode->AppendRadioItem(ID_Double, _T("Double Page"), _T("Show two pages at a time."));
-  menuView->Append(ID_M, _T("&Mode"), menuMode);
+	menuMode = new wxMenu;
+	menuMode->AppendRadioItem(ID_Single, _T("Single Page"), _T("Show only a single page at a time."));
+	menuMode->AppendRadioItem(ID_Double, _T("Double Page"), _T("Show two pages at a time."));
+	menuView->Append(ID_M, _T("&Mode"), menuMode);
 
-  menuFilter = new wxMenu;
-  menuFilter->AppendRadioItem(ID_Box, _T("Box"), _T("Use the Box filter."));
-  menuFilter->AppendRadioItem(ID_Bilinear, _T("Bilinear"), _T("Use the Bilinear filter."));
-  menuFilter->AppendRadioItem(ID_Bicubic, _T("Bicubic"), _T("Use the Bicubic filter."));
-  menuFilter->AppendRadioItem(ID_BSpline, _T("B-Spline"), _T("Use the B-Spline filter."));
-  menuFilter->AppendRadioItem(ID_CatmullRom, _T("Catmull-Rom"), _T("Use the Catmull-Rom filter."));
-  menuFilter->AppendRadioItem(ID_Lanczos, _T("Lanczos 3"), _T("Use the Box filter."));
-  menuView->Append(ID_S, _T("&Image Filter"), menuFilter);
+	menuFilter = new wxMenu;
+	menuFilter->AppendRadioItem(ID_Box, _T("Box"), _T("Use the Box filter."));
+	menuFilter->AppendRadioItem(ID_Bilinear, _T("Bilinear"), _T("Use the Bilinear filter."));
+	menuFilter->AppendRadioItem(ID_Bicubic, _T("Bicubic"), _T("Use the Bicubic filter."));
+	menuFilter->AppendRadioItem(ID_BSpline, _T("B-Spline"), _T("Use the B-Spline filter."));
+	menuFilter->AppendRadioItem(ID_CatmullRom, _T("Catmull-Rom"), _T("Use the Catmull-Rom filter."));
+	menuFilter->AppendRadioItem(ID_Lanczos, _T("Lanczos 3"), _T("Use the Box filter."));
+	menuView->Append(ID_S, _T("&Image Filter"), menuFilter);
 
-  menuView->AppendSeparator();
+	menuView->AppendSeparator();
 #ifndef __WXMAC__
-  menuView->Append(ID_Full, _T("Full &Screen\tAlt-Return"), _T("Display Full Screen."));
+	menuView->Append(ID_Full, _T("Full &Screen\tAlt-Return"), _T("Display Full Screen."));
 #endif
 
-  menuHelp = new wxMenu;
-  menuHelp->Append(ID_ShowLog, _T("&Log Window\tF12"), _T("Show Log Window."));
-  menuHelp->Append(wxID_ABOUT, _T("&About...\tF1"), _T("Show about dialog."));
+	menuHelp = new wxMenu;
+	menuHelp->Append(ID_ShowLog, _T("&Log Window\tF12"), _T("Show Log Window."));
+	menuHelp->Append(wxID_ABOUT, _T("&About...\tF1"), _T("Show about dialog."));
 
-  menuBar = new wxMenuBar();
-  menuBar->Append(menuFile, _T("&File"));
-  menuBar->Append(menuGo, _T("&Go"));
-  menuBar->Append(menuView, _T("&View"));
-  menuBar->Append(menuHelp, _T("&Help"));
+	menuBar = new wxMenuBar();
+	menuBar->Append(menuFile, _T("&File"));
+	menuBar->Append(menuGo, _T("&Go"));
+	menuBar->Append(menuView, _T("&View"));
+	menuBar->Append(menuHelp, _T("&Help"));
 
-  SetMenuBar(menuBar);
+	SetMenuBar(menuBar);
 
-  wxLogVerbose("Reading configuration...");
-  
-  // Each of the long values is followed by the letter L not the number one
-  long Zoom = config->Read("/Comical/Zoom", 2l); // Fit-to-Width is default
-  long Mode = config->Read("/Comical/Mode", 1l); // Double-Page is default
-  long Filter = config->Read("/Comical/Filter", 4l); // Catmull-Rom is default
+	wxLogVerbose("Reading configuration...");
+	
+	// Each of the long values is followed by the letter L not the number one
+	long Zoom = config->Read("/Comical/Zoom", 2l); // Fit-to-Width is default
+	long Mode = config->Read("/Comical/Mode", 1l); // Double-Page is default
+	long Filter = config->Read("/Comical/Filter", 4l); // Catmull-Rom is default
 
-  // Record the settings from the config in the menus
-  menuZoom->FindItemByPosition(Zoom)->Check(true);  
-  menuMode->FindItemByPosition(Mode)->Check(true);
-  menuFilter->FindItemByPosition(Filter)->Check(true);
-  
-  wxLogVerbose("Creating the canvas...");
-  theCanvas = new ComicalCanvas( this, -1, wxPoint(0,0), wxSize(10,10) );
-  
-  wxLogVerbose("done.");
+	// Record the settings from the config in the menus
+	menuZoom->FindItemByPosition(Zoom)->Check(true);
+	menuMode->FindItemByPosition(Mode)->Check(true);
+	menuFilter->FindItemByPosition(Filter)->Check(true);
+	
+	wxLogVerbose("Creating the canvas...");
+	theCanvas = new ComicalCanvas( this, -1, wxPoint(0,0), wxSize(10,10) );
+	
+	wxLogVerbose("done.");
 }
 
 BEGIN_EVENT_TABLE(ComicalFrame, wxFrame)
-  EVT_MENU(wxID_EXIT,	ComicalFrame::OnQuit)
-  EVT_MENU(wxID_ABOUT,	ComicalFrame::OnAbout)
-  EVT_MENU(wxID_OPEN,	ComicalFrame::OnOpen)
-  EVT_MENU(ID_First,	ComicalFrame::OnFirst)
-  EVT_MENU(ID_Last,	ComicalFrame::OnLast)
-  EVT_MENU(ID_PrevTurn,	ComicalFrame::OnPrevTurn)
-  EVT_MENU(ID_NextTurn,	ComicalFrame::OnNextTurn)
-  EVT_MENU(ID_PrevSlide,	ComicalFrame::OnPrevSlide)
-  EVT_MENU(ID_NextSlide,	ComicalFrame::OnNextSlide)
-  EVT_MENU(ID_GoTo,	ComicalFrame::OnGoTo)
+	EVT_MENU(wxID_EXIT,	ComicalFrame::OnQuit)
+	EVT_MENU(wxID_ABOUT,	ComicalFrame::OnAbout)
+	EVT_MENU(wxID_OPEN,	ComicalFrame::OnOpen)
+	EVT_MENU(ID_First,	ComicalFrame::OnFirst)
+	EVT_MENU(ID_Last,	ComicalFrame::OnLast)
+	EVT_MENU(ID_PrevTurn,	ComicalFrame::OnPrevTurn)
+	EVT_MENU(ID_NextTurn,	ComicalFrame::OnNextTurn)
+	EVT_MENU(ID_PrevSlide,	ComicalFrame::OnPrevSlide)
+	EVT_MENU(ID_NextSlide,	ComicalFrame::OnNextSlide)
+	EVT_MENU(ID_GoTo,	ComicalFrame::OnGoTo)
 #ifndef __WXMAC__
-  EVT_MENU(ID_Full,	ComicalFrame::OnFull)
+	EVT_MENU(ID_Full,	ComicalFrame::OnFull)
 #endif
-  EVT_MENU(ID_Unzoomed,	ComicalFrame::OnZoom)
-  EVT_MENU(ID_3Q,	ComicalFrame::OnZoom)
-  EVT_MENU(ID_Half,	ComicalFrame::OnZoom)
-  EVT_MENU(ID_1Q,	ComicalFrame::OnZoom)
-  EVT_MENU(ID_Fit,	ComicalFrame::OnZoom)
-  EVT_MENU(ID_FitH,	ComicalFrame::OnZoom)
-  EVT_MENU(ID_FitV,	ComicalFrame::OnZoom)
-  EVT_MENU(ID_Box,	ComicalFrame::OnFilter)
-  EVT_MENU(ID_Bicubic,	ComicalFrame::OnFilter)
-  EVT_MENU(ID_Bilinear,	ComicalFrame::OnFilter)
-  EVT_MENU(ID_BSpline,	ComicalFrame::OnFilter)
-  EVT_MENU(ID_CatmullRom,	ComicalFrame::OnFilter)
-  EVT_MENU(ID_Lanczos,	ComicalFrame::OnFilter)
-  EVT_MENU(ID_Double,	ComicalFrame::OnDouble)
-  EVT_MENU(ID_Single,	ComicalFrame::OnSingle)
-  EVT_MENU(ID_ShowLog,	ComicalFrame::OnShowLog)
-  EVT_CLOSE(ComicalFrame::OnClose)
+	EVT_MENU(ID_Unzoomed,	ComicalFrame::OnZoom)
+	EVT_MENU(ID_3Q,	ComicalFrame::OnZoom)
+	EVT_MENU(ID_Half,	ComicalFrame::OnZoom)
+	EVT_MENU(ID_1Q,	ComicalFrame::OnZoom)
+	EVT_MENU(ID_Fit,	ComicalFrame::OnZoom)
+	EVT_MENU(ID_FitH,	ComicalFrame::OnZoom)
+	EVT_MENU(ID_FitV,	ComicalFrame::OnZoom)
+	EVT_MENU(ID_Box,	ComicalFrame::OnFilter)
+	EVT_MENU(ID_Bicubic,	ComicalFrame::OnFilter)
+	EVT_MENU(ID_Bilinear,	ComicalFrame::OnFilter)
+	EVT_MENU(ID_BSpline,	ComicalFrame::OnFilter)
+	EVT_MENU(ID_CatmullRom,	ComicalFrame::OnFilter)
+	EVT_MENU(ID_Lanczos,	ComicalFrame::OnFilter)
+	EVT_MENU(ID_Double,	ComicalFrame::OnDouble)
+	EVT_MENU(ID_Single,	ComicalFrame::OnSingle)
+	EVT_MENU(ID_ShowLog,	ComicalFrame::OnShowLog)
+	EVT_CLOSE(ComicalFrame::OnClose)
 END_EVENT_TABLE()
 
 void ComicalFrame::OnClose()
 {
-  Destroy();  // Close the window
+	Destroy();	// Close the window
 }
 
 void ComicalFrame::OnQuit(wxCommandEvent& event)
 {
-  if (theBook) {
-    theBook->Delete(); // delete the ComicBook thread
-    theBook->Wait();
-    delete theBook; // clear out the rest of the ComicBook
-    theBook = NULL;
-  }
-  Close(TRUE);
+	if (theBook)
+	{
+		theBook->Delete(); // delete the ComicBook thread
+		theBook->Wait();
+		delete theBook; // clear out the rest of the ComicBook
+		theBook = NULL;
+	}
+	Close(TRUE);
 }
 
 void ComicalFrame::OnAbout(wxCommandEvent& event)
 {
+	wxMessageDialog AboutDlg(this, "", _T("About Comical"), wxOK);
+	AboutDlg.SetSize(500,330);
+//	wxDialog AboutDlg(this, -1, _T("About Comical"), wxDefaultPosition, wxSize(500, 300), wxDEFAULT_DIALOG_STYLE, _T("AboutDlg"));
+	wxTextCtrl *AboutTxt = new wxTextCtrl(&AboutDlg, -1, "", wxDefaultPosition, wxSize(500, 290), wxTE_READONLY | wxTE_MULTILINE, wxDefaultValidator, "AboutTxt");
 
-  wxMessageDialog AboutDlg(this, "", _T("About Comical"), wxOK);
-  AboutDlg.SetSize(500,330);
-//  wxDialog AboutDlg(this, -1, _T("About Comical"), wxDefaultPosition, wxSize(500, 300), wxDEFAULT_DIALOG_STYLE, _T("AboutDlg"));
-  wxTextCtrl *AboutTxt = new wxTextCtrl(&AboutDlg, -1, "", wxDefaultPosition, wxSize(500, 290), wxTE_READONLY | wxTE_MULTILINE, wxDefaultValidator, "AboutTxt");
+	*AboutTxt	<< _T("Comical ") << COMICAL_VERSION << _T(" (c) 2003 by James Athey. Comical is licensed under the GPL, version 2.\n\n")
+			<< _T("This software uses the following libraries:\n\n")
+			<< _T("- the FreeImage_Rescale() function from the FreeImage open source image library. See http://freeimage.sourceforge.net/ for details. FreeImage is used under the GNU GPL, version 2.\n\n")
+			<< _T("- wxWindows version 2.4. See http://www.wxwindows.org/ for details. wxWindows is used under the wxWindows Library Licence, Version 3.");
 
-  *AboutTxt	<< _T("Comical ") << COMICAL_VERSION << _T(" (c) 2003 by James Athey. Comical is licensed under the GPL, version 2.\n\n")
-  		<< _T("This software uses the following libraries:\n\n")
-  		<< _T("- the FreeImage_Rescale() function from the FreeImage open source image library. See http://freeimage.sourceforge.net/ for details. FreeImage is used under the GNU GPL, version 2.\n\n")
-  		<< _T("- wxWindows version 2.4. See http://www.wxwindows.org/ for details. wxWindows is used under the wxWindows Library Licence, Version 3.");
-
-  AboutDlg.ShowModal();
-
+	AboutDlg.ShowModal();
 }
 
 void ComicalFrame::OnOpen()
 {
-  
-  wxString cwd;  
-  config->Read("/Comical/CWD", &cwd);
-  wxLogVerbose("CWD=" + cwd);
-  wxString filename = wxFileSelector("Open a Comic Book", cwd, "", "", "Comic Books (*.cbr,*.cbz,*.rar,*.zip)|*.cbr;*.CBR;*.cbz;*.CBZ;*.rar;*.RAR;*.zip;*.ZIP", wxOPEN | wxCHANGE_DIR | wxFILE_MUST_EXIST, this);
+	wxString cwd;
+	config->Read("/Comical/CWD", &cwd);
+	wxLogVerbose("CWD=" + cwd);
+	wxString filename = wxFileSelector("Open a Comic Book", cwd, "", "", "Comic Books (*.cbr,*.cbz,*.rar,*.zip)|*.cbr;*.CBR;*.cbz;*.CBZ;*.rar;*.RAR;*.zip;*.ZIP", wxOPEN | wxCHANGE_DIR | wxFILE_MUST_EXIST, this);
 
-  if (!filename.empty()) {
-    OpenFile(filename);
-  }
+	if (!filename.empty())
+	{
+		OpenFile(filename);
+	}
 
 }
 
 void ComicalFrame::OpenFile(wxString filename)
 {
-  
-  if (!filename.empty()) {
-  
-    if (theBook) {
-      theBook->Delete(); // delete the ComicBook thread
-      theBook->Wait();
-      delete theBook; // clear out the rest of the ComicBook
-      theBook = NULL;
-    }
+	
+	if (!filename.empty())
+	{
+	
+		if (theBook)
+		{
+			theBook->Delete(); // delete the ComicBook thread
+			theBook->Wait();
+			delete theBook; // clear out the rest of the ComicBook
+			theBook = NULL;
+		}
 
-    if (filename.Right(4).Upper() == ".CBR" || filename.Right(4).Upper() == ".RAR")
-      theBook = new ComicBookRAR(filename, 10);
-    else if (filename.Right(4).Upper() == ".CBZ" || filename.Right(4).Upper() == ".ZIP")
-      theBook = new ComicBookZIP(filename, 10);
+		if (filename.Right(4).Upper() == ".CBR" || filename.Right(4).Upper() == ".RAR")
+			theBook = new ComicBookRAR(filename, 10);
+		else if (filename.Right(4).Upper() == ".CBZ" || filename.Right(4).Upper() == ".ZIP")
+			theBook = new ComicBookZIP(filename, 10);
 
-    if (theBook) {
-      theCanvas->theBook = theBook;
-      theCanvas->SetParams();
-    
-      theBook->Run(); // start the thread
-    
-      OnFirst();
-      SetTitle(_T("Comical - " + filename));
-      config->Write("/Comical/CWD",wxPathOnly(filename));
+		if (theBook)
+		{
+			theCanvas->theBook = theBook;
+			theCanvas->SetParams();
+	
+			theBook->Run(); // start the thread
+	
+			OnFirst();
+			SetTitle(_T("Comical - " + filename));
+			config->Write("/Comical/CWD",wxPathOnly(filename));
 
-    }
-  }
-
+		}
+	}
 }
 
 void ComicalFrame::OnFirst()
 {
-  if (theBook != NULL) theCanvas->FirstPage();
+	if (theBook != NULL) theCanvas->FirstPage();
 }
 
 void ComicalFrame::OnLast()
 {
-  if (theBook != NULL) theCanvas->LastPage();
+	if (theBook != NULL) theCanvas->LastPage();
 }
 
 void ComicalFrame::OnPrevTurn()
 {
-  if (theBook != NULL) theCanvas->PrevPageTurn();
+	if (theBook != NULL) theCanvas->PrevPageTurn();
 }
 
 void ComicalFrame::OnNextTurn()
 {
-  if (theBook != NULL) theCanvas->NextPageTurn();
+	if (theBook != NULL) theCanvas->NextPageTurn();
 }
 
 void ComicalFrame::OnPrevSlide()
 {
-  if (theBook != NULL) theCanvas->PrevPageSlide();
+	if (theBook != NULL) theCanvas->PrevPageSlide();
 }
 
 void ComicalFrame::OnNextSlide()
 {
-  if (theBook != NULL) theCanvas->NextPageSlide();
+	if (theBook != NULL) theCanvas->NextPageSlide();
 }
 
 void ComicalFrame::OnGoTo()
@@ -316,74 +318,76 @@ void ComicalFrame::OnGoTo()
 
 void ComicalFrame::OnFull(wxCommandEvent& event)
 {
-  if (IsFullScreen()) wxLogVerbose("Leaving FullScreen.");
-  else wxLogVerbose("Going FullScreen.");
-  ShowFullScreen(!(IsFullScreen()), wxFULLSCREEN_ALL);
+	if (IsFullScreen())
+		wxLogVerbose("Leaving FullScreen.");
+	else
+		wxLogVerbose("Going FullScreen.");
+	ShowFullScreen(!(IsFullScreen()), wxFULLSCREEN_ALL);
 }
 
 void ComicalFrame::OnZoom(wxCommandEvent& event)
 {
-  switch (event.GetId())
-  {
-  case ID_Unzoomed:
-    theCanvas->Zoom(FULL);
-    break;
-  case ID_3Q:
-    theCanvas->Zoom(THREEQ);
-    break;
-  case ID_Half:
-    theCanvas->Zoom(HALF);
-    break;
-  case ID_1Q:
-    theCanvas->Zoom(ONEQ);
-    break;
-  case ID_Fit:
-    theCanvas->Zoom(FIT);
-    break;
-  case ID_FitV:
-    theCanvas->Zoom(FITV);
-    break;
-  case ID_FitH:
-    theCanvas->Zoom(FITH);
-    break;
-  default:
-    wxLogError("Zoom mode %d is undefined.", event.GetId()); // we shouldn't be here... honest!
-    break;
-  }
+	switch (event.GetId())
+	{
+	case ID_Unzoomed:
+		theCanvas->Zoom(FULL);
+		break;
+	case ID_3Q:
+		theCanvas->Zoom(THREEQ);
+		break;
+	case ID_Half:
+		theCanvas->Zoom(HALF);
+		break;
+	case ID_1Q:
+		theCanvas->Zoom(ONEQ);
+		break;
+	case ID_Fit:
+		theCanvas->Zoom(FIT);
+		break;
+	case ID_FitV:
+		theCanvas->Zoom(FITV);
+		break;
+	case ID_FitH:
+		theCanvas->Zoom(FITH);
+		break;
+	default:
+		wxLogError("Zoom mode %d is undefined.", event.GetId()); // we shouldn't be here... honest!
+		break;
+	}
 }
 
 void ComicalFrame::OnFilter(wxCommandEvent& event)
 {
-  switch (event.GetId())
-  {
-  case ID_Box:
-    theCanvas->Filter(FILTER_BOX);
-    break;
-  case ID_Bilinear:
-    theCanvas->Filter(FILTER_BILINEAR);
-    break;
-  case ID_Bicubic:
-    theCanvas->Filter(FILTER_BICUBIC);
-    break;
-  case ID_BSpline:
-    theCanvas->Filter(FILTER_BSPLINE);
-    break;
-  case ID_CatmullRom:
-    theCanvas->Filter(FILTER_CATMULLROM);
-    break;
-  case ID_Lanczos:
-    theCanvas->Filter(FILTER_LANCZOS3);
-    break;
-  default:
-    wxLogError("Filter %d is undefined.", event.GetId()); // we shouldn't be here... honest!
-    break;
-  }
+	switch (event.GetId())
+	{
+	case ID_Box:
+		theCanvas->Filter(FILTER_BOX);
+		break;
+	case ID_Bilinear:
+		theCanvas->Filter(FILTER_BILINEAR);
+		break;
+	case ID_Bicubic:
+		theCanvas->Filter(FILTER_BICUBIC);
+		break;
+	case ID_BSpline:
+		theCanvas->Filter(FILTER_BSPLINE);
+		break;
+	case ID_CatmullRom:
+		theCanvas->Filter(FILTER_CATMULLROM);
+		break;
+	case ID_Lanczos:
+		theCanvas->Filter(FILTER_LANCZOS3);
+		break;
+	default:
+		wxLogError("Filter %d is undefined.", event.GetId()); // we shouldn't be here... honest!
+		break;
+	}
 }
 
 void ComicalFrame::OnRotate(wxCommandEvent& event)
 {
-	switch (event.GetId()) {
-	
+	switch (event.GetId())
+	{
 	case ID_North:
 		theCanvas->Rotate(NORTH);
 		break;
@@ -401,6 +405,7 @@ void ComicalFrame::OnRotate(wxCommandEvent& event)
 		break;
 	}
 }
+
 void ComicalFrame::OnSingle(wxCommandEvent& event)
 {
 	wxMenuItem *prev = menuView->FindItemByPosition(3);

@@ -7,24 +7,24 @@ scanned comic books and graphic novels with Comical's absurdly easy GUI and
 in-your-face double page display!
 
 Nifty Features:
+Single-Page or Double-Page display modes.
 Several zoom modes - 100%, 75%, 50%, 25%, Fit, Fit-to-Width, and Fit-to-Height.
 Crisp image scaling with algorithms adapted from FreeImage 3.
 Autodetects double pages scanned together and displays it accordingly.
 Full-Screen mode (not on MacOS X).
-Single-Page or Double-Page display modes.
 Displays JPG, GIF, PNG, and TIFF images.
 Supports RAR(.cbr) and ZIP(.cbz) comic book archives
 
 Rationale:
-Comical came to be because I felt somehow dirty using CDisplay through Wine,
+I wrote Comical because I felt somehow dirty using CDisplay through Wine,
 and I really wanted to share the fun of CBRs with a Mac-using friend of mine.
 The demand for both a Linux and a Mac OS X version of CDisplay on the Mutant
 Liberation Front Forums also spurred me on.
 
 Requirements:
 It should be possible to build Comical on any platform which supports
-wxWidgets 2.4.2 with zlib support
-and a recent ISO/C98 compliant C++ compiler, like gcc 3.x.
+wxWidgets 2.4.2 with zlib support and a recent ISO/C98 compliant C++ compiler,
+like gcc 3.x.
 
 Thanks:
 
@@ -40,8 +40,8 @@ Independent JPEG Group (http://www.ijg.org/)
 TIFF support provided by:
 Copyright (c) 1988-1997 Sam Leffler
 Copyright (c) 1991-1997 Silicon Graphics, Inc.
-
-Copyright (c) 2004 James Athey
+-------------------------------------------------------------------------------
+Copyright (c) 2004-2005 James Athey
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

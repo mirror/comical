@@ -41,7 +41,8 @@ wxRarInputStream::wxRarInputStream(const wxString& archive, const wxString& file
 	OpenArchiveData.OpenMode=RAR_OM_EXTRACT;
 	RarFile=RAROpenArchiveEx(&OpenArchiveData);
 
-	if ((RHCode=OpenArchiveData.OpenResult)!=0) {
+	if ((RHCode=OpenArchiveData.OpenResult)!=0)
+	{
 		m_lasterror = wxSTREAM_READ_ERROR;
 		wxLogError("Could not open " + archive + " for reading.");
 		OpenArchiveError(RHCode);
@@ -50,27 +51,32 @@ wxRarInputStream::wxRarInputStream(const wxString& archive, const wxString& file
     
 	HeaderData.CmtBuf=NULL;
 
-	while ((RHCode=RARReadHeader(RarFile,&HeaderData))==0) {
-		if (file.IsSameAs(HeaderData.FileName)) {
+	while ((RHCode=RARReadHeader(RarFile,&HeaderData))==0)
+	{
+		if (file.IsSameAs(HeaderData.FileName))
+		{
 			m_Size = HeaderData.UnpSize;
 			break;	
-		} else
+		}
+		else
 			RARProcessFile(RarFile,RAR_SKIP,NULL,NULL);
 	}
 	
-	if (m_Size == 0) { // archived file not found
+	if (m_Size == 0) // archived file not found
+	{
 		m_lasterror = wxSTREAM_READ_ERROR;
 		wxLogError(file + " not found in archive " + archive + ".");
 	}
 
 	m_Buffer = new char[m_Size];
 	CallBackBuffer = m_Buffer;
-	
+
 	RARSetCallback(RarFile, CallbackProc, (long) &CallBackBuffer);
 
 	PFCode = RARProcessFile(RarFile, RAR_TEST, NULL, NULL);
 
-	if (PFCode!=0) {
+	if (PFCode!=0)
+	{
 		m_lasterror = wxSTREAM_READ_ERROR;
 		ProcessFileError(PFCode);	
 	}
@@ -94,7 +100,8 @@ bool wxRarInputStream::Eof() const
 size_t wxRarInputStream::OnSysRead(void *buffer, size_t bufsize)
 {
 	wxASSERT_MSG( m_Pos <= (off_t)m_Size, _T("wxRarInputStream: invalid current position") );
-	if (m_Pos >= (off_t)m_Size) {
+	if (m_Pos >= (off_t)m_Size)
+	{
 		m_lasterror = wxSTREAM_EOF;
 		return 0;
 	}
@@ -113,7 +120,8 @@ off_t wxRarInputStream::OnSysSeek(off_t seek, wxSeekMode mode)
 {
     off_t nextpos;
 
-    switch ( mode ) {
+    switch ( mode )
+	{
         case wxFromCurrent : nextpos = seek + m_Pos; break;
         case wxFromStart : nextpos = seek; break;
         case wxFromEnd : nextpos = m_Size - 1 + seek; break;
@@ -126,7 +134,8 @@ off_t wxRarInputStream::OnSysSeek(off_t seek, wxSeekMode mode)
 
 void wxRarInputStream::OpenArchiveError(int Error)
 {
-	switch(Error) {
+	switch(Error)
+	{
 		case ERAR_NO_MEMORY:
 			wxLogVerbose("ERAR_NO_MEMORY: Not enough memory to open m_ArcName.");
 			break;
@@ -147,7 +156,8 @@ void wxRarInputStream::OpenArchiveError(int Error)
 
 void wxRarInputStream::ProcessFileError(int Error)
 {
-	switch(Error) {
+	switch(Error)
+	{
 		case ERAR_UNKNOWN_FORMAT:
 			wxLogVerbose("ERAR_UNKNOWN_FORMAT: Unknown archive format.");
 			break;
@@ -180,16 +190,17 @@ void wxRarInputStream::ProcessFileError(int Error)
 
 int CallbackProc(uint msg, long UserData, long P1, long P2)
 {
-	char *buffer;
-	switch(msg) {
+	char **buffer;
+	switch(msg)
+	{
 
 	case UCM_CHANGEVOLUME:
 		break;
 	case UCM_PROCESSDATA:
-		buffer = *((char **) UserData);
-		memcpy(buffer, (char *)P1, P2);
+		buffer = (char **) UserData;
+		memcpy(*buffer, (char *)P1, P2);
 		// advance the buffer ptr, original m_buffer ptr is untouched
-		buffer += P2;
+		*buffer += P2;
 		break;
 	case UCM_NEEDPASSWORD:
 		break;

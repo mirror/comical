@@ -41,6 +41,8 @@
 #ifndef WX_PRECOMP
 #include <wx/image.h>
 #include <wx/bitmap.h>
+#include <wx/log.h>
+#include <wx/timer.h>
 #endif
 
 #include "Resize.h"
@@ -55,9 +57,10 @@ public:
 	ComicPage(wxInputStream * src);
 	~ComicPage();
 	
-	void Scale(COMICAL_ROTATE direction, FREE_IMAGE_FILTER fi_filter, uint width, uint height);
-	bool IsReady() {return ready};
-	wxBitmap *GetPage(COMICAL_ROTATE direction, FREE_IMAGE_FITER fi_filter, uint width, uint height);
+	void Create(wxInputStream * source);
+	void ScaleImage(wxImage orig, uint width, uint height, FREE_IMAGE_FILTER fi_filter);
+	bool IsReady() {return ready;}
+	wxBitmap *GetPage(COMICAL_ROTATE rotate, FREE_IMAGE_FILTER fi_filter, int width, int height);
 	
 	wxImage original;
 	
@@ -66,6 +69,6 @@ protected:
 	COMICAL_ROTATE direction;
 	FREE_IMAGE_FILTER filter;
 	bool ready;
-}
+};
 
 #endif

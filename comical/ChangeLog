@@ -7,7 +7,7 @@ Now using zlib and wxZipInputStream for cbz's
 Moved page navigation features to "Go" menu
 Functions renamed for consistency (Zoom, Mode, and Filter)
 View settings and current working directory are now saved
-Read-ahead caching
+Read-ahead caching and multithreading for responsiveness
 Rotation
 
 0.4 -

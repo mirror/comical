@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2004 by James Leighton Athey                            *
+ *   Copyright (C) 2005 by James Leighton Athey                            *
  *   jathey@comcast.net                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -41,16 +41,16 @@ ComicPage::ComicPage(wxInputStream * source)
 	Create(source);
 }
 
-ComicPage::Create(wxInputStream * source)
+void ComicPage::Create(wxInputStream * source)
 {
 	wxLogVerbose("Loading image from wxInputStream...");
 	if (original.LoadFile(*source))
 		ready = true;
 	else
-		wxLogError("Successfully extracted the file " + theBook->pages[pagenumber] + ", but could not create an image from it.  It may be corrupted.");
+		wxLogError("Successfully extracted the file, but could not create an image from it.  It may be corrupted.");
 }
 
-wxBitmap * ComicPage::GetPage(COMICAL_ROTATE rotate, FREE_IMAGE_FITER fi_filter, uint width, uint height)
+wxBitmap * ComicPage::GetPage(COMICAL_ROTATE rotate, FREE_IMAGE_FILTER fi_filter, int width, int height)
 {
 	// if the requested image has the same properties as the original, just return the original
 	if (rotate == NORTH && width == original.GetWidth() && height == original.GetHeight()) {
@@ -62,22 +62,23 @@ wxBitmap * ComicPage::GetPage(COMICAL_ROTATE rotate, FREE_IMAGE_FITER fi_filter,
 			direction != rotate) {
 		switch (rotate) {
 		case NORTH:
-			resampled = ScaleImage(original, width, height, fi_filter);
+			ScaleImage(original, width, height, fi_filter);
 			break;
 		case EAST:
-			resampled = ScaleImage(original.Rotate90(false), width, height, fi_filter);
+			ScaleImage(original.Rotate90(false), width, height, fi_filter);
 			break;
 		case SOUTH:
-			resampled = ScaleImage(original.Rotate90().Rotate90(), width, height, fi_filter);
+			ScaleImage(original.Rotate90().Rotate90(), width, height, fi_filter);
 			break;
 		case WEST:
-			resampled = ScaleImage(original.Rotate90(true), width, height, fi_filter);
+			ScaleImage(original.Rotate90(true), width, height, fi_filter);
 			break;
 		}
 		filter = fi_filter;
 		direction = rotate;
 		return new wxBitmap(resampled);
 	}
+	return NULL;
 }
 
 void ComicPage::ScaleImage(wxImage src, uint width, uint height, FREE_IMAGE_FILTER fi_filter)

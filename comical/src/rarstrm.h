@@ -47,7 +47,8 @@ private:
     
     size_t m_Size;
     off_t m_Pos;
-    char *m_Buffer;
+    char *m_Buffer; // contains the stream data
+	char *m_Marker; // m_Buffer + bytes copied so far
     wxString m_ArcName;
 };
 

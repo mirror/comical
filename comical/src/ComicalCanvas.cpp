@@ -2,7 +2,7 @@
               ComicalCanvas.cpp - ComicalCanvas implementation
                              -------------------
     begin                : Thu Dec 18 2003
-    copyright            : (C) 2003 by James Athey
+    copyright            : (C) 2005 by James Athey
     email                : jathey@comcast.net
  ***************************************************************************/
 
@@ -31,392 +31,408 @@ IMPLEMENT_DYNAMIC_CLASS(ComicalCanvas, wxScrolledWindow)
 
 ComicalCanvas::ComicalCanvas( wxWindow *prnt, wxWindowID id, const wxPoint &pos, const wxSize &size ) : wxScrolledWindow( prnt, id, pos, size, wxSUNKEN_BORDER )
 {
-  parent = prnt;
-  SetBackgroundColour(* wxBLACK);
-  wxConfigBase *config = wxConfigBase::Get();
-  // Each of the long values is followed by the letter L not the number one
-  zoom = (COMICAL_ZOOM) config->Read("/Comical/Zoom", 2l); // Fit-to-Width is default
-  mode = (COMICAL_MODE) config->Read("/Comical/Mode", 1l); // Double-Page is default
-  filter = (FREE_IMAGE_FILTER) config->Read("/Comical/Filter", 4l); // Catmull-Rom is default
-  leftPage = rightPage = centerPage = NULL;
-  x = -1; y = -1;
+	parent = prnt;
+	SetBackgroundColour(* wxBLACK);
+	wxConfigBase *config = wxConfigBase::Get();
+	// Each of the long values is followed by the letter L not the number one
+	zoom = (COMICAL_ZOOM) config->Read("/Comical/Zoom", 2l); // Fit-to-Width is default
+	mode = (COMICAL_MODE) config->Read("/Comical/Mode", 1l); // Double-Page is default
+	filter = (FREE_IMAGE_FILTER) config->Read("/Comical/Filter", 4l); // Catmull-Rom is default
+	leftPage = rightPage = centerPage = NULL;
+	x = -1; y = -1;
 }
 
 BEGIN_EVENT_TABLE(ComicalCanvas, wxScrolledWindow)
-  EVT_PAINT(ComicalCanvas::OnPaint)
-  EVT_KEY_DOWN(ComicalCanvas::OnKeyDown)
+	EVT_PAINT(ComicalCanvas::OnPaint)
+	EVT_KEY_DOWN(ComicalCanvas::OnKeyDown)
 END_EVENT_TABLE()
 
 ComicalCanvas::~ComicalCanvas()
 {
-  ClearBitmaps();
-  wxLogVerbose("Writing configuration...");
-  wxConfigBase *config = wxConfigBase::Get();
-  config->Write("/Comical/Zoom", zoom);
-  config->Write("/Comical/Mode", mode);
-  config->Write("/Comical/Filter", filter);
+	ClearBitmaps();
+	wxLogVerbose("Writing configuration...");
+	wxConfigBase *config = wxConfigBase::Get();
+	config->Write("/Comical/Zoom", zoom);
+	config->Write("/Comical/Mode", mode);
+	config->Write("/Comical/Filter", filter);
 }
 
 void ComicalCanvas::ClearBitmap(wxBitmap *&bitmap)
 {
-	if (bitmap) {
-		if (bitmap->Ok()) {
-			delete bitmap;
-			bitmap = NULL;
-		}
+	if (bitmap && bitmap->Ok())
+	{
+		delete bitmap;
+		bitmap = NULL;
 	}
 }
 
 void ComicalCanvas::ClearBitmaps()
 {
-  ClearBitmap(leftPage);
-  ClearBitmap(centerPage);
-  ClearBitmap(rightPage);
+	ClearBitmap(leftPage);
+	ClearBitmap(centerPage);
+	ClearBitmap(rightPage);
 }
 
 void ComicalCanvas::FirstPage()
 {
-  wxBitmap *bitmap;
-  int xImage, yImage;
-  float rImage;
-  
-  if (theBook == NULL) return;
-  theBook->current = 0;
-  
-  bitmap = theBook->GetPage(0);
+	wxBitmap *bitmap;
+	int xImage, yImage;
+	float rImage;
+	
+	if (theBook == NULL)
+		return;
+	theBook->current = 0;
+	
+	bitmap = theBook->GetPage(0);
 
-  if (bitmap->Ok()) {
-    ClearBitmaps();
-    xImage = bitmap->GetWidth();
-    yImage = bitmap->GetHeight();
+	if (bitmap->Ok())
+	{
+		ClearBitmaps();
+		xImage = bitmap->GetWidth();
+		yImage = bitmap->GetHeight();
 
-    // Here we assume that portrait pages are single pages and that landscape
-    // pages are double pages.
-    rImage = float(xImage)/float(yImage);
-    if (rImage >= 1.0f || mode == SINGLE) {
-      centerPage = bitmap;
-    }
-    else {
-      rightPage = bitmap;
-    }
-
-    CreateBitmaps();
-
-  }
+		// Here we assume that portrait pages are single pages and that landscape
+		// pages are double pages.
+		rImage = float(xImage)/float(yImage);
+		if (rImage >= 1.0f || mode == SINGLE)
+			centerPage = bitmap;
+		else
+			rightPage = bitmap;
+		
+		CreateBitmaps();
+	}
 }
 
 void ComicalCanvas::LastPage()
 {
-  wxBitmap *bitmap;
-  int xImage, yImage;
-  float rImage;
-  
-  if (theBook == NULL) return;
-  theBook->current = theBook->pagecount - 1;
-  
-  bitmap = theBook->GetPage(theBook->current);
+	wxBitmap *bitmap;
+	int xImage, yImage;
+	float rImage;
+	
+	if (theBook == NULL) return;
+	theBook->current = theBook->pagecount - 1;
+	
+	bitmap = theBook->GetPage(theBook->current);
 
-  if (bitmap->Ok()) {
-    ClearBitmaps();
-    xImage = bitmap->GetWidth();
-    yImage = bitmap->GetHeight();
+	if (bitmap->Ok())
+	{
+		ClearBitmaps();
+		xImage = bitmap->GetWidth();
+		yImage = bitmap->GetHeight();
 
-    // Here we assume that portrait pages are single pages and that landscape
-    // pages are double pages.
-    rImage = float(xImage)/float(yImage);
-    if (rImage >= 1.0f || mode == SINGLE) {
-      centerPage = bitmap;
-    }
-    else {
-      leftPage = bitmap;
-    }
+		// Here we assume that portrait pages are single pages and that landscape
+		// pages are double pages.
+		rImage = float(xImage)/float(yImage);
+		if (rImage >= 1.0f || mode == SINGLE)
+			centerPage = bitmap;
+		else
+			leftPage = bitmap;
 
-    CreateBitmaps();
+		CreateBitmaps();
 
-  }
+	}
 }
 
 void ComicalCanvas::GoToPage(int pagenumber)
 {
-  wxBitmap *bitmap;
-  int xImage, yImage;
-  float rImage;
-  
-  wxLogVerbose("GoToPage %i...", pagenumber);
-  if (theBook == NULL) return;
-  if (pagenumber >= int(theBook->pagecount) || pagenumber < 0) return;
-  theBook->current = pagenumber;
-  
-  bitmap = theBook->GetPage(theBook->current);
+	wxBitmap *bitmap;
+	int xImage, yImage;
+	float rImage;
+	
+	wxLogVerbose("GoToPage %i...", pagenumber);
+	if (theBook == NULL) return;
+	if (pagenumber >= int(theBook->pagecount) || pagenumber < 0) return;
+	theBook->current = pagenumber;
+	
+	bitmap = theBook->GetPage(theBook->current);
 
-  if (bitmap)  if (bitmap->Ok()) {
-    ClearBitmaps();
-    xImage = bitmap->GetWidth();
-    yImage = bitmap->GetHeight();
+	if (bitmap)	if (bitmap->Ok())
+	{
+		ClearBitmaps();
+		xImage = bitmap->GetWidth();
+		yImage = bitmap->GetHeight();
 
-    // Here we assume that portrait pages are single pages and that landscape
-    // pages are double pages.
-    rImage = float(xImage)/float(yImage);
-    if (rImage >= 1.0f || mode == SINGLE) {
-      centerPage = bitmap;
-    }
-    else {
-      rightPage = bitmap;
-      if (theBook->current > 0) {
-        bitmap = theBook->GetPage(theBook->current - 1);
-        if (bitmap->Ok()) {
-          xImage = bitmap->GetWidth();
-          yImage = bitmap->GetHeight();
-          rImage = float(xImage)/float(yImage);
-          if (rImage < 1.0f) { // Only if this page is also not a double do we display it
-            leftPage = bitmap;
-          }
-        }
-      }
-    }
+		// Here we assume that portrait pages are single pages and that landscape
+		// pages are double pages.
+		rImage = float(xImage)/float(yImage);
+		if (rImage >= 1.0f || mode == SINGLE)
+			centerPage = bitmap;
+		else
+		{
+			rightPage = bitmap;
+			if (theBook->current > 0)
+			{
+				bitmap = theBook->GetPage(theBook->current - 1);
+				if (bitmap->Ok())
+				{
+					xImage = bitmap->GetWidth();
+					yImage = bitmap->GetHeight();
+					rImage = float(xImage)/float(yImage);
+					if (rImage < 1.0f) // Only if this page is also not a double do we display it
+						leftPage = bitmap;
+				}
+			}
+		}
 
-    CreateBitmaps();
+		CreateBitmaps();
 
-  }
+	}
 }
 
 void ComicalCanvas::PrevPageTurn()
 {
-  wxBitmap *bitmap;
-  int xImage, yImage;
-  float rImage;
+	wxBitmap *bitmap;
+	int xImage, yImage;
+	float rImage;
 
-  if (theBook == NULL) return;
-  if (theBook->current <= 0) return;
-  if (!leftPage || !rightPage || theBook->current == 1)
-    theBook->current -= 1;
-  else
-    theBook->current -= 2;
+	if (theBook == NULL) return;
+	if (theBook->current <= 0) return;
+	if (!leftPage || !rightPage || theBook->current == 1)
+		theBook->current -= 1;
+	else
+		theBook->current -= 2;
 
-  bitmap = theBook->GetPage(theBook->current);
+	bitmap = theBook->GetPage(theBook->current);
 
-  if (bitmap->Ok()) {
-    ClearBitmaps();
-    xImage = bitmap->GetWidth();
-    yImage = bitmap->GetHeight();
+	if (bitmap->Ok())
+	{
+		ClearBitmaps();
+		xImage = bitmap->GetWidth();
+		yImage = bitmap->GetHeight();
 
-    // Here we assume that portrait pages are single pages and that landscape
-    // pages are double pages.
+		// Here we assume that portrait pages are single pages and that landscape
+		// pages are double pages.
 
-    rImage = float(xImage)/float(yImage);
-    if (rImage >= 1.0f || mode == SINGLE) {
-      centerPage = bitmap;
-    }
-    else {
-      rightPage = bitmap;
-      if (theBook->current > 0) {
-        bitmap = theBook->GetPage(theBook->current - 1);
-        if (bitmap->Ok()) {
-          xImage = bitmap->GetWidth();
-          yImage = bitmap->GetHeight();
-          rImage = float(xImage)/float(yImage);
-          if (rImage < 1.0f) { // Only if this page is also not a double do we display it
-            leftPage = bitmap;
-          } else {
-            ClearBitmap(bitmap);
-          }
-        }
-      }
-    }
+		rImage = float(xImage)/float(yImage);
+		if (rImage >= 1.0f || mode == SINGLE)
+		{
+			centerPage = bitmap;
+		}
+		else
+		{
+			rightPage = bitmap;
+			if (theBook->current > 0)
+			{
+				bitmap = theBook->GetPage(theBook->current - 1);
+				if (bitmap->Ok())
+				{
+					xImage = bitmap->GetWidth();
+					yImage = bitmap->GetHeight();
+					rImage = float(xImage)/float(yImage);
+					if (rImage < 1.0f) // Only if this page is also not a double do we display it
+						leftPage = bitmap;
+					else
+						ClearBitmap(bitmap);
+				}
+			}
+		}
 
-    CreateBitmaps();
+		CreateBitmaps();
 
-  }
+	}
 }
 
 void ComicalCanvas::NextPageTurn()
 {
-  wxBitmap *bitmap;
-  int xImage, yImage;
-  float rImage;
+	wxBitmap *bitmap;
+	int xImage, yImage;
+	float rImage;
 
-  if (theBook == NULL) return;
-  if (theBook->current >= theBook->pagecount - 1) return;
-  if (theBook->current == theBook->pagecount - 2) {
-  	NextPageSlide();
-	return;
-  }
-
-  theBook->current++;
-  bitmap = theBook->GetPage(theBook->current);
-
-  if (bitmap->Ok()) {
-    ClearBitmaps();
-    xImage = bitmap->GetWidth();
-    yImage = bitmap->GetHeight();
-
-    // Here we assume that portrait pages are single pages and that landscape
-    // pages are double pages.
-
-    rImage = float(xImage)/float(yImage);
-    if (rImage >= 1.0f || mode == SINGLE) {
-      centerPage = bitmap;
-    }
-    else {
-      leftPage = bitmap;
-      if (theBook->current + 1 < theBook->pagecount) {
-        bitmap = theBook->GetPage(++theBook->current);
-        if (bitmap->Ok()) {
-          xImage = bitmap->GetWidth();
-          yImage = bitmap->GetHeight();
-          rImage = float(xImage)/float(yImage);
-          if (rImage < 1.0f) { // Only if this page is also not a double do we display it
-            rightPage = bitmap;
-          } else {
-	    theBook->current--;
-	    ClearBitmap(bitmap);
-	  }
+	if (theBook == NULL)
+		return;
+	if (theBook->current >= theBook->pagecount - 1)
+		return;
+	if (theBook->current == theBook->pagecount - 2)
+	{
+		NextPageSlide();
+		return;
 	}
-      }
-    }
 
-    CreateBitmaps();
+	theBook->current++;
+	bitmap = theBook->GetPage(theBook->current);
 
-  }
+	if (bitmap->Ok())
+	{
+		ClearBitmaps();
+		xImage = bitmap->GetWidth();
+		yImage = bitmap->GetHeight();
+
+		// Here we assume that portrait pages are single pages and that landscape
+		// pages are double pages.
+
+		rImage = float(xImage)/float(yImage);
+		if (rImage >= 1.0f || mode == SINGLE)
+			centerPage = bitmap;
+		else
+		{
+			leftPage = bitmap;
+			if (theBook->current + 1 < theBook->pagecount)
+			{
+				bitmap = theBook->GetPage(++theBook->current);
+				if (bitmap->Ok())
+				{
+					xImage = bitmap->GetWidth();
+					yImage = bitmap->GetHeight();
+					rImage = float(xImage)/float(yImage);
+					if (rImage < 1.0f) // Only if this page is also not a double do we display it
+						rightPage = bitmap;
+					else
+					{
+						theBook->current--;
+						ClearBitmap(bitmap);
+					}
+				}
+			}
+		}
+
+		CreateBitmaps();
+
+	}
 }
 
 void ComicalCanvas::PrevPageSlide()
 {
-  wxBitmap *bitmap;
-  int xImage, yImage;
-  float rImage;
+	wxBitmap *bitmap;
+	int xImage, yImage;
+	float rImage;
 
-  if (theBook == NULL) return;
-  if (theBook->current <= 0) return;
-  if (centerPage) {
-	PrevPageTurn();
-	return;
-  }
+	if (theBook == NULL)
+		return;
+	if (theBook->current <= 0)
+		return;
+	if (centerPage)
+	{
+		PrevPageTurn();
+		return;
+	}
 
-  theBook->current--;
+	theBook->current--;
 
-  if (mode == SINGLE)
-    bitmap = theBook->GetPage(theBook->current);
-  else
-    bitmap = theBook->GetPage(theBook->current - 1);
+	if (mode == SINGLE)
+		bitmap = theBook->GetPage(theBook->current);
+	else
+		bitmap = theBook->GetPage(theBook->current - 1);
 
-  if (bitmap->Ok()) {
+	if (bitmap->Ok())
+	{
 
-    ClearBitmap(rightPage);
-    ClearBitmap(centerPage);
+		ClearBitmap(rightPage);
+		ClearBitmap(centerPage);
 
-    xImage = bitmap->GetWidth();
-    yImage = bitmap->GetHeight();
+		xImage = bitmap->GetWidth();
+		yImage = bitmap->GetHeight();
 
-    // Here we assume that portrait pages are single pages and that landscape
-    // pages are double pages.
-    rImage = float(xImage)/float(yImage);
-    if (rImage >= 1.0f || mode == SINGLE) {
-      centerPage = bitmap;
-      if (mode == DOUBLE) {
-        theBook->current--;
-        ClearBitmap(leftPage);
-      }
-    }
-    else {
-      if (leftPage) {
-        if (leftPage->Ok()) {
-	  rightPage = leftPage;
-	  leftPage = bitmap;
-        }
-      }
-    }
+		// Here we assume that portrait pages are single pages and that landscape
+		// pages are double pages.
+		rImage = float(xImage)/float(yImage);
+		if (rImage >= 1.0f || mode == SINGLE)
+		{
+			centerPage = bitmap;
+			if (mode == DOUBLE)
+			{
+				theBook->current--;
+				ClearBitmap(leftPage);
+			}
+		}
+		else if (leftPage && leftPage->Ok())
+		{
+			rightPage = leftPage;
+			leftPage = bitmap;
+		}
 
-    CreateBitmaps();
+		CreateBitmaps();
 
-  }
+	}
 }
 
 void ComicalCanvas::NextPageSlide()
 {
-  wxBitmap *bitmap;
-  int xImage, yImage;
-  float rImage;
+	wxBitmap *bitmap;
+	int xImage, yImage;
+	float rImage;
 
-  if (theBook == NULL) return;
-  if (theBook->current >= theBook->pagecount - 1) return;
-  if (centerPage) {
-    if (centerPage->Ok() && theBook->current < theBook->pagecount - 1) {
-      NextPageTurn();
-      return;
-    }
-  }
-  theBook->current++;
-  
-  bitmap = theBook->GetPage(theBook->current);
-  
-  if (bitmap->Ok()) {
-    
-    ClearBitmap(leftPage);
-    ClearBitmap(centerPage);
+	if (theBook == NULL)
+		return;
+	if (theBook->current >= theBook->pagecount - 1)
+		return;
+	if (centerPage && centerPage->Ok() && theBook->current < theBook->pagecount - 1)
+	{
+			NextPageTurn();
+			return;
+	}
+	theBook->current++;
+	
+	bitmap = theBook->GetPage(theBook->current);
+	
+	if (bitmap->Ok())
+	{
+		ClearBitmap(leftPage);
+		ClearBitmap(centerPage);
 
-    xImage = bitmap->GetWidth();
-    yImage = bitmap->GetHeight();
+		xImage = bitmap->GetWidth();
+		yImage = bitmap->GetHeight();
 
-    // Here we assume that portrait pages are single pages and that landscape
-    // pages are double pages.
-    rImage = float(xImage)/float(yImage);
-    if (rImage >= 1.0f || mode == SINGLE) {
-      centerPage = bitmap;
-      ClearBitmap(rightPage);
-    }
-    else {
-      if (rightPage) {
-        if (rightPage->Ok()) {
-          leftPage = rightPage;
-	  rightPage = bitmap;  
-        }
-      }
-    }
-    CreateBitmaps();
+		// Here we assume that portrait pages are single pages and that landscape
+		// pages are double pages.
+		rImage = float(xImage)/float(yImage);
+		if (rImage >= 1.0f || mode == SINGLE)
+		{
+			centerPage = bitmap;
+			ClearBitmap(rightPage);
+		}
+		else if (rightPage && rightPage->Ok())
+		{
+			leftPage = rightPage;
+			rightPage = bitmap;
+		}
 
-  }
+		CreateBitmaps();
+
+	}
 }
 
 void ComicalCanvas::CreateBitmaps()
 {
-  int xScroll = 0, yScroll = 0, xWindow, yWindow;
-  bool left = false, right = false;
-  
-  GetClientSize(&xWindow, &yWindow);
-  
-  if (centerPage) {
-    if (centerPage->Ok()) {
-      xScroll = centerPage->GetWidth();
-      yScroll = centerPage->GetHeight();
-    }
-  }
-  else {
-    wxLogVerbose("CreateBitmaps double...");
-    if (leftPage) if ((left = leftPage->Ok())) {
-      xScroll += leftPage->GetWidth();
-      yScroll = leftPage->GetHeight();
-    }
-    if (rightPage) if ((right = rightPage->Ok())) {
-      xScroll += rightPage->GetWidth();
-      yScroll = (rightPage->GetHeight() > yScroll) ? rightPage->GetHeight() : yScroll;
-    }
-    if (!left || !right) // if only one page is active
-      xScroll *= 2;
-  }
-  wxLogVerbose("CreateBitmaps scrolling xScroll=%i yScroll=%i xWindow=%i", xScroll, yScroll, xWindow);
+	int xScroll = 0, yScroll = 0, xWindow, yWindow;
+	bool left = false, right = false;
+	
+	GetClientSize(&xWindow, &yWindow);
+	
+	if (centerPage && centerPage->Ok())
+	{
+		xScroll = centerPage->GetWidth();
+		yScroll = centerPage->GetHeight();
+	}
+	else
+	{
+		wxLogVerbose("CreateBitmaps double...");
+		if (leftPage) if ((left = leftPage->Ok()))
+		{
+			xScroll += leftPage->GetWidth();
+			yScroll = leftPage->GetHeight();
+		}
+		if (rightPage) if ((right = rightPage->Ok()))
+		{
+			xScroll += rightPage->GetWidth();
+			yScroll = (rightPage->GetHeight() > yScroll) ? rightPage->GetHeight() : yScroll;
+		}
+		if (!left || !right) // if only one page is active
+			xScroll *= 2;
+	}
+	wxLogVerbose("CreateBitmaps scrolling xScroll=%i yScroll=%i xWindow=%i", xScroll, yScroll, xWindow);
 
-  SetScrollbars(10, 10, xScroll / 10, yScroll / 10);
-  Scroll((xScroll / 20) - (xWindow / 20), 0);
-  Refresh();
-  wxLogVerbose("CreateBitmaps done.");
+	SetScrollbars(10, 10, xScroll / 10, yScroll / 10);
+	Scroll((xScroll / 20) - (xWindow / 20), 0);
+	Refresh();
+	wxLogVerbose("CreateBitmaps done.");
 
 }
 
 void ComicalCanvas::Zoom(COMICAL_ZOOM value)
 {
 	zoom = value;
-	if (theBook) {
+	if (theBook)
+	{
 		SetParams();
 		GoToPage(theBook->current);
 	}
@@ -425,7 +441,8 @@ void ComicalCanvas::Zoom(COMICAL_ZOOM value)
 void ComicalCanvas::Filter(FREE_IMAGE_FILTER value)
 {
 	filter = value;
-	if (theBook) {
+	if (theBook)
+	{
 		SetParams();
 		GoToPage(theBook->current);
 	}
@@ -434,7 +451,8 @@ void ComicalCanvas::Filter(FREE_IMAGE_FILTER value)
 void ComicalCanvas::Mode(COMICAL_MODE newmode)
 {
 	mode = newmode;
-	if (theBook) {
+	if (theBook)
+	{
 		SetParams();
 		GoToPage(theBook->current);
 	}
@@ -451,8 +469,8 @@ void ComicalCanvas::SetParams()
 void ComicalCanvas::Rotate(COMICAL_ROTATE rotate)
 {
 	wxLogVerbose("Rotate = " + rotate);
-	switch (rotate) {
-	
+	switch (rotate)
+	{
 	case NORTH:
 	
 	case EAST:
@@ -470,80 +488,81 @@ void ComicalCanvas::Rotate(COMICAL_ROTATE rotate)
 
 void ComicalCanvas::OnPaint( wxPaintEvent &WXUNUSED(event) )
 {
-  int xCanvas, yCanvas;
+	int xCanvas, yCanvas;
 
-  wxPaintDC dc( this );
-  PrepareDC( dc );
+	wxPaintDC dc( this );
+	PrepareDC( dc );
 
-  GetVirtualSize(&xCanvas, &yCanvas);
-  wxLogVerbose("OnPaint xCanvas=%i yCanvas=%i", xCanvas, yCanvas);
-  /* I can't properly initialize x and y until the constructors are done, but
-     if I just leave the values uninitialized, the very first image will be
-     resized twice.  Here, when OnPaint is called for the first time, the values
-     will be initialized.  */
-  if (x == -1 && y == -1) {
-    x = xCanvas;
-    y = yCanvas;
-  }
+	GetVirtualSize(&xCanvas, &yCanvas);
+	wxLogVerbose("OnPaint xCanvas=%i yCanvas=%i", xCanvas, yCanvas);
+	/* I can't properly initialize x and y until the constructors are done, but
+		 if I just leave the values uninitialized, the very first image will be
+		 resized twice.	Here, when OnPaint is called for the first time, the values
+		 will be initialized.	*/
+	if (x == -1 && y == -1)
+	{
+		x = xCanvas;
+		y = yCanvas;
+	}
 
-  if (zoom == FIT || zoom == FITH || zoom == FITV) {
-    if (xCanvas != x || yCanvas != y) {
-      x = xCanvas;
-      y = yCanvas;
-      wxLogVerbose("Window size has changed, rescaling to %i x %i", x, y);
-      SetParams();
-      GoToPage(theBook->current);
-      return;
-    }
-  }
+	if (zoom == FIT || zoom == FITH || zoom == FITV)
+	{
+		if (xCanvas != x || yCanvas != y)
+		{
+			x = xCanvas;
+			y = yCanvas;
+			wxLogVerbose("Window size has changed, rescaling to %i x %i", x, y);
+			SetParams();
+			GoToPage(theBook->current);
+			return;
+		}
+	}
 
-  if (centerPage) {
-    if (centerPage->Ok())
-      dc.DrawBitmap(*centerPage, (xCanvas/2) - centerPage->GetWidth()/2, 0, false);
-  }
-  else {
-    if (leftPage) if (leftPage->Ok())
-      dc.DrawBitmap(*leftPage, xCanvas/2 - leftPage->GetWidth(), 0, false);
-    if (rightPage) if (rightPage->Ok())
-      dc.DrawBitmap(*rightPage, xCanvas/2, 0, false);
-  }
+	if (centerPage && centerPage->Ok())
+			dc.DrawBitmap(*centerPage, (xCanvas/2) - centerPage->GetWidth()/2, 0, false);
+	else
+	{
+		if (leftPage && leftPage->Ok())
+			dc.DrawBitmap(*leftPage, xCanvas/2 - leftPage->GetWidth(), 0, false);
+		if (rightPage && rightPage->Ok())
+			dc.DrawBitmap(*rightPage, xCanvas/2, 0, false);
+	}
 
-  SetFocus(); // This is so we can grab keydown events
+	SetFocus(); // This is so we can grab keydown events
 
 }
 
 void ComicalCanvas::OnKeyDown(wxKeyEvent& event)
 {
+	switch(event.GetKeyCode())
+	{
 
-  switch(event.GetKeyCode()) {
+	case WXK_PRIOR:
+		PrevPageTurn();
+		break;
 
-  case WXK_PRIOR:
-    PrevPageTurn();
-    break;
+	case WXK_NEXT:
+		NextPageTurn();
+		break;
 
-  case WXK_NEXT:
-    NextPageTurn();
-    break;
+	case WXK_LEFT:
+		PrevPageSlide();
+		break;
 
-  case WXK_LEFT:
-    PrevPageSlide();
-    break;
+	case WXK_RIGHT:
+	case WXK_SPACE:
+		NextPageSlide();
+		break;
 
-  case WXK_RIGHT:
-  case WXK_SPACE:
-    NextPageSlide();
-    break;
+	case WXK_HOME:
+		FirstPage();
+		break;
 
-  case WXK_HOME:
-    FirstPage();
-    break;
+	case WXK_END:
+		LastPage();
+		break;
 
-  case WXK_END:
-    LastPage();
-    break;
-
-  default:
-    event.Skip();
-  }
-
+	default:
+		event.Skip();
+	}
 }

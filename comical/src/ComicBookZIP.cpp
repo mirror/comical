@@ -2,7 +2,7 @@
                               ComicBookZIP.cpp
                              -------------------
     begin                : Wed Oct 29 2003
-    copyright            : (C) 2003 by James Athey
+    copyright            : (C) 2005 by James Athey
     email                : jathey@comcast.net
  ***************************************************************************/
 
@@ -26,18 +26,20 @@
  ***************************************************************************/
 
 #include "ComicBookZIP.h"
+#include <cstdlib>
 
 ComicBookZIP::ComicBookZIP(wxString file, uint cachelen) : ComicBook()
 {
 	unzFile ZipFile;
 	static char namebuf[1024];
 	wxString page;
-	
+	unz_file_info *fileInfo;
 	filename = file;
 	cacheLen = cachelen;
 	current = 0;
 	
 	ZipFile = unzOpen(filename.c_str());
+	fileInfo = (unz_file_info*) malloc(sizeof(unz_file_info_s));
 
 	if (ZipFile) {
 		if (unzGoToFirstFile(ZipFile) != UNZ_OK) {
@@ -50,9 +52,9 @@ ComicBookZIP::ComicBookZIP(wxString file, uint cachelen) : ComicBook()
 		return;
 	}
 	do {
-		unzGetCurrentFileInfo(ZipFile, NULL, namebuf, 1024, NULL, 0, NULL, 0);
+		unzGetCurrentFileInfo(ZipFile, fileInfo, namebuf, 1024, NULL, 0, NULL, 0);
 		page = namebuf;
-		wxLogVerbose(page);
+		wxLogVerbose("%s\t%lu", page.c_str(), fileInfo->uncompressed_size);
 		if(page.Right(5).Upper() == ".JPEG" || page.Right(4).Upper() == ".JPG" ||
 		page.Right(5).Upper() == ".TIFF" || page.Right(4).Upper() == ".TIF" ||
 		page.Right(4).Upper() == ".GIF" ||

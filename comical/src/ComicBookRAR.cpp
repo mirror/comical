@@ -2,7 +2,7 @@
                               ComicBookRAR.cpp
                              -------------------
     begin                : Wed Oct 29 2003
-    copyright            : (C) 2003 by James Athey
+    copyright            : (C) 2005 by James Athey
     email                : jathey@comcast.net
  ***************************************************************************/
 
@@ -58,7 +58,7 @@ ComicBookRAR::ComicBookRAR(wxString file, uint cachelen) : ComicBook()
 	wxLogVerbose("Contents of " + filename + ":");
 	while ((RHCode=RARReadHeaderEx(RarFile,&HeaderData))==0) {
 		page = HeaderData.FileName;
-		wxLogVerbose(page);
+		wxLogVerbose("%s\t%u", page.c_str(), HeaderData.UnpSize);
 		if(page.Right(5).Upper() == ".JPEG" || page.Right(4).Upper() == ".JPG" ||
 		page.Right(5).Upper() == ".TIFF" || page.Right(4).Upper() == ".TIF" ||
 		page.Right(4).Upper() == ".GIF" ||
