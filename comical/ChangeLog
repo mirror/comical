@@ -1,0 +1,19 @@
+0.4 -
+Added support for bzip2 archives, with extension .bz2 or .cbb
+Added more sensical keyboard shortcuts
+New icon, courtesy of gotterdamm
+
+0.3 -
+You can specify a comic book from the commandline now
+Starts with open dialog when started without arguments
+Added single page slide
+PNG, GIF, and TIFF pages now supported, but untested
+Lots of functions and variables renamed from *jpeg* to *image*
+Added image resizing from FreeImage 3.  Looks SO much better.
+Put ComicalCanvas canvas class into its own source file
+
+0.2 -
+Pages are now sorted
+Fixed stupid bug in ScaleJpeg when page was wider than canvas
+
+0.1 - Initial Release

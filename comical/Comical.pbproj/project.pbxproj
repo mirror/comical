@@ -1,0 +1,450 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 38;
+	objects = {
+		0249A665FF388DC511CA2CEA = {
+			isa = PBXApplicationReference;
+			path = Comical.app;
+			refType = 3;
+		};
+//020
+//021
+//022
+//023
+//024
+//040
+//041
+//042
+//043
+//044
+		04313892FE3035C9C02AAC07 = {
+			buildActionMask = 2147483647;
+			files = (
+			);
+			isa = PBXRezBuildPhase;
+		};
+//040
+//041
+//042
+//043
+//044
+//050
+//051
+//052
+//053
+//054
+		05952DFCFFF02D1B11CA0E50 = {
+			buildRules = (
+			);
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				OPTIMIZATION_CFLAGS = "-O0";
+			};
+			isa = PBXBuildStyle;
+			name = Development;
+		};
+		05952DFDFFF02D1B11CA0E50 = {
+			buildRules = (
+			);
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+			};
+			isa = PBXBuildStyle;
+			name = Deployment;
+		};
+//050
+//051
+//052
+//053
+//054
+//080
+//081
+//082
+//083
+//084
+		0867D6AAFE840B52C02AAC07 = {
+			children = (
+				0867D6ABFE840B52C02AAC07,
+			);
+			isa = PBXVariantGroup;
+			name = InfoPlist.strings;
+			refType = 4;
+		};
+		0867D6ABFE840B52C02AAC07 = {
+			fileEncoding = 10;
+			isa = PBXFileReference;
+			name = English;
+			path = English.lproj/InfoPlist.strings;
+			refType = 4;
+		};
+		0867D6ACFE840B52C02AAC07 = {
+			fileRef = 0867D6AAFE840B52C02AAC07;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+//080
+//081
+//082
+//083
+//084
+//190
+//191
+//192
+//193
+//194
+		195DF8C9FE9D4F0611CA2CBB = {
+			children = (
+				0249A665FF388DC511CA2CEA,
+			);
+			isa = PBXGroup;
+			name = Products;
+			refType = 4;
+		};
+//190
+//191
+//192
+//193
+//194
+//200
+//201
+//202
+//203
+//204
+		20286C28FDCF999611CA2CEA = {
+			buildStyles = (
+				05952DFCFFF02D1B11CA0E50,
+				05952DFDFFF02D1B11CA0E50,
+			);
+			isa = PBXProject;
+			mainGroup = 20286C29FDCF999611CA2CEA;
+			projectDirPath = "";
+			targets = (
+				20286C34FDCF999611CA2CEA,
+			);
+		};
+		20286C29FDCF999611CA2CEA = {
+			children = (
+				20286C2AFDCF999611CA2CEA,
+				20286C2CFDCF999611CA2CEA,
+				20286C32FDCF999611CA2CEA,
+				195DF8C9FE9D4F0611CA2CBB,
+				F7F09902056C71B7019AB25C,
+			);
+			isa = PBXGroup;
+			name = "¬´PROJECTNAME¬ª";
+			path = "";
+			refType = 4;
+		};
+		20286C2AFDCF999611CA2CEA = {
+			children = (
+				F70D16A2056C429001B74F27,
+				F70D16A3056C429001B74F27,
+				F70D16A4056C429001B74F27,
+				F70D16A5056C429001B74F27,
+				F70D16A6056C429001B74F27,
+				F70D16A7056C429001B74F27,
+				F70D16A8056C429001B74F27,
+				F70D16A9056C429001B74F27,
+				F70D16B2056C42AC01B74F27,
+			);
+			isa = PBXGroup;
+			name = Sources;
+			path = "";
+			refType = 4;
+		};
+		20286C2CFDCF999611CA2CEA = {
+			children = (
+				0867D6AAFE840B52C02AAC07,
+			);
+			isa = PBXGroup;
+			name = Resources;
+			path = "";
+			refType = 4;
+		};
+		20286C32FDCF999611CA2CEA = {
+			children = (
+				20286C33FDCF999611CA2CEA,
+				F70D16B7056C47B001B74F27,
+			);
+			isa = PBXGroup;
+			name = "External Frameworks and Libraries";
+			path = "";
+			refType = 4;
+		};
+		20286C33FDCF999611CA2CEA = {
+			isa = PBXFrameworkReference;
+			name = Carbon.framework;
+			path = /System/Library/Frameworks/Carbon.framework;
+			refType = 0;
+		};
+		20286C34FDCF999611CA2CEA = {
+			buildPhases = (
+				20286C35FDCF999611CA2CEA,
+				20286C36FDCF999611CA2CEA,
+				20286C38FDCF999611CA2CEA,
+				20286C3BFDCF999611CA2CEA,
+				04313892FE3035C9C02AAC07,
+			);
+			buildSettings = {
+				DEBUGGING_SYMBOLS = NO;
+				FRAMEWORK_SEARCH_PATHS = "";
+				HEADER_SEARCH_PATHS = "/usr/local/lib/wx/include/mac-2.4 ";
+				LIBRARY_SEARCH_PATHS = "./ /usr/local/lib /usr/lib/gcc/darwin/3.1 /Users/jathey/dev/Comical";
+				OPTIMIZATION_CFLAGS = "-O2";
+				OTHER_CFLAGS = "\U0001-D__WXMAC__ -DWXMAKINGDLL -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -mcpu=750";
+				OTHER_REZFLAGS = "\U0001";
+				PREBINDING = NO;
+				PRODUCT_NAME = Comical;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = "-Wall -Wmost -Wno-four-char-constants -Wno-unknown-pragmas";
+				WRAPPER_EXTENSION = app;
+			};
+			dependencies = (
+			);
+			isa = PBXApplicationTarget;
+			name = Comical;
+			productName = "¬´PROJECTNAME¬ª";
+			productReference = 0249A665FF388DC511CA2CEA;
+			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<!DOCTYPE plist SYSTEM \"file://localhost/System/Library/DTDs/PropertyList.dtd\">
+<plist version=\"0.9\">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>cbr</string>
+			</array>
+			<key>CFBundleTypeName</key>
+			<string>Comic Book RAR</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>cbz</string>
+			</array>
+			<key>CFBundleTypeName</key>
+			<string>Comic Book ZIP</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+		</dict>
+	</array>
+	<key>CFBundleExecutable</key>
+	<string>Comical</string>
+	<key>CFBundleGetInfoString</key>
+	<string>Comical version 0.1, Copyright 2003 James Athey</string>
+	<key>CFBundleIconFile</key>
+	<string>Comical.icns</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Comical</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>Comical version 0.1</string>
+	<key>CFBundleVersion</key>
+	<string>0.1</string>
+	<key>CSResourcesFileMapped</key>
+	<true/>
+</dict>
+</plist>
+";
+			shouldUseHeadermap = 1;
+		};
+		20286C35FDCF999611CA2CEA = {
+			buildActionMask = 2147483647;
+			files = (
+				F70D16AB056C429001B74F27,
+				F70D16AD056C429001B74F27,
+				F70D16AF056C429001B74F27,
+				F70D16B1056C429001B74F27,
+				F70D16B3056C42AC01B74F27,
+			);
+			isa = PBXHeadersBuildPhase;
+		};
+		20286C36FDCF999611CA2CEA = {
+			buildActionMask = 2147483647;
+			files = (
+				0867D6ACFE840B52C02AAC07,
+				F7F09903056C71B7019AB25C,
+			);
+			isa = PBXResourcesBuildPhase;
+		};
+		20286C38FDCF999611CA2CEA = {
+			buildActionMask = 2147483647;
+			files = (
+				F70D16AA056C429001B74F27,
+				F70D16AC056C429001B74F27,
+				F70D16AE056C429001B74F27,
+				F70D16B0056C429001B74F27,
+			);
+			isa = PBXSourcesBuildPhase;
+		};
+		20286C3BFDCF999611CA2CEA = {
+			buildActionMask = 2147483647;
+			files = (
+				F7EF2B04056DAD7301A80064,
+				F7EF2B08056E0FDA01A80064,
+			);
+			isa = PBXFrameworksBuildPhase;
+		};
+//200
+//201
+//202
+//203
+//204
+//F70
+//F71
+//F72
+//F73
+//F74
+		F70D16A2056C429001B74F27 = {
+			isa = PBXFileReference;
+			name = ComicalApp.cpp;
+			path = src/ComicalApp.cpp;
+			refType = 4;
+		};
+		F70D16A3056C429001B74F27 = {
+			isa = PBXFileReference;
+			name = ComicalApp.h;
+			path = src/ComicalApp.h;
+			refType = 4;
+		};
+		F70D16A4056C429001B74F27 = {
+			isa = PBXFileReference;
+			name = ComicBook.cpp;
+			path = src/ComicBook.cpp;
+			refType = 4;
+		};
+		F70D16A5056C429001B74F27 = {
+			isa = PBXFileReference;
+			name = ComicBook.h;
+			path = src/ComicBook.h;
+			refType = 4;
+		};
+		F70D16A6056C429001B74F27 = {
+			isa = PBXFileReference;
+			name = ComicBookRAR.cpp;
+			path = src/ComicBookRAR.cpp;
+			refType = 4;
+		};
+		F70D16A7056C429001B74F27 = {
+			isa = PBXFileReference;
+			name = ComicBookRAR.h;
+			path = src/ComicBookRAR.h;
+			refType = 4;
+		};
+		F70D16A8056C429001B74F27 = {
+			isa = PBXFileReference;
+			name = ComicBookZIP.cpp;
+			path = src/ComicBookZIP.cpp;
+			refType = 4;
+		};
+		F70D16A9056C429001B74F27 = {
+			isa = PBXFileReference;
+			name = ComicBookZIP.h;
+			path = src/ComicBookZIP.h;
+			refType = 4;
+		};
+		F70D16AA056C429001B74F27 = {
+			fileRef = F70D16A2056C429001B74F27;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		F70D16AB056C429001B74F27 = {
+			fileRef = F70D16A3056C429001B74F27;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		F70D16AC056C429001B74F27 = {
+			fileRef = F70D16A4056C429001B74F27;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		F70D16AD056C429001B74F27 = {
+			fileRef = F70D16A5056C429001B74F27;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		F70D16AE056C429001B74F27 = {
+			fileRef = F70D16A6056C429001B74F27;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		F70D16AF056C429001B74F27 = {
+			fileRef = F70D16A7056C429001B74F27;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		F70D16B0056C429001B74F27 = {
+			fileRef = F70D16A8056C429001B74F27;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		F70D16B1056C429001B74F27 = {
+			fileRef = F70D16A9056C429001B74F27;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		F70D16B2056C42AC01B74F27 = {
+			isa = PBXFileReference;
+			name = pstream.h;
+			path = src/pstream.h;
+			refType = 4;
+		};
+		F70D16B3056C42AC01B74F27 = {
+			fileRef = F70D16B2056C42AC01B74F27;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		F70D16B7056C47B001B74F27 = {
+			isa = PBXFileReference;
+			name = "libwx_mac-2.4.dylib";
+			path = "/usr/local/lib/libwx_mac-2.4.dylib";
+			refType = 0;
+		};
+		F7EF2B04056DAD7301A80064 = {
+			fileRef = 20286C33FDCF999611CA2CEA;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		F7EF2B08056E0FDA01A80064 = {
+			fileRef = F70D16B7056C47B001B74F27;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		F7F09902056C71B7019AB25C = {
+			isa = PBXFileReference;
+			path = Comical.icns;
+			refType = 4;
+		};
+		F7F09903056C71B7019AB25C = {
+			fileRef = F7F09902056C71B7019AB25C;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+	};
+	rootObject = 20286C28FDCF999611CA2CEA;
+}
