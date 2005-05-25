@@ -5,17 +5,11 @@
 #	the sfx module
 #
 
-# MacOSX using GCC
+# Linux using GCC
 CXX=g++
 CXXFLAGS=-O2
-DEFINES=-DBIG_ENDIAN -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_BSD_COMPAT
+DEFINES=-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE
 STRIP=strip
-
-# Linux using GCC
-#CXX=g++
-#CXXFLAGS=-O2
-#DEFINES=-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE
-#STRIP=strip
 
 # Linux using LCC
 #CXX=lcc
@@ -91,14 +85,13 @@ STRIP=strip
 COMPILE=$(CXX) $(CXXFLAGS) $(DEFINES)
 LINK=$(CXX)
 
-UNRAR_OBJ=rar.o list.o
-LIB_OBJ=dll.o smallfn.o
+UNRAR_OBJ=filestr.o recvol.o rs.o scantree.o
+LIB_OBJ=filestr.o scantree.o dll.o
 
-OBJECTS=strlist.o strfn.o pathfn.o int64.o savepos.o global.o file.o filefn.o filcreat.o \
+OBJECTS=rar.o strlist.o strfn.o pathfn.o int64.o savepos.o global.o file.o filefn.o filcreat.o \
 	archive.o arcread.o unicode.o system.o isnt.o crypt.o crc.o rawread.o encname.o \
 	resource.o match.o timefn.o rdwrfn.o consio.o options.o ulinks.o errhnd.o rarvm.o \
-	rijndael.o getbits.o sha1.o extinfo.o extract.o volume.o find.o unpack.o \
-	recvol.o scantree.o rs.o cmddata.o filestr.o
+	rijndael.o getbits.o sha1.o extinfo.o extract.o volume.o list.o find.o unpack.o cmddata.o
 
 .cpp.o:
 	$(COMPILE) -D$(WHAT) -c $<
@@ -120,7 +113,7 @@ sfx:	$(OBJECTS)
 	$(LINK) -o default.sfx $(LDFLAGS) $(OBJECTS)
 	$(STRIP) default.sfx
 
-lib:	WHAT=RARDLL -DSILENT
+lib:	WHAT=RARDLL
 lib:	$(OBJECTS) $(LIB_OBJ)
-	@rm -f libunrar.dylib
-	$(LINK) -dynamiclib -o libunrar.dylib $(LDFLAGS) $(OBJECTS) $(LIB_OBJ)
+	@rm -f libunrar.so
+	$(LINK) -shared -o libunrar.so $(LDFLAGS) $(OBJECTS) $(LIB_OBJ)

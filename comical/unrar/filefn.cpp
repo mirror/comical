@@ -76,6 +76,15 @@ void CreatePath(const char *Path,const wchar *PathW,bool SkipLastName)
         WideToChar(DirPtrW,DirName);
       else
       {
+#ifndef DBCS_SUPPORTED
+        if (*s!=CPATHDIVIDER)
+          for (const char *n=s;*n!=0 && n-Path<NM;n++)
+            if (*n==CPATHDIVIDER)
+            {
+              s=n;
+              break;
+            }
+#endif
         strncpy(DirName,Path,s-Path);
         DirName[s-Path]=0;
       }
@@ -97,10 +106,11 @@ void CreatePath(const char *Path,const wchar *PathW,bool SkipLastName)
 
 void SetDirTime(const char *Name,RarTime *ftm,RarTime *ftc,RarTime *fta)
 {
+#ifdef _WIN_32
   bool sm=ftm!=NULL && ftm->IsSet();
   bool sc=ftc!=NULL && ftc->IsSet();
-  bool sa=ftc!=NULL && fta->IsSet();
-#ifdef _WIN_32
+  bool sa=fta!=NULL && fta->IsSet();
+
   if (!WinNT())
     return;
   unsigned int DirAttr=GetFileAttr(Name);
@@ -159,7 +169,7 @@ Int64 GetFreeDisk(const char *Name)
 
   if (pGetDiskFreeSpaceEx==NULL)
   {
-	HMODULE hKernel=GetModuleHandle("kernel32.dll");
+    HMODULE hKernel=GetModuleHandle("kernel32.dll");
     if (hKernel!=NULL)
       pGetDiskFreeSpaceEx=(GETDISKFREESPACEEX)GetProcAddress(hKernel,"GetDiskFreeSpaceExA");
   }
@@ -466,7 +476,7 @@ uint CalcFileCRC(File *SrcFile,Int64 Size)
   SrcFile->Seek(0,SEEK_SET);
   while ((ReadSize=SrcFile->Read(&Data[0],int64to32(Size==INT64ERR ? Int64(BufSize):Min(Int64(BufSize),Size))))!=0)
   {
-    BlockCount++;
+    ++BlockCount;
     if ((BlockCount & 15)==0)
     {
       Wait();
