@@ -31,8 +31,6 @@
 #include "../Comical Icons/comical.xpm"  // the icon!
 #endif
 
-#define COMICAL_VERSION 0.5
-#include <iostream>
 // Create a new application object.
 IMPLEMENT_APP(ComicalApp)
 
@@ -43,7 +41,9 @@ bool ComicalApp::OnInit()
 	wxImage::AddHandler(new wxGIFHandler);
 	wxImage::AddHandler(new wxTIFFHandler);
 
-	ComicalFrame *frame = new ComicalFrame(_T("Comical"), wxPoint(50, 50), wxSize(600, 400));
+	//wxFileSystem::AddHandler(new wxZipFSHandler);
+	
+	ComicalFrame *frame = new ComicalFrame(_T("Comical"), wxPoint(50, 50), wxSize(600, 400), wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE);
 	
 #ifndef __WXMAC__
 	frame->SetIcon(wxICON(Comical));
@@ -68,7 +68,7 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 {
 	theBook = NULL;
 
-	ComicalLog = new wxLogGui();
+	ComicalLog = new wxLogStderr();
 	ComicalLog->SetVerbose(FALSE);
 	wxLog::SetActiveTarget(ComicalLog);
 	
@@ -147,34 +147,34 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 }
 
 BEGIN_EVENT_TABLE(ComicalFrame, wxFrame)
-	EVT_MENU(wxID_EXIT,		ComicalFrame::OnQuit)
+	EVT_MENU(wxID_EXIT,	ComicalFrame::OnQuit)
 	EVT_MENU(wxID_ABOUT,	ComicalFrame::OnAbout)
-	EVT_MENU(wxID_OPEN,		ComicalFrame::OnOpen)
-	EVT_MENU(ID_First,		ComicalFrame::OnFirst)
-	EVT_MENU(ID_Last,		ComicalFrame::OnLast)
+	EVT_MENU(wxID_OPEN,	ComicalFrame::OnOpen)
+	EVT_MENU(ID_First,	ComicalFrame::OnFirst)
+	EVT_MENU(ID_Last,	ComicalFrame::OnLast)
 	EVT_MENU(ID_PrevTurn,	ComicalFrame::OnPrevTurn)
 	EVT_MENU(ID_NextTurn,	ComicalFrame::OnNextTurn)
 	EVT_MENU(ID_PrevSlide,	ComicalFrame::OnPrevSlide)
 	EVT_MENU(ID_NextSlide,	ComicalFrame::OnNextSlide)
-	EVT_MENU(ID_GoTo,		ComicalFrame::OnGoTo)
+	EVT_MENU(ID_GoTo,	ComicalFrame::OnGoTo)
 #ifndef __WXMAC__
-	EVT_MENU(ID_Full,		ComicalFrame::OnFull)
+	EVT_MENU(ID_Full,	ComicalFrame::OnFull)
 #endif
 	EVT_MENU(ID_Unzoomed,	ComicalFrame::OnZoom)
-	EVT_MENU(ID_3Q,			ComicalFrame::OnZoom)
-	EVT_MENU(ID_Half,		ComicalFrame::OnZoom)
-	EVT_MENU(ID_1Q,			ComicalFrame::OnZoom)
-	EVT_MENU(ID_Fit,		ComicalFrame::OnZoom)
-	EVT_MENU(ID_FitH,		ComicalFrame::OnZoom)
-	EVT_MENU(ID_FitV,		ComicalFrame::OnZoom)
-	EVT_MENU(ID_Box,		ComicalFrame::OnFilter)
+	EVT_MENU(ID_3Q,		ComicalFrame::OnZoom)
+	EVT_MENU(ID_Half,	ComicalFrame::OnZoom)
+	EVT_MENU(ID_1Q,		ComicalFrame::OnZoom)
+	EVT_MENU(ID_Fit,	ComicalFrame::OnZoom)
+	EVT_MENU(ID_FitH,	ComicalFrame::OnZoom)
+	EVT_MENU(ID_FitV,	ComicalFrame::OnZoom)
+	EVT_MENU(ID_Box,	ComicalFrame::OnFilter)
 	EVT_MENU(ID_Bicubic,	ComicalFrame::OnFilter)
 	EVT_MENU(ID_Bilinear,	ComicalFrame::OnFilter)
 	EVT_MENU(ID_BSpline,	ComicalFrame::OnFilter)
 	EVT_MENU(ID_CatmullRom,	ComicalFrame::OnFilter)
 	EVT_MENU(ID_Lanczos,	ComicalFrame::OnFilter)
-	EVT_MENU(ID_Double,		ComicalFrame::OnDouble)
-	EVT_MENU(ID_Single,		ComicalFrame::OnSingle)
+	EVT_MENU(ID_Double,	ComicalFrame::OnDouble)
+	EVT_MENU(ID_Single,	ComicalFrame::OnSingle)
 	EVT_CLOSE(ComicalFrame::OnClose)
 END_EVENT_TABLE()
 
@@ -197,16 +197,8 @@ void ComicalFrame::OnQuit(wxCommandEvent& event)
 
 void ComicalFrame::OnAbout(wxCommandEvent& event)
 {
-	wxMessageDialog AboutDlg(this, "", _T("About Comical"), wxOK);
+	wxMessageDialog AboutDlg(this, "Comical 0.5, (c) 2003-2005 James Athey.  Comical is licensed under the GPL, version 2, with a linking exception; see COPYING for details.", _T("About Comical"), wxOK);
 	AboutDlg.SetSize(500,330);
-//	wxDialog AboutDlg(this, -1, _T("About Comical"), wxDefaultPosition, wxSize(500, 300), wxDEFAULT_DIALOG_STYLE, _T("AboutDlg"));
-	wxTextCtrl *AboutTxt = new wxTextCtrl(&AboutDlg, -1, "", wxDefaultPosition, wxSize(500, 290), wxTE_READONLY | wxTE_MULTILINE, wxDefaultValidator, "AboutTxt");
-
-	*AboutTxt	<< _T("Comical ") << COMICAL_VERSION << _T(" (c) 2003 by James Athey. Comical is licensed under the GPL, version 2.\n\n")
-			<< _T("This software uses the following libraries:\n\n")
-			<< _T("- the FreeImage_Rescale() function from the FreeImage open source image library. See http://freeimage.sourceforge.net/ for details. FreeImage is used under the GNU GPL, version 2.\n\n")
-			<< _T("- wxWindows version 2.4. See http://www.wxwindows.org/ for details. wxWindows is used under the wxWindows Library Licence, Version 3.");
-
 	AboutDlg.ShowModal();
 }
 
@@ -289,15 +281,15 @@ void ComicalFrame::OnNextSlide(wxCommandEvent& event)
 
 void ComicalFrame::OnGoTo(wxCommandEvent& event)
 {
-	wxString message;
-	long pagecount, pagenumber;
+	wxString message ;
+	long pagenumber;
 	if (theBook != NULL)
 	{
-		pagecount = theBook->pagecount - 1;
-		message = "Enter a page number from 0 to ";
-		pagenumber = wxGetNumberFromUser(message, "Page", "Go To Page", 0, 0, pagecount, this);
+		message = "Enter a page number from 1 to ";
+		message += wxString::Format("%d", theBook->pagecount);
+		pagenumber = wxGetNumberFromUser(message, "Page", "Go To Page", theBook->current + 1, 1, theBook->pagecount, this);
 		if (pagenumber != -1)
-			theCanvas->GoToPage(pagenumber);
+			theCanvas->GoToPage(pagenumber - 1);
 	}
 
 }
@@ -390,10 +382,8 @@ void ComicalFrame::OnRotate(wxCommandEvent& event)
 
 void ComicalFrame::OnSingle(wxCommandEvent& event)
 {
-//	wxMenuItem *prev = menuView->FindItemByPosition(3);
-//	wxMenuItem *next = menuView->FindItemByPosition(4);
-	wxMenuItem *prev = menuView->FindItem(ID_PrevTurn);
-	wxMenuItem *next = menuView->FindItem(ID_NextTurn);
+	wxMenuItem *prev = menuGo->FindItem(ID_PrevTurn);
+	wxMenuItem *next = menuGo->FindItem(ID_NextTurn);
 	prev->Enable(false);
 	next->Enable(false);
 	theCanvas->Mode(SINGLE);
@@ -401,10 +391,8 @@ void ComicalFrame::OnSingle(wxCommandEvent& event)
 
 void ComicalFrame::OnDouble(wxCommandEvent& event)
 {
-//	wxMenuItem *prev = menuView->FindItemByPosition(3);
-//	wxMenuItem *next = menuView->FindItemByPosition(4);
-	wxMenuItem *prev = menuView->FindItem(ID_PrevTurn);
-	wxMenuItem *next = menuView->FindItem(ID_NextTurn);
+	wxMenuItem *prev = menuGo->FindItem(ID_PrevTurn);
+	wxMenuItem *next = menuGo->FindItem(ID_NextTurn);
 	prev->Enable(true);
 	next->Enable(true);
 	theCanvas->Mode(DOUBLE);

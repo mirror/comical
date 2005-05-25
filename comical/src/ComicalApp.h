@@ -46,8 +46,8 @@
 #include <wx/msgdlg.h>
 #include <wx/textdlg.h>
 #include <wx/tokenzr.h>
-#include <wx/log.h>
 #include <wx/config.h>
+#include <wx/log.h>
 #endif
 
 #include "ComicalCanvas.h"
@@ -55,7 +55,7 @@
 #include "ComicBookRAR.h"
 #include "ComicBookZIP.h"
 
-wxLogGui *ComicalLog;
+wxLog *ComicalLog;
 
 class ComicalApp : public wxApp {
 

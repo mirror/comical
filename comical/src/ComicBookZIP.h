@@ -50,12 +50,11 @@
 class ComicBookZIP : public ComicBook {
 
 public:
-  ComicBookZIP(wxString file, uint cachelen);
-  virtual ~ComicBookZIP() {};
+	ComicBookZIP(wxString file, uint cachelen);
+	virtual ~ComicBookZIP() {};
 
 protected:
-  wxInputStream * ExtractStream(unsigned int pageindex);
-
+	wxInputStream * ExtractStream(unsigned int pageindex);
 };
 
 #endif

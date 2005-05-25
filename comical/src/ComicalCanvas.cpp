@@ -43,6 +43,7 @@ ComicalCanvas::ComicalCanvas( wxWindow *prnt, wxWindowID id, const wxPoint &pos,
 }
 
 BEGIN_EVENT_TABLE(ComicalCanvas, wxScrolledWindow)
+	EVT_SIZE(ComicalCanvas::OnSize)
 	EVT_PAINT(ComicalCanvas::OnPaint)
 	EVT_KEY_DOWN(ComicalCanvas::OnKeyDown)
 END_EVENT_TABLE()
@@ -426,6 +427,14 @@ void ComicalCanvas::CreateBitmaps()
 void ComicalCanvas::Zoom(COMICAL_ZOOM value)
 {
 	zoom = value;
+	if (zoom == FITH)
+		EnableScrolling(false, true); // Horizontal fit, no horizontal scrolling
+	else if (zoom == FITV)
+		EnableScrolling(true, false); // Vertical fit, no vertical scrolling
+	else if (zoom == FIT)
+		EnableScrolling(false, false); // Fit, no scrolling
+	else
+		EnableScrolling(true, true);	
 	if (theBook)
 	{
 		SetParams();
@@ -456,7 +465,10 @@ void ComicalCanvas::Mode(COMICAL_MODE newmode)
 void ComicalCanvas::SetParams()
 {
 	int xCanvas, yCanvas;
-	GetClientSize(&xCanvas, &yCanvas);
+	wxLogMessage("SetParams");
+	GetClientSize(&xCanvas, &yCanvas); // Client Size is the visible area
+	x = xCanvas;
+	y = yCanvas;
 	theBook->SetParams(mode, filter, zoom, xCanvas, yCanvas);
 }
 
@@ -477,15 +489,23 @@ void ComicalCanvas::Rotate(COMICAL_ROTATE rotate)
 	}
 }
 
+void ComicalCanvas::OnSize(wxSizeEvent &event)
+{
+	if (theBook != NULL)
+	{
+		SetParams();
+		GoToPage(theBook->current);
+	}
+}
 
-void ComicalCanvas::OnPaint( wxPaintEvent &WXUNUSED(event) )
+void ComicalCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 {
 	int xCanvas, yCanvas;
 
-	wxPaintDC dc( this );
-	PrepareDC( dc );
+	wxPaintDC dc(this);
+	PrepareDC(dc);
 
-	GetVirtualSize(&xCanvas, &yCanvas);
+	GetClientSize(&xCanvas, &yCanvas);
 	/* I can't properly initialize x and y until the constructors are done, but
 		 if I just leave the values uninitialized, the very first image will be
 		 resized twice.	Here, when OnPaint is called for the first time, the values

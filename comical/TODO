@@ -1,11 +1,8 @@
-images should only resize once when window changes
-current images should be resized first when window changes
-about window crashes mac version
 Fix Mac OS X document types
-Add logging levels so that logging works as designed
 run everything through code beautifier
 
 Long Term:
 User-configurable keybindings
 Page turning animation
 Box Zoom/Magnifying Glass
+Page Rotation

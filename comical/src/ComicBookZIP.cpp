@@ -42,24 +42,23 @@ ComicBookZIP::ComicBookZIP(wxString file, uint cachelen) : ComicBook()
 
 	wxLogVerbose("Contents of " + filename + ":");
 #if wxCHECK_VERSION(2, 5, 0)
-	wxZipInputStream *zipFile;
-    wxFFileInputStream *fs = new wxFFileInputStream(filename);
-    if (fs->Ok())
-        zipFile = new wxZipInputStream(*fs);
-    else
-        delete fs;
-	wxZipEntry *entry;
-	while ((entry = zipFile->GetNextEntry()) != NULL)
+	wxFFileInputStream *fs = new wxFFileInputStream(filename);
+	if (fs->Ok())
 	{
-		page = entry->GetName();
-		wxLogVerbose("%s\t%ld", page.c_str(), entry->GetSize());
-		if(	page.Right(5).Upper() == ".JPEG" || page.Right(4).Upper() == ".JPG" ||
-			page.Right(5).Upper() == ".TIFF" || page.Right(4).Upper() == ".TIF" ||
-			page.Right(4).Upper() == ".GIF" ||
-			page.Right(4).Upper() == ".PNG" )
-			filenames.push_back(page);
+		wxZipInputStream *zipFile = new wxZipInputStream(*fs);
+		wxZipEntry *entry;
+		while ((entry = zipFile->GetNextEntry()) != NULL)
+		{
+			page = entry->GetName();
+			wxLogVerbose("%s\t%ld", page.c_str(), entry->GetSize());
+			if(	page.Right(5).Upper() == ".JPEG" || page.Right(4).Upper() == ".JPG" ||
+				page.Right(5).Upper() == ".TIFF" || page.Right(4).Upper() == ".TIF" ||
+				page.Right(4).Upper() == ".GIF" ||
+				page.Right(4).Upper() == ".PNG" )
+				filenames.push_back(page);
+		}
+		delete zipFile;
 	}
-	delete zipFile;
 	delete fs;
 #else
 	static char namebuf[1024];
