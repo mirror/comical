@@ -67,6 +67,8 @@ class ComicalCanvas : public wxScrolledWindow
     void Mode(COMICAL_MODE);
     void Filter(FREE_IMAGE_FILTER);
     void Rotate(COMICAL_ROTATE);
+    void RotatePrev(COMICAL_ROTATE);
+
     void SetParams();
 
     ComicBook *theBook;

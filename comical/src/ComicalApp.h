@@ -55,8 +55,6 @@
 #include "ComicBookRAR.h"
 #include "ComicBookZIP.h"
 
-wxLog *ComicalLog;
-
 class ComicalApp : public wxApp {
 
 public:
@@ -76,11 +74,12 @@ class ComicalFrame : public wxFrame {
               const wxSize& size,
               long style = wxDEFAULT_FRAME_STYLE);
 
+    void OpenFile(wxString);
+
     void OnQuit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
     void OnOpen(wxCommandEvent& event);
     void OnClose(wxCloseEvent& event);
-
     void OnFirst(wxCommandEvent& event);
     void OnLast(wxCommandEvent& event);
     void OnPrevTurn(wxCommandEvent& event);
@@ -94,18 +93,19 @@ class ComicalFrame : public wxFrame {
     void OnSingle(wxCommandEvent& event);
     void OnDouble(wxCommandEvent& event);
     void OnRotate(wxCommandEvent& event);
+    void OnRotatePrev(wxCommandEvent& event);
 
-    void OpenFile(wxString);
+    wxMenuBar *menuBar;
+    wxMenu *menuFile, *menuGo, *menuView, *menuHelp, *menuZoom, *menuMode, *menuFilter, *menuRotate, *menuRotateLeft, *menuRotateRight;
+
+  private:
+
+    wxConfig *config;
+    wxLog *ComicalLog;
 
     ComicalCanvas *theCanvas;
     ComicBook *theBook;
 
-  private:
-
-    wxMenuBar *menuBar;
-    wxMenu *menuFile, *menuGo, *menuView, *menuHelp, *menuZoom, *menuMode, *menuFilter, *menuRotate;
-    wxConfig *config;
-    
     DECLARE_EVENT_TABLE()
 
 };
@@ -123,7 +123,6 @@ ID_S,
 ID_M,
 ID_Single,
 ID_Double,
-ID_F,
 ID_Box,
 ID_Bicubic,
 ID_Bilinear,
@@ -138,10 +137,21 @@ ID_PrevSlide,
 ID_NextSlide,
 ID_GoTo,
 ID_Full,
+ID_Rotate,
+ID_RotateLeft,
+ID_RotateRight,
 ID_North,
+ID_NorthLeft,
+ID_NorthRight,
 ID_East,
+ID_EastLeft,
+ID_EastRight,
 ID_South,
-ID_West
+ID_SouthLeft,
+ID_SouthRight,
+ID_West,
+ID_WestLeft,
+ID_WestRight
 };
 
 #endif

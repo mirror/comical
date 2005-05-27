@@ -8,6 +8,7 @@ Moved page navigation features to "Go" menu
 Functions renamed for consistency (Zoom, Mode, and Filter)
 View settings and current working directory are now saved
 Read-ahead caching and multithreading for responsiveness
+Added ability to rotate pages
 
 0.4 -
 Added support for bzip2 archives, with extension .bz2 or .cbb

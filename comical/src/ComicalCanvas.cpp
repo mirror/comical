@@ -26,6 +26,7 @@
  ***************************************************************************/
 
 #include "ComicalCanvas.h"
+#include "ComicalApp.h"
 
 IMPLEMENT_DYNAMIC_CLASS(ComicalCanvas, wxScrolledWindow)
 
@@ -299,6 +300,11 @@ void ComicalCanvas::PrevPageSlide()
 		return;
 	if (theBook->current <= 0)
 		return;
+	if (theBook->current == 1)
+	{
+		FirstPage();
+		return;
+	}
 	if (centerPage)
 	{
 		PrevPageTurn();
@@ -396,23 +402,39 @@ void ComicalCanvas::CreateBitmaps()
 	bool left = false, right = false;
 	
 	GetClientSize(&xWindow, &yWindow);
-	
+
+	ComicalFrame *cParent = (ComicalFrame *) parent;
+	wxMenuItem *rotate;
+
 	if (centerPage && centerPage->Ok())
 	{
 		xScroll = centerPage->GetWidth();
 		yScroll = centerPage->GetHeight();
+
+		cParent->menuView->FindItem(ID_RotateLeft)->Enable(false);
+		cParent->menuView->FindItem(ID_RotateRight)->Enable(false);
+		cParent->menuView->FindItem(ID_Rotate)->Enable(true);
+		cParent->menuRotate->FindItemByPosition(theBook->Orientations[theBook->current])->Check();
 	}
 	else
 	{
-		if (leftPage) if ((left = leftPage->Ok()))
-		{
-			xScroll += leftPage->GetWidth();
-			yScroll = leftPage->GetHeight();
-		}
+		cParent->menuView->FindItem(ID_Rotate)->Enable(false);
+
 		if (rightPage) if ((right = rightPage->Ok()))
 		{
 			xScroll += rightPage->GetWidth();
 			yScroll = (rightPage->GetHeight() > yScroll) ? rightPage->GetHeight() : yScroll;
+
+			cParent->menuView->FindItem(ID_RotateRight)->Enable(true);
+			cParent->menuRotateRight->FindItemByPosition(theBook->Orientations[theBook->current])->Check();
+		}
+		if (leftPage) if ((left = leftPage->Ok()))
+		{
+			xScroll += leftPage->GetWidth();
+			yScroll = leftPage->GetHeight();
+
+			cParent->menuView->FindItem(ID_RotateLeft)->Enable(true);
+			cParent->menuRotateLeft->FindItemByPosition(theBook->Orientations[theBook->current - 1])->Check();
 		}
 		if (!left || !right) // if only one page is active
 			xScroll *= 2;
@@ -421,7 +443,6 @@ void ComicalCanvas::CreateBitmaps()
 	SetScrollbars(10, 10, xScroll / 10, yScroll / 10);
 	Scroll((xScroll / 20) - (xWindow / 20), 0);
 	Refresh();
-
 }
 
 void ComicalCanvas::Zoom(COMICAL_ZOOM value)
@@ -465,27 +486,24 @@ void ComicalCanvas::Mode(COMICAL_MODE newmode)
 void ComicalCanvas::SetParams()
 {
 	int xCanvas, yCanvas;
-	wxLogMessage("SetParams");
 	GetClientSize(&xCanvas, &yCanvas); // Client Size is the visible area
 	x = xCanvas;
 	y = yCanvas;
 	theBook->SetParams(mode, filter, zoom, xCanvas, yCanvas);
 }
 
-void ComicalCanvas::Rotate(COMICAL_ROTATE rotate)
+void ComicalCanvas::Rotate(COMICAL_ROTATE direction)
 {
-	switch (rotate)
+	theBook->RotatePage(theBook->current, direction);
+	GoToPage(theBook->current);
+}
+
+void ComicalCanvas::RotatePrev(COMICAL_ROTATE direction)
+{
+	if(theBook->current > 0)
 	{
-	case NORTH:
-	
-	case EAST:
-	
-	case SOUTH:
-	
-	case WEST:
-	
-	default:
-		break;
+		theBook->RotatePage(theBook->current - 1, direction);
+		GoToPage(theBook->current - 1);
 	}
 }
 
@@ -529,7 +547,9 @@ void ComicalCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 	}
 
 	if (centerPage && centerPage->Ok())
-			dc.DrawBitmap(*centerPage, (xCanvas/2) - centerPage->GetWidth()/2, 0, false);
+	{
+		dc.DrawBitmap(*centerPage, (xCanvas/2) - centerPage->GetWidth()/2, 0, false);
+	}
 	else
 	{
 		if (leftPage && leftPage->Ok())

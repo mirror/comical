@@ -60,7 +60,7 @@ bool ComicalApp::OnInit()
 			frame->OpenFile(wxString(argv[1]));
 		}
 	}
-	
+
 	return TRUE;
 }
 
@@ -92,6 +92,7 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	menuGo->Append(ID_GoTo, _T("&Go to page..."), _T("Jump to another page number."));
 
 	menuView = new wxMenu;
+
 	menuZoom = new wxMenu;
 	menuZoom->AppendRadioItem(ID_Fit, _T("Fit"), _T("Scale pages to fit the window."));
 	menuZoom->AppendRadioItem(ID_FitV, _T("Fit to Height"), _T("Scale pages to fit the window's height."));
@@ -102,6 +103,27 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	menuZoom->AppendRadioItem(ID_Half, _T("50%"), _T("50% Zoom."));
 	menuZoom->AppendRadioItem(ID_1Q, _T("25%"), _T("25% Zoom."));
 	menuView->Append(ID_S, _T("&Zoom"), menuZoom);
+
+	menuRotate = new wxMenu;
+	menuRotate->AppendRadioItem(ID_North, _T("Normal"), _T("No rotation."));
+	menuRotate->AppendRadioItem(ID_East, _T("90 Clockwise"), _T("Rotate 90 degrees clockwise."));
+	menuRotate->AppendRadioItem(ID_South, _T("180"), _T("Rotate 180 degrees."));
+	menuRotate->AppendRadioItem(ID_West, _T("90 Counter-Clockwise"), _T("Rotate 90 degrees counter-clockwise."));
+	menuView->Append(ID_Rotate, _T("&Rotate"), menuRotate);
+
+	menuRotateLeft = new wxMenu;
+	menuRotateLeft->AppendRadioItem(ID_NorthLeft, _T("Normal"), _T("No rotation."));
+	menuRotateLeft->AppendRadioItem(ID_EastLeft, _T("90 Clockwise"), _T("Rotate 90 degrees clockwise."));
+	menuRotateLeft->AppendRadioItem(ID_SouthLeft, _T("180"), _T("Rotate 180 degrees."));
+	menuRotateLeft->AppendRadioItem(ID_WestLeft, _T("90 Counter-Clockwise"), _T("Rotate 90 degrees counter-clockwise."));
+	menuView->Append(ID_RotateLeft, _T("Rotate Left Page"), menuRotateLeft);
+
+	menuRotateRight = new wxMenu;
+	menuRotateRight->AppendRadioItem(ID_NorthRight, _T("Normal"), _T("No rotation."));
+	menuRotateRight->AppendRadioItem(ID_EastRight, _T("90 Clockwise"), _T("Rotate 90 degrees clockwise."));
+	menuRotateRight->AppendRadioItem(ID_SouthRight, _T("180"), _T("Rotate 180 degrees."));
+	menuRotateRight->AppendRadioItem(ID_WestRight, _T("90 Counter-Clockwise"), _T("Rotate 90 degrees counter-clockwise."));
+	menuView->Append(ID_RotateRight, _T("Rotate Ri&ght Page"), menuRotateRight);
 
 	menuMode = new wxMenu;
 	menuMode->AppendRadioItem(ID_Single, _T("Single Page"), _T("Show only a single page at a time."));
@@ -123,7 +145,7 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 #endif
 
 	menuHelp = new wxMenu;
-	menuHelp->Append(wxID_ABOUT, _T("&About...\tF1"), _T("Show about dialog."));
+	menuHelp->Append(wxID_ABOUT, _T("&About...\tF1"), _T("Display About Dialog."));
 
 	menuBar = new wxMenuBar();
 	menuBar->Append(menuFile, _T("&File"));
@@ -143,7 +165,7 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	menuMode->FindItemByPosition(Mode)->Check(true);
 	menuFilter->FindItemByPosition(Filter)->Check(true);
 	
-	theCanvas = new ComicalCanvas( this, -1, wxPoint(0,0), wxSize(10,10) );
+	theCanvas = new ComicalCanvas(this, -1, wxPoint(0,0), wxSize(10,10));
 }
 
 BEGIN_EVENT_TABLE(ComicalFrame, wxFrame)
@@ -175,6 +197,18 @@ BEGIN_EVENT_TABLE(ComicalFrame, wxFrame)
 	EVT_MENU(ID_Lanczos,	ComicalFrame::OnFilter)
 	EVT_MENU(ID_Double,	ComicalFrame::OnDouble)
 	EVT_MENU(ID_Single,	ComicalFrame::OnSingle)
+	EVT_MENU(ID_North,	ComicalFrame::OnRotate)
+	EVT_MENU(ID_NorthRight,	ComicalFrame::OnRotate)
+	EVT_MENU(ID_East,	ComicalFrame::OnRotate)
+	EVT_MENU(ID_EastRight,	ComicalFrame::OnRotate)
+	EVT_MENU(ID_South,	ComicalFrame::OnRotate)
+	EVT_MENU(ID_SouthRight,	ComicalFrame::OnRotate)
+	EVT_MENU(ID_West,	ComicalFrame::OnRotate)
+	EVT_MENU(ID_WestRight,	ComicalFrame::OnRotate)
+	EVT_MENU(ID_NorthLeft,	ComicalFrame::OnRotatePrev)
+	EVT_MENU(ID_EastLeft,	ComicalFrame::OnRotatePrev)
+	EVT_MENU(ID_SouthLeft,	ComicalFrame::OnRotatePrev)
+	EVT_MENU(ID_WestLeft,	ComicalFrame::OnRotatePrev)
 	EVT_CLOSE(ComicalFrame::OnClose)
 END_EVENT_TABLE()
 
@@ -363,16 +397,42 @@ void ComicalFrame::OnRotate(wxCommandEvent& event)
 	switch (event.GetId())
 	{
 	case ID_North:
+	case ID_NorthRight:
 		theCanvas->Rotate(NORTH);
 		break;
 	case ID_East:
+	case ID_EastRight:
 		theCanvas->Rotate(EAST);
 		break;
 	case ID_South:
+	case ID_SouthRight:
 		theCanvas->Rotate(SOUTH);
 		break;
 	case ID_West:
+	case ID_WestRight:
 		theCanvas->Rotate(WEST);
+		break;
+	default:
+		wxLogError("I don't think I can turn that way: " + event.GetId()); // we shouldn't be here... honest!
+		break;
+	}
+}
+
+void ComicalFrame::OnRotatePrev(wxCommandEvent& event)
+{
+	switch (event.GetId())
+	{
+	case ID_NorthLeft:
+		theCanvas->RotatePrev(NORTH);
+		break;
+	case ID_EastLeft:
+		theCanvas->RotatePrev(EAST);
+		break;
+	case ID_SouthLeft:
+		theCanvas->RotatePrev(SOUTH);
+		break;
+	case ID_WestLeft:
+		theCanvas->RotatePrev(WEST);
 		break;
 	default:
 		wxLogError("I don't think I can turn that way: " + event.GetId()); // we shouldn't be here... honest!

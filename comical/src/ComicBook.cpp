@@ -266,13 +266,13 @@ void ComicBook::ScaleImage(uint pagenumber)
 		Resamples[pagenumber] = FreeImage_Rescale(orig, int(xImage * scalingFactor), int(yImage * scalingFactor), fiFilter);
 		break;
 	case EAST:
-		Resamples[pagenumber] = FreeImage_Rescale(orig, int(yImage * scalingFactor), int(xImage * scalingFactor), fiFilter).Rotate90(false);
+		Resamples[pagenumber] = FreeImage_Rescale(orig, int(yImage * scalingFactor), int(xImage * scalingFactor), fiFilter).Rotate90(true);
 		break;
 	case SOUTH:
 		Resamples[pagenumber] = FreeImage_Rescale(orig, int(xImage * scalingFactor), int(yImage * scalingFactor), fiFilter).Rotate90().Rotate90();
 		break;
 	case WEST:
-		Resamples[pagenumber] = FreeImage_Rescale(orig, int(yImage * scalingFactor), int(xImage * scalingFactor), fiFilter).Rotate90(true);
+		Resamples[pagenumber] = FreeImage_Rescale(orig, int(yImage * scalingFactor), int(xImage * scalingFactor), fiFilter).Rotate90(false);
 		break;
 	default:
 		break;
