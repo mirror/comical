@@ -48,6 +48,7 @@
 #include <wx/tokenzr.h>
 #include <wx/config.h>
 #include <wx/log.h>
+#include <wx/toolbar.h>
 #endif
 
 #include "ComicalCanvas.h"
@@ -75,10 +76,19 @@ class ComicalFrame : public wxFrame {
               long style = wxDEFAULT_FRAME_STYLE);
 
     void OpenFile(wxString);
+    void OnOpen(wxCommandEvent& event);
+
+    wxToolBar *toolBarNav;
+    wxMenuBar *menuBar;
+    wxMenu *menuFile, *menuGo, *menuView, *menuHelp, *menuZoom, *menuMode, *menuFilter, *menuRotate, *menuRotateLeft, *menuRotateRight;
+    wxToolBarToolBase *rot_ccw_left, *rot_cw_left;
+  protected:
+    wxSize GetClientSize();
+
+  private:
 
     void OnQuit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
-    void OnOpen(wxCommandEvent& event);
     void OnClose(wxCloseEvent& event);
     void OnFirst(wxCommandEvent& event);
     void OnLast(wxCommandEvent& event);
@@ -93,12 +103,8 @@ class ComicalFrame : public wxFrame {
     void OnSingle(wxCommandEvent& event);
     void OnDouble(wxCommandEvent& event);
     void OnRotate(wxCommandEvent& event);
-    void OnRotatePrev(wxCommandEvent& event);
-
-    wxMenuBar *menuBar;
-    wxMenu *menuFile, *menuGo, *menuView, *menuHelp, *menuZoom, *menuMode, *menuFilter, *menuRotate, *menuRotateLeft, *menuRotateRight;
-
-  private:
+    void OnRotateLeft(wxCommandEvent& event);
+    void OnSize(wxSizeEvent &event);
 
     wxConfig *config;
     wxLog *ComicalLog;
@@ -112,6 +118,13 @@ class ComicalFrame : public wxFrame {
 
 enum
 {
+ID_S,
+ID_M,
+ID_Rotate,
+ID_RotateLeft,
+ID_RotateRight,
+ID_Full,
+//Zooms
 ID_Unzoomed,
 ID_3Q,
 ID_Half,
@@ -119,16 +132,17 @@ ID_1Q,
 ID_Fit,
 ID_FitV,
 ID_FitH,
-ID_S,
-ID_M,
+//Modes
 ID_Single,
 ID_Double,
+//Filters
 ID_Box,
 ID_Bicubic,
 ID_Bilinear,
 ID_BSpline,
 ID_CatmullRom,
 ID_Lanczos,
+//Navigation
 ID_First,
 ID_Last,
 ID_PrevTurn,
@@ -136,22 +150,19 @@ ID_NextTurn,
 ID_PrevSlide,
 ID_NextSlide,
 ID_GoTo,
-ID_Full,
-ID_Rotate,
-ID_RotateLeft,
-ID_RotateRight,
+//Rotation
+ID_CW,
+ID_CCW,
+ID_CWL,
+ID_CCWL,
 ID_North,
-ID_NorthLeft,
-ID_NorthRight,
 ID_East,
-ID_EastLeft,
-ID_EastRight,
 ID_South,
-ID_SouthLeft,
-ID_SouthRight,
 ID_West,
-ID_WestLeft,
-ID_WestRight
+ID_NorthLeft,
+ID_EastLeft,
+ID_SouthLeft,
+ID_WestLeft
 };
 
 #endif

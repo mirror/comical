@@ -30,7 +30,11 @@
 
 IMPLEMENT_DYNAMIC_CLASS(ComicalCanvas, wxScrolledWindow)
 
-ComicalCanvas::ComicalCanvas( wxWindow *prnt, wxWindowID id, const wxPoint &pos, const wxSize &size ) : wxScrolledWindow( prnt, id, pos, size, wxSUNKEN_BORDER )
+#if wxCHECK_VERSION(2, 5, 1)
+ComicalCanvas::ComicalCanvas(wxWindow *prnt, const wxPoint &pos, const wxSize &size) : wxScrolledWindow(prnt, -1, pos, size, wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE)
+#else
+ComicalCanvas::ComicalCanvas(wxWindow *prnt, const wxPoint &pos, const wxSize &size) : wxScrolledWindow(prnt, -1, pos, size, wxNO_BORDER)
+#endif
 {
 	parent = prnt;
 	SetBackgroundColour(* wxBLACK);
@@ -44,7 +48,6 @@ ComicalCanvas::ComicalCanvas( wxWindow *prnt, wxWindowID id, const wxPoint &pos,
 }
 
 BEGIN_EVENT_TABLE(ComicalCanvas, wxScrolledWindow)
-	EVT_SIZE(ComicalCanvas::OnSize)
 	EVT_PAINT(ComicalCanvas::OnPaint)
 	EVT_KEY_DOWN(ComicalCanvas::OnKeyDown)
 END_EVENT_TABLE()
@@ -362,8 +365,8 @@ void ComicalCanvas::NextPageSlide()
 		return;
 	if (centerPage && centerPage->Ok() && theBook->current < theBook->pagecount - 1)
 	{
-			NextPageTurn();
-			return;
+		NextPageTurn();
+		return;
 	}
 	theBook->current++;
 	
@@ -404,7 +407,6 @@ void ComicalCanvas::CreateBitmaps()
 	GetClientSize(&xWindow, &yWindow);
 
 	ComicalFrame *cParent = (ComicalFrame *) parent;
-	wxMenuItem *rotate;
 
 	if (centerPage && centerPage->Ok())
 	{
@@ -415,31 +417,54 @@ void ComicalCanvas::CreateBitmaps()
 		cParent->menuView->FindItem(ID_RotateRight)->Enable(false);
 		cParent->menuView->FindItem(ID_Rotate)->Enable(true);
 		cParent->menuRotate->FindItemByPosition(theBook->Orientations[theBook->current])->Check();
+		cParent->toolBarNav->EnableTool(ID_CCWL, false);
+		cParent->toolBarNav->EnableTool(ID_CWL, false);
+		cParent->toolBarNav->EnableTool(ID_CCW, true);
+		cParent->toolBarNav->EnableTool(ID_CW, true);
 	}
 	else
 	{
 		cParent->menuView->FindItem(ID_Rotate)->Enable(false);
 
-		if (rightPage) if ((right = rightPage->Ok()))
+		if (rightPage && (right = rightPage->Ok()))
 		{
 			xScroll += rightPage->GetWidth();
 			yScroll = (rightPage->GetHeight() > yScroll) ? rightPage->GetHeight() : yScroll;
 
 			cParent->menuView->FindItem(ID_RotateRight)->Enable(true);
 			cParent->menuRotateRight->FindItemByPosition(theBook->Orientations[theBook->current])->Check();
+			cParent->toolBarNav->EnableTool(ID_CCW, true);
+			cParent->toolBarNav->EnableTool(ID_CW, true);
 		}
-		if (leftPage) if ((left = leftPage->Ok()))
+		else
+		{
+			cParent->menuView->FindItem(ID_RotateRight)->Enable(false);
+			cParent->toolBarNav->EnableTool(ID_CCW, false);
+			cParent->toolBarNav->EnableTool(ID_CW, false);
+		}
+	
+		if (leftPage && (left = leftPage->Ok()))
 		{
 			xScroll += leftPage->GetWidth();
 			yScroll = leftPage->GetHeight();
 
 			cParent->menuView->FindItem(ID_RotateLeft)->Enable(true);
 			cParent->menuRotateLeft->FindItemByPosition(theBook->Orientations[theBook->current - 1])->Check();
+			cParent->toolBarNav->EnableTool(ID_CCWL, true);
+			cParent->toolBarNav->EnableTool(ID_CWL, true);
 		}
+		else
+		{
+			cParent->menuView->FindItem(ID_RotateLeft)->Enable(false);
+			cParent->toolBarNav->EnableTool(ID_CCWL, false);
+			cParent->toolBarNav->EnableTool(ID_CWL, false);
+		}
+
 		if (!left || !right) // if only one page is active
 			xScroll *= 2;
 	}
 
+	cParent->toolBarNav->Realize();
 	SetScrollbars(10, 10, xScroll / 10, yScroll / 10);
 	Scroll((xScroll / 20) - (xWindow / 20), 0);
 	Refresh();
@@ -492,27 +517,105 @@ void ComicalCanvas::SetParams()
 	theBook->SetParams(mode, filter, zoom, xCanvas, yCanvas);
 }
 
+void ComicalCanvas::Rotate(bool clockwise)
+{
+	COMICAL_ROTATE direction = theBook->Orientations[theBook->current];
+	if (clockwise)
+	{
+		switch (direction)
+		{
+		case NORTH:
+			theBook->RotatePage(theBook->current, EAST);
+			break;
+		case EAST:
+			theBook->RotatePage(theBook->current, SOUTH);
+			break;
+		case SOUTH:
+			theBook->RotatePage(theBook->current, WEST);
+			break;
+		case WEST:
+			theBook->RotatePage(theBook->current, NORTH);
+			break;
+		}
+	}
+	else
+	{
+		switch (direction)
+		{
+		case NORTH:
+			theBook->RotatePage(theBook->current, WEST);
+			break;
+		case EAST:
+			theBook->RotatePage(theBook->current, NORTH);
+			break;
+		case SOUTH:
+			theBook->RotatePage(theBook->current, EAST);
+			break;
+		case WEST:
+			theBook->RotatePage(theBook->current, SOUTH);
+			break;
+		}
+	}
+	GoToPage(theBook->current);
+}
+
 void ComicalCanvas::Rotate(COMICAL_ROTATE direction)
 {
 	theBook->RotatePage(theBook->current, direction);
 	GoToPage(theBook->current);
 }
 
-void ComicalCanvas::RotatePrev(COMICAL_ROTATE direction)
+void ComicalCanvas::RotateLeft(bool clockwise)
+{
+	if(theBook->current > 0)
+	{
+		COMICAL_ROTATE direction = theBook->Orientations[theBook->current - 1];
+		if (clockwise)
+		{
+			switch (direction)
+			{
+			case NORTH:
+				theBook->RotatePage(theBook->current - 1, EAST);
+				break;
+			case EAST:
+				theBook->RotatePage(theBook->current - 1, SOUTH);
+				break;
+			case SOUTH:
+				theBook->RotatePage(theBook->current - 1, WEST);
+				break;
+			case WEST:
+				theBook->RotatePage(theBook->current - 1, NORTH);
+				break;
+			}
+		}
+		else
+		{
+			switch (direction)
+			{
+			case NORTH:
+				theBook->RotatePage(theBook->current - 1, WEST);
+				break;
+			case EAST:
+				theBook->RotatePage(theBook->current - 1, NORTH);
+				break;
+			case SOUTH:
+				theBook->RotatePage(theBook->current - 1, EAST);
+				break;
+			case WEST:
+				theBook->RotatePage(theBook->current - 1, SOUTH);
+				break;
+			}
+		}
+		GoToPage(theBook->current - 1);
+	}
+}
+
+void ComicalCanvas::RotateLeft(COMICAL_ROTATE direction)
 {
 	if(theBook->current > 0)
 	{
 		theBook->RotatePage(theBook->current - 1, direction);
 		GoToPage(theBook->current - 1);
-	}
-}
-
-void ComicalCanvas::OnSize(wxSizeEvent &event)
-{
-	if (theBook != NULL)
-	{
-		SetParams();
-		GoToPage(theBook->current);
 	}
 }
 
@@ -575,11 +678,10 @@ void ComicalCanvas::OnKeyDown(wxKeyEvent& event)
 		NextPageTurn();
 		break;
 
-	case WXK_LEFT:
+	case WXK_BACK:
 		PrevPageSlide();
 		break;
 
-	case WXK_RIGHT:
 	case WXK_SPACE:
 		NextPageSlide();
 		break;

@@ -53,7 +53,7 @@ class ComicalCanvas : public wxScrolledWindow
 
   public:
     ComicalCanvas() {}
-    ComicalCanvas(wxWindow *parent, wxWindowID, const wxPoint &pos, const wxSize &size);
+    ComicalCanvas(wxWindow *parent, const wxPoint &pos, const wxSize &size);
     ~ComicalCanvas();
 
     void FirstPage();
@@ -66,8 +66,10 @@ class ComicalCanvas : public wxScrolledWindow
     void Zoom(COMICAL_ZOOM);
     void Mode(COMICAL_MODE);
     void Filter(FREE_IMAGE_FILTER);
+    void Rotate(bool);
+    void RotateLeft(bool);
     void Rotate(COMICAL_ROTATE);
-    void RotatePrev(COMICAL_ROTATE);
+    void RotateLeft(COMICAL_ROTATE);
 
     void SetParams();
 
@@ -80,7 +82,6 @@ class ComicalCanvas : public wxScrolledWindow
 
     void OnPaint(wxPaintEvent &event);
     void OnKeyDown(wxKeyEvent &event);
-    void OnSize(wxSizeEvent &event);
 
     wxBitmap *leftPage, *rightPage, *centerPage;
     COMICAL_ZOOM zoom;

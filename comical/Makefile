@@ -10,7 +10,7 @@ LDFLAGS = `wx-config --libs` -Lunrar -lunrar
 .cpp.o:
 	$(CC) $(CFLAGS) -c -o $*.o $<
 
-ALL.O = src/ComicBook.o src/ComicBookRAR.o src/ComicBookZIP.o src/ComicPage.o src/ComicalApp.o src/ComicalCanvas.o src/Resize.o src/rarstrm.o
+ALL.O = src/ComicBook.o src/ComicBookRAR.o src/ComicBookZIP.o src/ComicalApp.o src/ComicalCanvas.o src/Resize.o src/rarstrm.o
 
 comical: $(ALL.O)
 	$(CC) -o $@ $(ALL.O) $(LDFLAGS)

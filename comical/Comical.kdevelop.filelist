@@ -199,3 +199,4 @@ Comical.pbproj/CVS/Repository
 Comical.pbproj/CVS/Root
 src/pstream.h
 src/ComicalLog.h
+src/enums.h

@@ -29,6 +29,14 @@
 
 #ifndef __WXMAC__
 #include "../Comical Icons/comical.xpm"  // the icon!
+#include "../Comical Icons/firstpage.xpm"
+#include "../Comical Icons/prevpage.xpm"
+#include "../Comical Icons/prev.xpm"
+#include "../Comical Icons/next.xpm"
+#include "../Comical Icons/nextpage.xpm"
+#include "../Comical Icons/lastpage.xpm"
+#include "../Comical Icons/rot_cw.xpm"
+#include "../Comical Icons/rot_ccw.xpm"
 #endif
 
 // Create a new application object.
@@ -119,10 +127,10 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	menuView->Append(ID_RotateLeft, _T("Rotate Left Page"), menuRotateLeft);
 
 	menuRotateRight = new wxMenu;
-	menuRotateRight->AppendRadioItem(ID_NorthRight, _T("Normal"), _T("No rotation."));
-	menuRotateRight->AppendRadioItem(ID_EastRight, _T("90 Clockwise"), _T("Rotate 90 degrees clockwise."));
-	menuRotateRight->AppendRadioItem(ID_SouthRight, _T("180"), _T("Rotate 180 degrees."));
-	menuRotateRight->AppendRadioItem(ID_WestRight, _T("90 Counter-Clockwise"), _T("Rotate 90 degrees counter-clockwise."));
+	menuRotateRight->AppendRadioItem(ID_North, _T("Normal"), _T("No rotation."));
+	menuRotateRight->AppendRadioItem(ID_East, _T("90 Clockwise"), _T("Rotate 90 degrees clockwise."));
+	menuRotateRight->AppendRadioItem(ID_South, _T("180"), _T("Rotate 180 degrees."));
+	menuRotateRight->AppendRadioItem(ID_West, _T("90 Counter-Clockwise"), _T("Rotate 90 degrees counter-clockwise."));
 	menuView->Append(ID_RotateRight, _T("Rotate Ri&ght Page"), menuRotateRight);
 
 	menuMode = new wxMenu;
@@ -165,7 +173,26 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	menuMode->FindItemByPosition(Mode)->Check(true);
 	menuFilter->FindItemByPosition(Filter)->Check(true);
 	
-	theCanvas = new ComicalCanvas(this, -1, wxPoint(0,0), wxSize(10,10));
+	theCanvas = new ComicalCanvas(this, wxPoint(0,0), this->GetClientSize());
+
+	toolBarNav = new wxToolBar(this, -1, wxPoint(0, this->GetClientSize().y), wxDefaultSize, wxNO_BORDER | wxTB_HORIZONTAL | wxTB_FLAT);
+	toolBarNav->SetToolBitmapSize(wxSize(16, 16));
+	rot_ccw_left = toolBarNav->AddTool(ID_CCWL, _T("Rotate Counter-Clockwise (left page)"), wxBITMAP(rot_ccw), _T("Rotate Counter-Clockwise (left page)"));
+	rot_cw_left = toolBarNav->AddTool(ID_CWL, _T("Rotate Clockwise (left page)"), wxBITMAP(rot_cw), _T("Rotate Clockwise (left page)"));
+	toolBarNav->AddSeparator();
+	toolBarNav->AddTool(ID_First, _T("First Page"), wxBITMAP(firstpage), _T("First Page"));
+	toolBarNav->AddTool(ID_PrevTurn, _T("Previous Page Turn"), wxBITMAP(prevpage), _T("Previous Page Turn"));
+	toolBarNav->AddTool(ID_PrevSlide, _T("Previous Page"), wxBITMAP(prev), _T("Previous Page"));
+	toolBarNav->AddTool(ID_NextSlide, _T("Next Page"), wxBITMAP(next), _T("Next Page"));
+	toolBarNav->AddTool(ID_NextTurn, _T("Next Page Turn"), wxBITMAP(nextpage), _T("Next Page Turn"));
+	toolBarNav->AddTool(ID_Last, _T("Last Page"), wxBITMAP(lastpage), _T("Last Page"));
+	toolBarNav->AddSeparator();
+	toolBarNav->AddTool(ID_CCW, _T("Rotate Counter-Clockwise"), wxBITMAP(rot_ccw), _T("Rotate Counter-Clockwise"));
+	toolBarNav->AddTool(ID_CW, _T("Rotate Clockwise"), wxBITMAP(rot_cw), _T("Rotate Clockwise"));
+	toolBarNav->Realize();
+
+	wxSize clientSize = GetClientSize();
+	toolBarNav->SetSize(0, clientSize.y, clientSize.x, -1);
 }
 
 BEGIN_EVENT_TABLE(ComicalFrame, wxFrame)
@@ -182,34 +209,16 @@ BEGIN_EVENT_TABLE(ComicalFrame, wxFrame)
 #ifndef __WXMAC__
 	EVT_MENU(ID_Full,	ComicalFrame::OnFull)
 #endif
-	EVT_MENU(ID_Unzoomed,	ComicalFrame::OnZoom)
-	EVT_MENU(ID_3Q,		ComicalFrame::OnZoom)
-	EVT_MENU(ID_Half,	ComicalFrame::OnZoom)
-	EVT_MENU(ID_1Q,		ComicalFrame::OnZoom)
-	EVT_MENU(ID_Fit,	ComicalFrame::OnZoom)
-	EVT_MENU(ID_FitH,	ComicalFrame::OnZoom)
-	EVT_MENU(ID_FitV,	ComicalFrame::OnZoom)
-	EVT_MENU(ID_Box,	ComicalFrame::OnFilter)
-	EVT_MENU(ID_Bicubic,	ComicalFrame::OnFilter)
-	EVT_MENU(ID_Bilinear,	ComicalFrame::OnFilter)
-	EVT_MENU(ID_BSpline,	ComicalFrame::OnFilter)
-	EVT_MENU(ID_CatmullRom,	ComicalFrame::OnFilter)
-	EVT_MENU(ID_Lanczos,	ComicalFrame::OnFilter)
 	EVT_MENU(ID_Double,	ComicalFrame::OnDouble)
 	EVT_MENU(ID_Single,	ComicalFrame::OnSingle)
-	EVT_MENU(ID_North,	ComicalFrame::OnRotate)
-	EVT_MENU(ID_NorthRight,	ComicalFrame::OnRotate)
-	EVT_MENU(ID_East,	ComicalFrame::OnRotate)
-	EVT_MENU(ID_EastRight,	ComicalFrame::OnRotate)
-	EVT_MENU(ID_South,	ComicalFrame::OnRotate)
-	EVT_MENU(ID_SouthRight,	ComicalFrame::OnRotate)
-	EVT_MENU(ID_West,	ComicalFrame::OnRotate)
-	EVT_MENU(ID_WestRight,	ComicalFrame::OnRotate)
-	EVT_MENU(ID_NorthLeft,	ComicalFrame::OnRotatePrev)
-	EVT_MENU(ID_EastLeft,	ComicalFrame::OnRotatePrev)
-	EVT_MENU(ID_SouthLeft,	ComicalFrame::OnRotatePrev)
-	EVT_MENU(ID_WestLeft,	ComicalFrame::OnRotatePrev)
+	EVT_MENU_RANGE(ID_Unzoomed, ID_FitH, ComicalFrame::OnZoom)
+	EVT_MENU_RANGE(ID_Box, ID_Lanczos, ComicalFrame::OnFilter)
+	EVT_MENU_RANGE(ID_CW, ID_CCW, ComicalFrame::OnRotate)
+	EVT_MENU_RANGE(ID_CWL, ID_CCWL, ComicalFrame::OnRotateLeft)
+	EVT_MENU_RANGE(ID_North, ID_West, ComicalFrame::OnRotate)
+	EVT_MENU_RANGE(ID_NorthLeft, ID_WestLeft, ComicalFrame::OnRotateLeft)
 	EVT_CLOSE(ComicalFrame::OnClose)
+	EVT_SIZE(ComicalFrame::OnSize)
 END_EVENT_TABLE()
 
 void ComicalFrame::OnClose(wxCloseEvent& event)
@@ -231,8 +240,7 @@ void ComicalFrame::OnQuit(wxCommandEvent& event)
 
 void ComicalFrame::OnAbout(wxCommandEvent& event)
 {
-	wxMessageDialog AboutDlg(this, "Comical 0.5, (c) 2003-2005 James Athey.  Comical is licensed under the GPL, version 2, with a linking exception; see COPYING for details.", _T("About Comical"), wxOK);
-	AboutDlg.SetSize(500,330);
+	wxMessageDialog AboutDlg(this, "Comical 0.5, (c) 2003-2005 James Athey.\nComical is licensed under the GPL, version 2,\nwith a linking exception; see COPYING for details.", _T("About Comical"), wxOK);
 	AboutDlg.ShowModal();
 }
 
@@ -396,46 +404,54 @@ void ComicalFrame::OnRotate(wxCommandEvent& event)
 {
 	switch (event.GetId())
 	{
+	case ID_CW:
+		theCanvas->Rotate(true);
+		break;
+	case ID_CCW:
+		theCanvas->Rotate(false);
+		break;
 	case ID_North:
-	case ID_NorthRight:
 		theCanvas->Rotate(NORTH);
 		break;
 	case ID_East:
-	case ID_EastRight:
 		theCanvas->Rotate(EAST);
 		break;
 	case ID_South:
-	case ID_SouthRight:
 		theCanvas->Rotate(SOUTH);
 		break;
 	case ID_West:
-	case ID_WestRight:
 		theCanvas->Rotate(WEST);
 		break;
 	default:
-		wxLogError("I don't think I can turn that way: " + event.GetId()); // we shouldn't be here... honest!
+		wxLogError("I don't think I can turn that way: %d", event.GetId()); // we shouldn't be here... honest!
 		break;
 	}
 }
 
-void ComicalFrame::OnRotatePrev(wxCommandEvent& event)
+void ComicalFrame::OnRotateLeft(wxCommandEvent& event)
 {
 	switch (event.GetId())
 	{
+	case ID_CWL:
+		theCanvas->RotateLeft(true);
+		break;
+	case ID_CCWL:
+		theCanvas->RotateLeft(false);
+		break;
 	case ID_NorthLeft:
-		theCanvas->RotatePrev(NORTH);
+		theCanvas->RotateLeft(NORTH);
 		break;
 	case ID_EastLeft:
-		theCanvas->RotatePrev(EAST);
+		theCanvas->RotateLeft(EAST);
 		break;
 	case ID_SouthLeft:
-		theCanvas->RotatePrev(SOUTH);
+		theCanvas->RotateLeft(SOUTH);
 		break;
 	case ID_WestLeft:
-		theCanvas->RotatePrev(WEST);
+		theCanvas->RotateLeft(WEST);
 		break;
 	default:
-		wxLogError("I don't think I can turn that way: " + event.GetId()); // we shouldn't be here... honest!
+		wxLogError("I don't think I can turn that way: %d", event.GetId()); // we shouldn't be here... honest!
 		break;
 	}
 }
@@ -456,4 +472,26 @@ void ComicalFrame::OnDouble(wxCommandEvent& event)
 	prev->Enable(true);
 	next->Enable(true);
 	theCanvas->Mode(DOUBLE);
+}
+
+wxSize ComicalFrame::GetClientSize()
+{
+	wxSize clientSize = this->wxFrame::GetClientSize();
+	if (toolBarNav == NULL)
+		return clientSize;
+	clientSize.SetHeight(clientSize.y - toolBarNav->GetSize().y);
+	return clientSize;
+}
+
+void ComicalFrame::OnSize(wxSizeEvent& event)
+{
+	wxSize clientSize = GetClientSize();
+	if (toolBarNav != NULL)
+	{
+		toolBarNav->SetSize(0, clientSize.y, clientSize.x, -1);
+	}
+	if (theCanvas != NULL)
+	{
+		theCanvas->SetSize(0, 0, clientSize.x, clientSize.y);
+	}
 }
