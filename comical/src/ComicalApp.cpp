@@ -175,10 +175,11 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	
 	theCanvas = new ComicalCanvas(this, wxPoint(0,0), this->GetClientSize());
 
-	toolBarNav = new wxToolBar(this, -1, wxPoint(0, this->GetClientSize().y), wxDefaultSize, wxNO_BORDER | wxTB_HORIZONTAL | wxTB_FLAT);
+	progress = new wxGauge(this, -1, 10, wxPoint(0, this->GetClientSize().y), wxSize(this->GetClientSize().x, 10));
+	toolBarNav = new wxToolBar(this, -1, wxPoint(0, this->GetClientSize().y + 10), wxDefaultSize, wxNO_BORDER | wxTB_HORIZONTAL | wxTB_FLAT);
 	toolBarNav->SetToolBitmapSize(wxSize(16, 16));
-	rot_ccw_left = toolBarNav->AddTool(ID_CCWL, _T("Rotate Counter-Clockwise (left page)"), wxBITMAP(rot_ccw), _T("Rotate Counter-Clockwise (left page)"));
-	rot_cw_left = toolBarNav->AddTool(ID_CWL, _T("Rotate Clockwise (left page)"), wxBITMAP(rot_cw), _T("Rotate Clockwise (left page)"));
+	toolBarNav->AddTool(ID_CCWL, _T("Rotate Counter-Clockwise (left page)"), wxBITMAP(rot_ccw), _T("Rotate Counter-Clockwise (left page)"));
+	toolBarNav->AddTool(ID_CWL, _T("Rotate Clockwise (left page)"), wxBITMAP(rot_cw), _T("Rotate Clockwise (left page)"));
 	toolBarNav->AddSeparator();
 	toolBarNav->AddTool(ID_First, _T("First Page"), wxBITMAP(firstpage), _T("First Page"));
 	toolBarNav->AddTool(ID_PrevTurn, _T("Previous Page Turn"), wxBITMAP(prevpage), _T("Previous Page Turn"));
@@ -189,10 +190,17 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	toolBarNav->AddSeparator();
 	toolBarNav->AddTool(ID_CCW, _T("Rotate Counter-Clockwise"), wxBITMAP(rot_ccw), _T("Rotate Counter-Clockwise"));
 	toolBarNav->AddTool(ID_CW, _T("Rotate Clockwise"), wxBITMAP(rot_cw), _T("Rotate Clockwise"));
+	toolBarNav->Enable(false);
 	toolBarNav->Realize();
 
 	wxSize clientSize = GetClientSize();
-	toolBarNav->SetSize(0, clientSize.y, clientSize.x, -1);
+	wxSize buttonSize = toolBarNav->GetToolSize();
+	wxSize marginSize = toolBarNav->GetMargins();
+	int width = 288;
+	int xPos = (clientSize.x - width) / 2;
+	progress->SetSize(0, clientSize.y, clientSize.x, 10);
+	toolBarNav->SetSize(xPos, clientSize.y + 10, width, -1);
+	toolBarNav->Realize();
 }
 
 BEGIN_EVENT_TABLE(ComicalFrame, wxFrame)
@@ -280,13 +288,16 @@ void ComicalFrame::OpenFile(wxString filename)
 		{
 			theCanvas->theBook = theBook;
 			theCanvas->SetParams();
+
+			toolBarNav->Enable(true);
+			progress->SetRange(theBook->pagecount - 1);
+			progress->SetValue(0);
 	
 			theBook->Run(); // start the thread
 	
 			OnFirst(*(new wxCommandEvent()));
 			SetTitle(_T("Comical - " + filename));
-			config->Write("/Comical/CWD",wxPathOnly(filename));
-
+			config->Write("/Comical/CWD", wxPathOnly(filename));
 		}
 	}
 }
@@ -477,21 +488,20 @@ void ComicalFrame::OnDouble(wxCommandEvent& event)
 wxSize ComicalFrame::GetClientSize()
 {
 	wxSize clientSize = this->wxFrame::GetClientSize();
-	if (toolBarNav == NULL)
-		return clientSize;
-	clientSize.SetHeight(clientSize.y - toolBarNav->GetSize().y);
+	int y = clientSize.y;
+	if (toolBarNav != NULL)
+		y -= toolBarNav->GetSize().y;
+	if (progress != NULL)
+		y -= progress->GetSize().y;
+	clientSize.SetHeight(y);
 	return clientSize;
 }
 
-void ComicalFrame::OnSize(wxSizeEvent& event)
+void ComicalFrame::OnSize(wxSizeEvent &event)
 {
-	wxSize clientSize = GetClientSize();
-	if (toolBarNav != NULL)
-	{
-		toolBarNav->SetSize(0, clientSize.y, clientSize.x, -1);
-	}
 	if (theCanvas != NULL)
 	{
-		theCanvas->SetSize(0, 0, clientSize.x, clientSize.y);
+		wxSize clientSize = GetClientSize();
+		theCanvas->SetSize(clientSize);
 	}
 }

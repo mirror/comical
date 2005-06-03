@@ -1,7 +1,7 @@
 Fix Mac OS X document types
 run everything through code beautifier
 Japan-mode (right-to-left)
-Center toolbar buttons
+Fix toolbar and gauge placement on start
 LastPage(), PrevPageSlide(), NextPageSlide() shows last page on both sides
 Fix Fit-to-Height behavior
 call unrar's makefile.linux from main Makefile

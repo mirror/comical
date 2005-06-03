@@ -50,18 +50,19 @@ ComicalCanvas::ComicalCanvas(wxWindow *prnt, const wxPoint &pos, const wxSize &s
 BEGIN_EVENT_TABLE(ComicalCanvas, wxScrolledWindow)
 	EVT_PAINT(ComicalCanvas::OnPaint)
 	EVT_KEY_DOWN(ComicalCanvas::OnKeyDown)
+	EVT_SIZE(ComicalCanvas::OnSize)
 END_EVENT_TABLE()
 
 ComicalCanvas::~ComicalCanvas()
 {
-	ClearBitmaps();
+	clearBitmaps();
 	wxConfigBase *config = wxConfigBase::Get();
 	config->Write("/Comical/Zoom", zoom);
 	config->Write("/Comical/Mode", mode);
 	config->Write("/Comical/Filter", filter);
 }
 
-void ComicalCanvas::ClearBitmap(wxBitmap *&bitmap)
+void ComicalCanvas::clearBitmap(wxBitmap *&bitmap)
 {
 	if (bitmap && bitmap->Ok())
 	{
@@ -70,11 +71,11 @@ void ComicalCanvas::ClearBitmap(wxBitmap *&bitmap)
 	}
 }
 
-void ComicalCanvas::ClearBitmaps()
+void ComicalCanvas::clearBitmaps()
 {
-	ClearBitmap(leftPage);
-	ClearBitmap(centerPage);
-	ClearBitmap(rightPage);
+	clearBitmap(leftPage);
+	clearBitmap(centerPage);
+	clearBitmap(rightPage);
 }
 
 void ComicalCanvas::FirstPage()
@@ -85,13 +86,13 @@ void ComicalCanvas::FirstPage()
 	
 	if (theBook == NULL)
 		return;
-	theBook->current = 0;
+	setPage(0);
 	
 	bitmap = theBook->GetPage(0);
 
 	if (bitmap->Ok())
 	{
-		ClearBitmaps();
+		clearBitmaps();
 		xImage = bitmap->GetWidth();
 		yImage = bitmap->GetHeight();
 
@@ -103,7 +104,7 @@ void ComicalCanvas::FirstPage()
 		else
 			rightPage = bitmap;
 		
-		CreateBitmaps();
+		createBitmaps();
 	}
 }
 
@@ -114,13 +115,13 @@ void ComicalCanvas::LastPage()
 	float rImage;
 	
 	if (theBook == NULL) return;
-	theBook->current = theBook->pagecount - 1;
+	setPage(theBook->pagecount - 1);
 	
 	bitmap = theBook->GetPage(theBook->current);
 
 	if (bitmap->Ok())
 	{
-		ClearBitmaps();
+		clearBitmaps();
 		xImage = bitmap->GetWidth();
 		yImage = bitmap->GetHeight();
 
@@ -132,7 +133,7 @@ void ComicalCanvas::LastPage()
 		else
 			leftPage = bitmap;
 
-		CreateBitmaps();
+		createBitmaps();
 
 	}
 }
@@ -145,13 +146,13 @@ void ComicalCanvas::GoToPage(int pagenumber)
 	
 	if (theBook == NULL) return;
 	if (pagenumber >= int(theBook->pagecount) || pagenumber < 0) return;
-	theBook->current = pagenumber;
+	setPage(pagenumber);
 	
 	bitmap = theBook->GetPage(theBook->current);
 
 	if (bitmap)	if (bitmap->Ok())
 	{
-		ClearBitmaps();
+		clearBitmaps();
 		xImage = bitmap->GetWidth();
 		yImage = bitmap->GetHeight();
 
@@ -177,7 +178,7 @@ void ComicalCanvas::GoToPage(int pagenumber)
 			}
 		}
 
-		CreateBitmaps();
+		createBitmaps();
 
 	}
 }
@@ -191,15 +192,15 @@ void ComicalCanvas::PrevPageTurn()
 	if (theBook == NULL) return;
 	if (theBook->current <= 0) return;
 	if (!leftPage || !rightPage || theBook->current == 1)
-		theBook->current -= 1;
+		setPage(theBook->current - 1);
 	else
-		theBook->current -= 2;
+		setPage(theBook->current - 2);
 
 	bitmap = theBook->GetPage(theBook->current);
 
 	if (bitmap->Ok())
 	{
-		ClearBitmaps();
+		clearBitmaps();
 		xImage = bitmap->GetWidth();
 		yImage = bitmap->GetHeight();
 
@@ -225,12 +226,12 @@ void ComicalCanvas::PrevPageTurn()
 					if (rImage < 1.0f) // Only if this page is also not a double do we display it
 						leftPage = bitmap;
 					else
-						ClearBitmap(bitmap);
+						clearBitmap(bitmap);
 				}
 			}
 		}
 
-		CreateBitmaps();
+		createBitmaps();
 
 	}
 }
@@ -251,12 +252,12 @@ void ComicalCanvas::NextPageTurn()
 		return;
 	}
 
-	theBook->current++;
+	setPage(theBook->current + 1);
 	bitmap = theBook->GetPage(theBook->current);
 
 	if (bitmap->Ok())
 	{
-		ClearBitmaps();
+		clearBitmaps();
 		xImage = bitmap->GetWidth();
 		yImage = bitmap->GetHeight();
 
@@ -271,7 +272,8 @@ void ComicalCanvas::NextPageTurn()
 			leftPage = bitmap;
 			if (theBook->current + 1 < theBook->pagecount)
 			{
-				bitmap = theBook->GetPage(++theBook->current);
+				setPage(theBook->current + 1);
+				bitmap = theBook->GetPage(theBook->current);
 				if (bitmap->Ok())
 				{
 					xImage = bitmap->GetWidth();
@@ -281,14 +283,14 @@ void ComicalCanvas::NextPageTurn()
 						rightPage = bitmap;
 					else
 					{
-						theBook->current--;
-						ClearBitmap(bitmap);
+						setPage(theBook->current - 1);
+						clearBitmap(bitmap);
 					}
 				}
 			}
 		}
 
-		CreateBitmaps();
+		createBitmaps();
 
 	}
 }
@@ -314,7 +316,7 @@ void ComicalCanvas::PrevPageSlide()
 		return;
 	}
 
-	theBook->current--;
+	setPage(theBook->current - 1);
 
 	if (mode == SINGLE)
 		bitmap = theBook->GetPage(theBook->current);
@@ -324,8 +326,8 @@ void ComicalCanvas::PrevPageSlide()
 	if (bitmap->Ok())
 	{
 
-		ClearBitmap(rightPage);
-		ClearBitmap(centerPage);
+		clearBitmap(rightPage);
+		clearBitmap(centerPage);
 
 		xImage = bitmap->GetWidth();
 		yImage = bitmap->GetHeight();
@@ -338,8 +340,8 @@ void ComicalCanvas::PrevPageSlide()
 			centerPage = bitmap;
 			if (mode == DOUBLE)
 			{
-				theBook->current--;
-				ClearBitmap(leftPage);
+				setPage(theBook->current - 1);
+				clearBitmap(leftPage);
 			}
 		}
 		else if (leftPage && leftPage->Ok())
@@ -348,7 +350,7 @@ void ComicalCanvas::PrevPageSlide()
 			leftPage = bitmap;
 		}
 
-		CreateBitmaps();
+		createBitmaps();
 
 	}
 }
@@ -368,14 +370,14 @@ void ComicalCanvas::NextPageSlide()
 		NextPageTurn();
 		return;
 	}
-	theBook->current++;
+	setPage(theBook->current + 1);
 	
 	bitmap = theBook->GetPage(theBook->current);
 	
 	if (bitmap->Ok())
 	{
-		ClearBitmap(leftPage);
-		ClearBitmap(centerPage);
+		clearBitmap(leftPage);
+		clearBitmap(centerPage);
 
 		xImage = bitmap->GetWidth();
 		yImage = bitmap->GetHeight();
@@ -386,7 +388,7 @@ void ComicalCanvas::NextPageSlide()
 		if (rImage >= 1.0f || mode == SINGLE)
 		{
 			centerPage = bitmap;
-			ClearBitmap(rightPage);
+			clearBitmap(rightPage);
 		}
 		else if (rightPage && rightPage->Ok())
 		{
@@ -394,12 +396,12 @@ void ComicalCanvas::NextPageSlide()
 			rightPage = bitmap;
 		}
 
-		CreateBitmaps();
+		createBitmaps();
 
 	}
 }
 
-void ComicalCanvas::CreateBitmaps()
+void ComicalCanvas::createBitmaps()
 {
 	int xScroll = 0, yScroll = 0, xWindow, yWindow;
 	bool left = false, right = false;
@@ -697,4 +699,22 @@ void ComicalCanvas::OnKeyDown(wxKeyEvent& event)
 	default:
 		event.Skip();
 	}
+}
+
+void ComicalCanvas::OnSize(wxSizeEvent& event)
+{
+	ComicalFrame *cParent = (ComicalFrame *) parent;
+	wxSize canvasSize = GetClientSize();
+	wxSize toolBarSize = cParent->toolBarNav->GetSize();
+	wxSize progressSize = cParent->progress->GetSize();
+	int tbxPos = (canvasSize.x - toolBarSize.x) / 2;
+	cParent->toolBarNav->SetSize(tbxPos, canvasSize.y + progressSize.y, toolBarSize.x, -1);
+	cParent->progress->SetSize(0, canvasSize.y, canvasSize.x, 10);
+}
+
+void ComicalCanvas::setPage(int pagenumber)
+{
+	theBook->current = pagenumber;
+	ComicalFrame *cParent = (ComicalFrame *) parent;
+	cParent->progress->SetValue(pagenumber);
 }

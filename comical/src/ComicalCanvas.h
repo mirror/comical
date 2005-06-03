@@ -76,12 +76,14 @@ class ComicalCanvas : public wxScrolledWindow
     ComicBook *theBook;
 
   private:
-    void ClearBitmap(wxBitmap *&bitmap);
-    void ClearBitmaps();
-    void CreateBitmaps();
+    void clearBitmap(wxBitmap *&bitmap);
+    void clearBitmaps();
+    void createBitmaps();
+    void setPage(int pagenumber);
 
     void OnPaint(wxPaintEvent &event);
     void OnKeyDown(wxKeyEvent &event);
+    void OnSize(wxSizeEvent &event);
 
     wxBitmap *leftPage, *rightPage, *centerPage;
     COMICAL_ZOOM zoom;
