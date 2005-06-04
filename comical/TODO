@@ -1,8 +1,6 @@
 Fix Mac OS X document types
 run everything through code beautifier
 Japan-mode (right-to-left)
-LastPage(), PrevPageSlide(), NextPageSlide() shows last page on both sides
-call unrar's makefile.linux from main Makefile
 
 Long Term:
 User-configurable keybindings
