@@ -176,6 +176,7 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	theCanvas = new ComicalCanvas(this, wxPoint(0,0), this->GetClientSize());
 
 	progress = new wxGauge(this, -1, 10, wxPoint(0, this->GetClientSize().y), wxSize(this->GetClientSize().x, 10));
+
 	toolBarNav = new wxToolBar(this, -1, wxPoint(0, this->GetClientSize().y + 10), wxDefaultSize, wxNO_BORDER | wxTB_HORIZONTAL | wxTB_FLAT);
 	toolBarNav->SetToolBitmapSize(wxSize(16, 16));
 	toolBarNav->AddTool(ID_CCWL, _T("Rotate Counter-Clockwise (left page)"), wxBITMAP(rot_ccw), _T("Rotate Counter-Clockwise (left page)"));
@@ -194,12 +195,17 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	toolBarNav->Realize();
 
 	wxSize clientSize = GetClientSize();
-	wxSize buttonSize = toolBarNav->GetToolSize();
-	wxSize marginSize = toolBarNav->GetMargins();
-	int width = 288;
-	int xPos = (clientSize.x - width) / 2;
+	// GetToolSize is returning the same value as GetToolBitmapSize,
+	// i.e., wxSize(16,16), and GetToolMargins is returning wxSize(0,0).
+	// I want the toolbar to be just large enough to contain all of the
+	// buttons inside of it, and I want to determine it programatically.
+	/*wxSize buttonSize = toolBarNav->GetToolSize();
+	wxSize marginSize = toolBarNav->GetToolMargins();
+	int tbWidth = (buttonSize.x * 12) + (marginSize.x * 14);*/
+	int tbWidth = 288;
+	int tbX = (clientSize.x - tbWidth) / 2;
 	progress->SetSize(0, clientSize.y, clientSize.x, 10);
-	toolBarNav->SetSize(xPos, clientSize.y + 10, width, -1);
+	toolBarNav->SetSize(tbX, clientSize.y + 10, tbWidth, -1);
 	toolBarNav->Realize();
 }
 

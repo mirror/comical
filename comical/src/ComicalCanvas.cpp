@@ -404,7 +404,7 @@ void ComicalCanvas::NextPageSlide()
 void ComicalCanvas::createBitmaps()
 {
 	int xScroll = 0, yScroll = 0, xWindow, yWindow;
-	bool left = false, right = false;
+	bool leftOk = false, rightOk = false;
 	
 	GetClientSize(&xWindow, &yWindow);
 
@@ -428,10 +428,10 @@ void ComicalCanvas::createBitmaps()
 	{
 		cParent->menuView->FindItem(ID_Rotate)->Enable(false);
 
-		if (rightPage && (right = rightPage->Ok()))
+		if (rightPage && (rightOk = rightPage->Ok()))
 		{
-			xScroll += rightPage->GetWidth();
-			yScroll = (rightPage->GetHeight() > yScroll) ? rightPage->GetHeight() : yScroll;
+			xScroll = rightPage->GetWidth();
+			yScroll = rightPage->GetHeight();
 
 			cParent->menuView->FindItem(ID_RotateRight)->Enable(true);
 			cParent->menuRotateRight->FindItemByPosition(theBook->Orientations[theBook->current])->Check();
@@ -445,10 +445,10 @@ void ComicalCanvas::createBitmaps()
 			cParent->toolBarNav->EnableTool(ID_CW, false);
 		}
 	
-		if (leftPage && (left = leftPage->Ok()))
+		if (leftPage && (leftOk = leftPage->Ok()))
 		{
-			xScroll += leftPage->GetWidth();
-			yScroll = leftPage->GetHeight();
+			xScroll = (leftPage->GetWidth() > xScroll) ? leftPage->GetWidth() : xScroll;
+			yScroll = (leftPage->GetHeight() > yScroll) ? leftPage->GetHeight() : yScroll;
 
 			cParent->menuView->FindItem(ID_RotateLeft)->Enable(true);
 			cParent->menuRotateLeft->FindItemByPosition(theBook->Orientations[theBook->current - 1])->Check();
@@ -462,8 +462,7 @@ void ComicalCanvas::createBitmaps()
 			cParent->toolBarNav->EnableTool(ID_CWL, false);
 		}
 
-		if (!left || !right) // if only one page is active
-			xScroll *= 2;
+		xScroll *= 2;
 	}
 
 	cParent->toolBarNav->Realize();
@@ -512,11 +511,8 @@ void ComicalCanvas::Mode(COMICAL_MODE newmode)
 
 void ComicalCanvas::SetParams()
 {
-	int xCanvas, yCanvas;
-	GetClientSize(&xCanvas, &yCanvas); // Client Size is the visible area
-	x = xCanvas;
-	y = yCanvas;
-	theBook->SetParams(mode, filter, zoom, xCanvas, yCanvas);
+	wxSize clientSize = GetClientSize(); // Client Size is the visible area
+	theBook->SetParams(mode, filter, zoom, clientSize.x, clientSize.y);
 }
 
 void ComicalCanvas::Rotate(bool clockwise)
@@ -628,28 +624,7 @@ void ComicalCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 	wxPaintDC dc(this);
 	PrepareDC(dc);
 
-	GetClientSize(&xCanvas, &yCanvas);
-	/* I can't properly initialize x and y until the constructors are done, but
-		 if I just leave the values uninitialized, the very first image will be
-		 resized twice.	Here, when OnPaint is called for the first time, the values
-		 will be initialized.	*/
-	if (x == -1 && y == -1)
-	{
-		x = xCanvas;
-		y = yCanvas;
-	}
-
-	if (zoom == FIT || zoom == FITH || zoom == FITV)
-	{
-		if (xCanvas != x || yCanvas != y)
-		{
-			x = xCanvas;
-			y = yCanvas;
-			SetParams();
-			GoToPage(theBook->current);
-			return;
-		}
-	}
+	GetVirtualSize(&xCanvas, &yCanvas);
 
 	if (centerPage && centerPage->Ok())
 	{
@@ -704,12 +679,21 @@ void ComicalCanvas::OnKeyDown(wxKeyEvent& event)
 void ComicalCanvas::OnSize(wxSizeEvent& event)
 {
 	ComicalFrame *cParent = (ComicalFrame *) parent;
-	wxSize canvasSize = GetClientSize();
-	wxSize toolBarSize = cParent->toolBarNav->GetSize();
-	wxSize progressSize = cParent->progress->GetSize();
-	int tbxPos = (canvasSize.x - toolBarSize.x) / 2;
-	cParent->toolBarNav->SetSize(tbxPos, canvasSize.y + progressSize.y, toolBarSize.x, -1);
-	cParent->progress->SetSize(0, canvasSize.y, canvasSize.x, 10);
+	if (cParent->toolBarNav != NULL && cParent->progress != NULL)
+	{
+		wxSize clientSize = GetClientSize();
+		wxSize canvasSize = GetSize();
+		wxSize toolBarSize = cParent->toolBarNav->GetSize();
+		wxSize progressSize = cParent->progress->GetSize();
+		int tbxPos = (clientSize.x - toolBarSize.x) / 2;
+		cParent->toolBarNav->SetSize(tbxPos, canvasSize.y + progressSize.y, toolBarSize.x, -1);
+		cParent->progress->SetSize(0, canvasSize.y, canvasSize.x, 10);
+	}
+	if (theBook != NULL)
+	{
+		SetParams();
+		GoToPage(theBook->current);
+	}
 }
 
 void ComicalCanvas::setPage(int pagenumber)
