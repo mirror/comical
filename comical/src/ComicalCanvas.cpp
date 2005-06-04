@@ -110,7 +110,13 @@ void ComicalCanvas::FirstPage()
 
 void ComicalCanvas::LastPage()
 {
-	wxBitmap *bitmap;
+	if (theBook == NULL)
+		return;
+	GoToPage(theBook->pagecount - 1);
+/* Commenting this out because it puts the last page on the left side, instead
+ * of the right.  If you then do PrevPageSlide() and NextPageSlide(), you see
+ * the last page on both sides. */
+/*	wxBitmap *bitmap;
 	int xImage, yImage;
 	float rImage;
 	
@@ -135,8 +141,9 @@ void ComicalCanvas::LastPage()
 
 		createBitmaps();
 
-	}
+	}*/
 }
+
 
 void ComicalCanvas::GoToPage(int pagenumber)
 {
