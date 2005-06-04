@@ -256,8 +256,24 @@ void ComicBook::ScaleImage(uint pagenumber)
 
 	case FULL: // no resize
 	default:
-		scalingFactor = 1.0f;
-		break;
+		switch (Orientations[pagenumber])
+		{
+		case NORTH:
+			Resamples[pagenumber] = wxImage(orig);
+			break;
+		case EAST:
+			Resamples[pagenumber] = wxImage(orig).Rotate90(true);
+			break;
+		case SOUTH:
+			Resamples[pagenumber] = wxImage(orig).Rotate90().Rotate90();
+			break;
+		case WEST:
+			Resamples[pagenumber] = wxImage(orig).Rotate90(false);
+			break;
+		default:
+			break;
+		}
+		return;
 	}
 
 	switch (Orientations[pagenumber])
