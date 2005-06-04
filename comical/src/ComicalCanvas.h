@@ -91,7 +91,6 @@ class ComicalCanvas : public wxScrolledWindow
     FREE_IMAGE_FILTER filter;
 
     wxWindow *parent;
-    int x,y;
 
     DECLARE_DYNAMIC_CLASS(ComicalCanvas)
     DECLARE_EVENT_TABLE()

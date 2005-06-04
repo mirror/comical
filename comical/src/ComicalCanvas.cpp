@@ -44,7 +44,6 @@ ComicalCanvas::ComicalCanvas(wxWindow *prnt, const wxPoint &pos, const wxSize &s
 	mode = (COMICAL_MODE) config->Read("/Comical/Mode", 1l); // Double-Page is default
 	filter = (FREE_IMAGE_FILTER) config->Read("/Comical/Filter", 4l); // Catmull-Rom is default
 	leftPage = rightPage = centerPage = NULL;
-	x = -1; y = -1;
 }
 
 BEGIN_EVENT_TABLE(ComicalCanvas, wxScrolledWindow)
@@ -76,6 +75,80 @@ void ComicalCanvas::clearBitmaps()
 	clearBitmap(leftPage);
 	clearBitmap(centerPage);
 	clearBitmap(rightPage);
+}
+
+void ComicalCanvas::createBitmaps()
+{
+	int xScroll = 0, yScroll = 0, xWindow, yWindow;
+	bool leftOk = false, rightOk = false;
+	
+	GetClientSize(&xWindow, &yWindow);
+
+	ComicalFrame *cParent = (ComicalFrame *) parent;
+
+	if (centerPage && centerPage->Ok())
+	{
+		xScroll = centerPage->GetWidth();
+		yScroll = centerPage->GetHeight();
+
+		cParent->menuView->FindItem(ID_RotateLeft)->Enable(false);
+		cParent->menuView->FindItem(ID_RotateRight)->Enable(false);
+		cParent->menuView->FindItem(ID_Rotate)->Enable(true);
+		cParent->menuRotate->FindItemByPosition(theBook->Orientations[theBook->current])->Check();
+		cParent->toolBarNav->EnableTool(ID_CCWL, false);
+		cParent->toolBarNav->EnableTool(ID_CWL, false);
+		cParent->toolBarNav->EnableTool(ID_CCW, true);
+		cParent->toolBarNav->EnableTool(ID_CW, true);
+	}
+	else
+	{
+		cParent->menuView->FindItem(ID_Rotate)->Enable(false);
+
+		if (rightPage && (rightOk = rightPage->Ok()))
+		{
+			xScroll = rightPage->GetWidth();
+			yScroll = rightPage->GetHeight();
+
+			cParent->menuView->FindItem(ID_RotateRight)->Enable(true);
+			cParent->menuRotateRight->FindItemByPosition(theBook->Orientations[theBook->current])->Check();
+			cParent->toolBarNav->EnableTool(ID_CCW, true);
+			cParent->toolBarNav->EnableTool(ID_CW, true);
+		}
+		else
+		{
+			cParent->menuView->FindItem(ID_RotateRight)->Enable(false);
+			cParent->toolBarNav->EnableTool(ID_CCW, false);
+			cParent->toolBarNav->EnableTool(ID_CW, false);
+		}
+	
+		if (leftPage && (leftOk = leftPage->Ok()))
+		{
+			xScroll = (leftPage->GetWidth() > xScroll) ? leftPage->GetWidth() : xScroll;
+			yScroll = (leftPage->GetHeight() > yScroll) ? leftPage->GetHeight() : yScroll;
+
+			cParent->menuView->FindItem(ID_RotateLeft)->Enable(true);
+			cParent->menuRotateLeft->FindItemByPosition(theBook->Orientations[theBook->current - 1])->Check();
+			cParent->toolBarNav->EnableTool(ID_CCWL, true);
+			cParent->toolBarNav->EnableTool(ID_CWL, true);
+		}
+		else
+		{
+			cParent->menuView->FindItem(ID_RotateLeft)->Enable(false);
+			cParent->toolBarNav->EnableTool(ID_CCWL, false);
+			cParent->toolBarNav->EnableTool(ID_CWL, false);
+		}
+
+		xScroll *= 2;
+	}
+
+	cParent->toolBarNav->Realize();
+	
+	// Add the remainder before dividing, so we have round-up instead of round-down integer division
+	xScroll += xScroll % 10;
+	yScroll += yScroll % 10;
+	SetScrollbars(10, 10, xScroll / 10, yScroll / 10);
+	Scroll((xScroll / 20) - (xWindow / 20), 0);
+	Refresh();
 }
 
 void ComicalCanvas::FirstPage()
@@ -406,76 +479,6 @@ void ComicalCanvas::NextPageSlide()
 		createBitmaps();
 
 	}
-}
-
-void ComicalCanvas::createBitmaps()
-{
-	int xScroll = 0, yScroll = 0, xWindow, yWindow;
-	bool leftOk = false, rightOk = false;
-	
-	GetClientSize(&xWindow, &yWindow);
-
-	ComicalFrame *cParent = (ComicalFrame *) parent;
-
-	if (centerPage && centerPage->Ok())
-	{
-		xScroll = centerPage->GetWidth();
-		yScroll = centerPage->GetHeight();
-
-		cParent->menuView->FindItem(ID_RotateLeft)->Enable(false);
-		cParent->menuView->FindItem(ID_RotateRight)->Enable(false);
-		cParent->menuView->FindItem(ID_Rotate)->Enable(true);
-		cParent->menuRotate->FindItemByPosition(theBook->Orientations[theBook->current])->Check();
-		cParent->toolBarNav->EnableTool(ID_CCWL, false);
-		cParent->toolBarNav->EnableTool(ID_CWL, false);
-		cParent->toolBarNav->EnableTool(ID_CCW, true);
-		cParent->toolBarNav->EnableTool(ID_CW, true);
-	}
-	else
-	{
-		cParent->menuView->FindItem(ID_Rotate)->Enable(false);
-
-		if (rightPage && (rightOk = rightPage->Ok()))
-		{
-			xScroll = rightPage->GetWidth();
-			yScroll = rightPage->GetHeight();
-
-			cParent->menuView->FindItem(ID_RotateRight)->Enable(true);
-			cParent->menuRotateRight->FindItemByPosition(theBook->Orientations[theBook->current])->Check();
-			cParent->toolBarNav->EnableTool(ID_CCW, true);
-			cParent->toolBarNav->EnableTool(ID_CW, true);
-		}
-		else
-		{
-			cParent->menuView->FindItem(ID_RotateRight)->Enable(false);
-			cParent->toolBarNav->EnableTool(ID_CCW, false);
-			cParent->toolBarNav->EnableTool(ID_CW, false);
-		}
-	
-		if (leftPage && (leftOk = leftPage->Ok()))
-		{
-			xScroll = (leftPage->GetWidth() > xScroll) ? leftPage->GetWidth() : xScroll;
-			yScroll = (leftPage->GetHeight() > yScroll) ? leftPage->GetHeight() : yScroll;
-
-			cParent->menuView->FindItem(ID_RotateLeft)->Enable(true);
-			cParent->menuRotateLeft->FindItemByPosition(theBook->Orientations[theBook->current - 1])->Check();
-			cParent->toolBarNav->EnableTool(ID_CCWL, true);
-			cParent->toolBarNav->EnableTool(ID_CWL, true);
-		}
-		else
-		{
-			cParent->menuView->FindItem(ID_RotateLeft)->Enable(false);
-			cParent->toolBarNav->EnableTool(ID_CCWL, false);
-			cParent->toolBarNav->EnableTool(ID_CWL, false);
-		}
-
-		xScroll *= 2;
-	}
-
-	cParent->toolBarNav->Realize();
-	SetScrollbars(10, 10, xScroll / 10, yScroll / 10);
-	Scroll((xScroll / 20) - (xWindow / 20), 0);
-	Refresh();
 }
 
 void ComicalCanvas::Zoom(COMICAL_ZOOM value)
