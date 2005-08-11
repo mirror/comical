@@ -48,6 +48,8 @@
 
 #include "ComicBook.h"
 
+enum PAGETYPE {FULL_PAGE, LEFT_HALF, RIGHT_HALF};
+
 class ComicalCanvas : public wxScrolledWindow
 {
 
@@ -58,7 +60,7 @@ class ComicalCanvas : public wxScrolledWindow
 
     void FirstPage();
     void LastPage();
-    void GoToPage(int pagenumber);
+    void GoToPage(uint pagenumber);
     void PrevPageTurn();
     void NextPageTurn();
     void PrevPageSlide();
@@ -86,6 +88,9 @@ class ComicalCanvas : public wxScrolledWindow
     void OnSize(wxSizeEvent &event);
 
     wxBitmap *leftPage, *rightPage, *centerPage;
+    int leftNum, rightNum;
+    PAGETYPE leftPart, rightPart;
+
     COMICAL_ZOOM zoom;
     COMICAL_MODE mode;
     FREE_IMAGE_FILTER filter;

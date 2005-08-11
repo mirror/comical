@@ -32,8 +32,8 @@
 
 ComicBook::~ComicBook()
 {
-	delete[] Originals;
-	delete[] Resamples;
+	delete[] originals;
+	delete[] resamples;
 	delete[] Orientations;
 	delete[] imageProtectors;
 }
@@ -44,7 +44,7 @@ void ComicBook::RotatePage(uint pagenumber, COMICAL_ROTATE direction)
 	{
 		wxMutexLocker lock(imageProtectors[pagenumber]);
 		Orientations[pagenumber] = direction;
-		Resamples[pagenumber].Destroy();
+		resamples[pagenumber].Destroy();
 	}
 }
 
@@ -52,17 +52,17 @@ void ComicBook::SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COM
 {
 	if(mode != newMode || fiFilter != newFilter || zoom != newZoom || width != newWidth || height != newHeight)
 	{
-		for (uint i = 0; i < pagecount; i++)
+		for (uint i = 0; i < pageCount; i++)
 		{
 			imageProtectors[i].Lock(); // race condition possible?
-			Resamples[i].Destroy();
+			resamples[i].Destroy();
 		}
 		mode = newMode;
 		fiFilter = newFilter;
 		zoom = newZoom;
 		width = newWidth;
 		height = newHeight;
-		for (uint i = 0; i < pagecount; i++)
+		for (uint i = 0; i < pageCount; i++)
 			imageProtectors[i].Unlock();
 	}
 }
@@ -70,11 +70,52 @@ void ComicBook::SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COM
 wxBitmap * ComicBook::GetPage(uint pagenumber)
 {
 	wxBusyCursor busy;
-	while (!Resamples[pagenumber].Ok())
+	while (!resamples[pagenumber].Ok())
 	{
 		Sleep(50);
 	}
-	return new wxBitmap(Resamples[pagenumber]);
+	return new wxBitmap(resamples[pagenumber]);
+}
+
+wxBitmap * ComicBook::GetPageLeftHalf(uint pagenumber)
+{
+	wxBusyCursor busy;
+	while (!resamples[pagenumber].Ok())
+	{
+		Sleep(50);
+	}
+	int width = resamples[pagenumber].GetWidth();
+	int height = resamples[pagenumber].GetHeight();
+	return new wxBitmap(resamples[pagenumber].GetSubImage(wxRect(0, 0, width / 2, height)));
+}
+
+wxBitmap * ComicBook::GetPageRightHalf(uint pagenumber)
+{
+	wxBusyCursor busy;
+	while (!resamples[pagenumber].Ok())
+	{
+		Sleep(50);
+	}
+	int width = resamples[pagenumber].GetWidth();
+	int height = resamples[pagenumber].GetHeight();
+	return new wxBitmap(resamples[pagenumber].GetSubImage(wxRect(width / 2, 0, (width / 2) + (width % 2), height)));
+}
+
+bool ComicBook::IsPageLandscape(uint pagenumber)
+{
+	if (pagenumber > pageCount)
+		throw new PageOutOfRangeException(pagenumber, pageCount);
+	wxBusyCursor busy;
+	while (!resamples[pagenumber].Ok())
+	{
+		Sleep(50);
+	}
+	int width = resamples[pagenumber].GetWidth();
+	int height = resamples[pagenumber].GetHeight();
+	if ((float(width)/float(height)) > 1.0f)
+		return true;
+	else
+		return false;
 }
 
 void * ComicBook::Entry()
@@ -84,21 +125,21 @@ void * ComicBook::Entry()
 
 	while (!TestDestroy())
 	{
-		currentPage = int(current); // in case this value changes midloop
+		currentPage = int(Current); // in case this value changes midloop
 		
 		// The caching algorithm.  First calculates next highest
 		// priority page, then checks to see if that page needs
 		// updating.  If no pages need updating, yield the timeslice.
 		
-		if (cacheLen >= pagecount)
+		if (cacheLen >= pageCount)
 		{
 			low = 0;
-			high = pagecount - 1;
+			high = pageCount - 1;
 		}
 		else
 		{
 			/* A moving window of size cacheLen.  2/3 of the pages in the
-			 * cache are after the current page, the other 1/3 are before
+			 * cache are after the Current page, the other 1/3 are before
 			 * it. */
 			high = 2 * cacheLen / 3;
 			low = cacheLen - high;
@@ -106,11 +147,11 @@ void * ComicBook::Entry()
 			high = currentPage + high - 1;
 			low = currentPage - low;
 
-			/* Keep the window within 0 and pagecount. */
-			if (high >= int(pagecount))
+			/* Keep the window within 0 and pageCount. */
+			if (high >= int(pageCount))
 			{
-				low -= (high - pagecount) + 1;
-				high = pagecount - 1;
+				low -= (high - pageCount) + 1;
+				high = pageCount - 1;
 			}
 			else if (low < 0)
 			{
@@ -119,7 +160,7 @@ void * ComicBook::Entry()
 			}
 		}
 
-		for (i = 0; i < cacheLen && i < pagecount; i++)
+		for (i = 0; i < cacheLen && i < pageCount; i++)
 		{
 			if (TestDestroy())
 				break;
@@ -128,23 +169,23 @@ void * ComicBook::Entry()
 				target = currentPage - (target - high);
 			
 			imageProtectors[target].Lock();
-			if (!Resamples[target].Ok())
+			if (!resamples[target].Ok())
 			{
-				if (!Originals[target].Ok())
+				if (!originals[target].Ok())
 				{
 					wxInputStream * is = ExtractStream(target);
 					pageBytes = is->GetSize();
 					if (is->IsOk() && is->GetSize() > 0)
 					{
-						Originals[target].LoadFile(*is);
+						originals[target].LoadFile(*is);
 					}
 					else
 					{
-						Originals[target] = new wxImage(1,1);
+						originals[target] = new wxImage(1,1);
 					}
 				}
 				ScaleImage(target);
-				if (!Resamples[target].Ok())
+				if (!resamples[target].Ok())
 					wxLogError("Failed to scale page %d.", target);
 				imageProtectors[target].Unlock();
 				break;
@@ -152,28 +193,28 @@ void * ComicBook::Entry()
 			imageProtectors[target].Unlock();
 		}
 
-		if (i < cacheLen && i < pagecount)
+		if (i < cacheLen && i < pageCount)
 		{
-			if (cacheLen < pagecount)
+			if (cacheLen < pageCount)
 			{
 				// Delete pages outside of the cache's range.
 				for (i = 0; int(i) < low; i++)
 				{
 					imageProtectors[i].Lock();
-					if(Resamples[i].Ok())
-						Resamples[i].Destroy();
-					if(Originals[i].Ok())
-						Originals[i].Destroy();
+					if(resamples[i].Ok())
+						resamples[i].Destroy();
+					if(originals[i].Ok())
+						originals[i].Destroy();
 					imageProtectors[i].Unlock();
 				}
 				
-				for (i = pagecount - 1; int(i) > high; i--)
+				for (i = pageCount - 1; int(i) > high; i--)
 				{
 					imageProtectors[i].Lock();
-					if(Resamples[i].Ok())
-						Resamples[i].Destroy();
-					if(Originals[i].Ok())
-						Originals[i].Destroy();
+					if(resamples[i].Ok())
+						resamples[i].Destroy();
+					if(originals[i].Ok())
+						originals[i].Destroy();
 					imageProtectors[i].Unlock();
 				}
 			}
@@ -191,7 +232,7 @@ void ComicBook::ScaleImage(uint pagenumber)
 	float rCanvas, rImage;  // width/height ratios
 	float scalingFactor;
   
-	wxImage &orig = Originals[pagenumber];
+	wxImage &orig = originals[pagenumber];
 
 	if (Orientations[pagenumber] == NORTH || Orientations[pagenumber] == SOUTH)
 	{
@@ -259,16 +300,16 @@ void ComicBook::ScaleImage(uint pagenumber)
 		switch (Orientations[pagenumber])
 		{
 		case NORTH:
-			Resamples[pagenumber] = wxImage(orig);
+			resamples[pagenumber] = wxImage(orig);
 			break;
 		case EAST:
-			Resamples[pagenumber] = wxImage(orig).Rotate90(true);
+			resamples[pagenumber] = wxImage(orig).Rotate90(true);
 			break;
 		case SOUTH:
-			Resamples[pagenumber] = wxImage(orig).Rotate90().Rotate90();
+			resamples[pagenumber] = wxImage(orig).Rotate90().Rotate90();
 			break;
 		case WEST:
-			Resamples[pagenumber] = wxImage(orig).Rotate90(false);
+			resamples[pagenumber] = wxImage(orig).Rotate90(false);
 			break;
 		default:
 			break;
@@ -279,16 +320,16 @@ void ComicBook::ScaleImage(uint pagenumber)
 	switch (Orientations[pagenumber])
 	{
 	case NORTH:
-		Resamples[pagenumber] = FreeImage_Rescale(orig, int(xImage * scalingFactor), int(yImage * scalingFactor), fiFilter);
+		resamples[pagenumber] = FreeImage_Rescale(orig, int(xImage * scalingFactor), int(yImage * scalingFactor), fiFilter);
 		break;
 	case EAST:
-		Resamples[pagenumber] = FreeImage_Rescale(orig, int(yImage * scalingFactor), int(xImage * scalingFactor), fiFilter).Rotate90(true);
+		resamples[pagenumber] = FreeImage_Rescale(orig, int(yImage * scalingFactor), int(xImage * scalingFactor), fiFilter).Rotate90(true);
 		break;
 	case SOUTH:
-		Resamples[pagenumber] = FreeImage_Rescale(orig, int(xImage * scalingFactor), int(yImage * scalingFactor), fiFilter).Rotate90().Rotate90();
+		resamples[pagenumber] = FreeImage_Rescale(orig, int(xImage * scalingFactor), int(yImage * scalingFactor), fiFilter).Rotate90().Rotate90();
 		break;
 	case WEST:
-		Resamples[pagenumber] = FreeImage_Rescale(orig, int(yImage * scalingFactor), int(xImage * scalingFactor), fiFilter).Rotate90(false);
+		resamples[pagenumber] = FreeImage_Rescale(orig, int(yImage * scalingFactor), int(xImage * scalingFactor), fiFilter).Rotate90(false);
 		break;
 	default:
 		break;

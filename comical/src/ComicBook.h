@@ -53,6 +53,7 @@
 #include <vector>
 #include <algorithm>
 
+#include "Exceptions.h"
 #include "Resize.h"
 
 using namespace std;
@@ -73,12 +74,20 @@ public:
 	virtual void * Entry();
 
 	void RotatePage(uint pagenumber, COMICAL_ROTATE direction);
+	uint GetPageCount() { return pageCount;}
 	void SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COMICAL_ZOOM newZoom, uint newWidth, uint newHeight);
 	void SetCacheLen(uint newCacheLen);
 	wxBitmap *GetPage(uint pagenumber);
-	vector<wxString> filenames;
-	uint current;
-	uint pagecount;
+	wxBitmap *GetPageLeftHalf(uint pagenumber);
+	wxBitmap *GetPageRightHalf(uint pagenumber);
+	bool IsPageLandscape(uint pagenumber);
+	vector<wxString> Filenames;
+
+	/* Used to prefetch nearby pages and discard distant pages. 
+	 * when mode = DOUBLE, Current is the pagenumber of the page on the right.
+	 * when mode = SINGLE, Current is the pagenumber of the displayed page. */
+	uint Current;
+
 	COMICAL_ROTATE *Orientations;
 	
 protected:
@@ -86,9 +95,10 @@ protected:
 	
 	void ScaleImage(uint pagenumber);
 	
+	uint pageCount;
 	wxString filename;
-	wxImage *Originals;
-	wxImage *Resamples;
+	wxImage *originals;
+	wxImage *resamples;
 	wxMutex *imageProtectors; // only one thread can touch an image at a time
 	
 	uint cacheLen;

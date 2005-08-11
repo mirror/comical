@@ -1,6 +1,7 @@
-Fix Mac OS X document types
-run everything through code beautifier
 Japan-mode (right-to-left)
+Test cases:
+	0 pages
+	1 page
 
 Long Term:
 User-configurable keybindings

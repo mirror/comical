@@ -52,7 +52,7 @@ bool ComicalApp::OnInit()
 	//wxFileSystem::AddHandler(new wxZipFSHandler);
 	
 	ComicalFrame *frame = new ComicalFrame(_T("Comical"), wxPoint(50, 50), wxSize(600, 400), wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE);
-	
+
 #ifndef __WXMAC__
 	frame->SetIcon(wxICON(Comical));
 #endif
@@ -192,20 +192,13 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	toolBarNav->AddTool(ID_CCW, _T("Rotate Counter-Clockwise"), wxBITMAP(rot_ccw), _T("Rotate Counter-Clockwise"));
 	toolBarNav->AddTool(ID_CW, _T("Rotate Clockwise"), wxBITMAP(rot_cw), _T("Rotate Clockwise"));
 	toolBarNav->Enable(false);
-	toolBarNav->Realize();
+	toolBarNav->Fit();
 
 	wxSize clientSize = GetClientSize();
-	// GetToolSize is returning the same value as GetToolBitmapSize,
-	// i.e., wxSize(16,16), and GetToolMargins is returning wxSize(0,0).
-	// I want the toolbar to be just large enough to contain all of the
-	// buttons inside of it, and I want to determine it programatically.
-	/*wxSize buttonSize = toolBarNav->GetToolSize();
-	wxSize marginSize = toolBarNav->GetToolMargins();
-	int tbWidth = (buttonSize.x * 12) + (marginSize.x * 14);*/
-	int tbWidth = 288;
-	int tbX = (clientSize.x - tbWidth) / 2;
+
+	int tbX = (clientSize.x - toolBarNav->GetSize().x) / 2;
 	progress->SetSize(0, clientSize.y, clientSize.x, 10);
-	toolBarNav->SetSize(tbX, clientSize.y + 10, tbWidth, -1);
+	toolBarNav->SetSize(tbX, clientSize.y + 10, toolBarNav->GetSize().x, -1);
 	toolBarNav->Realize();
 }
 
@@ -296,7 +289,7 @@ void ComicalFrame::OpenFile(wxString filename)
 			theCanvas->SetParams();
 
 			toolBarNav->Enable(true);
-			progress->SetRange(theBook->pagecount - 1);
+			progress->SetRange(theBook->GetPageCount() - 1);
 			progress->SetValue(0);
 	
 			theBook->Run(); // start the thread
@@ -345,8 +338,8 @@ void ComicalFrame::OnGoTo(wxCommandEvent& event)
 	if (theBook != NULL)
 	{
 		message = "Enter a page number from 1 to ";
-		message += wxString::Format("%d", theBook->pagecount);
-		pagenumber = wxGetNumberFromUser(message, "Page", "Go To Page", theBook->current + 1, 1, theBook->pagecount, this);
+		message += wxString::Format("%d", theBook->GetPageCount());
+		pagenumber = wxGetNumberFromUser(message, "Page", "Go To Page", theBook->Current + 1, 1, theBook->GetPageCount(), this);
 		if (pagenumber != -1)
 			theCanvas->GoToPage(pagenumber - 1);
 	}
@@ -419,8 +412,7 @@ void ComicalFrame::OnFilter(wxCommandEvent& event)
 
 void ComicalFrame::OnRotate(wxCommandEvent& event)
 {
-	switch (event.GetId())
-	{
+	switch (event.GetId()) {
 	case ID_CW:
 		theCanvas->Rotate(true);
 		break;
@@ -447,8 +439,7 @@ void ComicalFrame::OnRotate(wxCommandEvent& event)
 
 void ComicalFrame::OnRotateLeft(wxCommandEvent& event)
 {
-	switch (event.GetId())
-	{
+	switch (event.GetId()) {
 	case ID_CWL:
 		theCanvas->RotateLeft(true);
 		break;

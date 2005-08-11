@@ -200,3 +200,4 @@ Comical.pbproj/CVS/Root
 src/pstream.h
 src/ComicalLog.h
 src/enums.h
+src/Exceptions.h

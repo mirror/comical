@@ -38,7 +38,7 @@ ComicBookRAR::ComicBookRAR(wxString file, uint cachelen) : ComicBook()
 	
 	filename = file;
 	cacheLen = cachelen;
-	current = 0;
+	Current = 0;
 	
 	memset(&OpenArchiveData,0,sizeof(OpenArchiveData));
 	OpenArchiveData.ArcName = (char *) filename.c_str();
@@ -63,7 +63,7 @@ ComicBookRAR::ComicBookRAR(wxString file, uint cachelen) : ComicBook()
 		page.Right(5).Upper() == ".TIFF" || page.Right(4).Upper() == ".TIF" ||
 		page.Right(4).Upper() == ".GIF" ||
 		page.Right(4).Upper() == ".PNG" )
-			filenames.push_back(page);
+			Filenames.push_back(page);
 		
 		if ((PFCode=RARProcessFile(RarFile,RAR_SKIP,NULL,NULL))!=0) {
 			ProcessFileError(PFCode);
@@ -74,18 +74,18 @@ ComicBookRAR::ComicBookRAR(wxString file, uint cachelen) : ComicBook()
 	if (RHCode==ERAR_BAD_DATA)
 		wxLogError("libunrar: \nFile header broken");
 
-	vector<wxString>::iterator begin = filenames.begin();
-	vector<wxString>::iterator end = filenames.end();
+	vector<wxString>::iterator begin = Filenames.begin();
+	vector<wxString>::iterator end = Filenames.end();
 	sort(begin, end);  // I love the STL!
 
-	pagecount = filenames.size();
+	pageCount = Filenames.size();
 	
-	Originals = new wxImage[pagecount];
-	Resamples = new wxImage[pagecount];
-	Orientations = new COMICAL_ROTATE[pagecount]; // NORTH == 0
-	for (uint i = 0; i < pagecount; i++)
+	originals = new wxImage[pageCount];
+	resamples = new wxImage[pageCount];
+	Orientations = new COMICAL_ROTATE[pageCount]; // NORTH == 0
+	for (uint i = 0; i < pageCount; i++)
 		Orientations[i] = NORTH;
-	imageProtectors = new wxMutex[pagecount];
+	imageProtectors = new wxMutex[pageCount];
 	
 	RARCloseArchive(RarFile);
 	
@@ -94,7 +94,7 @@ ComicBookRAR::ComicBookRAR(wxString file, uint cachelen) : ComicBook()
 
 wxInputStream * ComicBookRAR::ExtractStream(unsigned int pageindex)
 {
-	return new wxRarInputStream(filename, filenames[pageindex]);
+	return new wxRarInputStream(filename, Filenames[pageindex]);
 }
 
 void ComicBookRAR::OpenArchiveError(int Error, wxString ArcName)
