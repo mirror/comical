@@ -1,5 +1,5 @@
 /* XPM */
-static char *firstpage[]={
+static char *firstpage_xpm[]={
 "16 15 37 1",
 ". c None",
 "# c #024266",
