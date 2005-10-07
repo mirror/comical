@@ -112,6 +112,9 @@ void ComicalCanvas::createBitmaps()
 		cParent->toolBarNav->EnableTool(ID_CWL, false);
 		cParent->toolBarNav->EnableTool(ID_CCW, true);
 		cParent->toolBarNav->EnableTool(ID_CW, true);
+		
+		cParent->labelLeft->SetLabel("");
+		cParent->labelRight->SetLabel(wxString::Format("%d of %d", theBook->Current + 1, theBook->GetPageCount()));
 	} else {
 		cParent->menuView->FindItem(ID_Rotate)->Enable(false);
 
@@ -124,12 +127,15 @@ void ComicalCanvas::createBitmaps()
 			cParent->menuRotateRight->FindItemByPosition(theBook->Orientations[rightNum])->Check();
 			cParent->toolBarNav->EnableTool(ID_CCW, true);
 			cParent->toolBarNav->EnableTool(ID_CW, true);
+
+			cParent->labelRight->SetLabel(wxString::Format("%d of %d", rightNum + 1, theBook->GetPageCount()));
 		}
 		else
 		{
 			cParent->menuView->FindItem(ID_RotateRight)->Enable(false);
 			cParent->toolBarNav->EnableTool(ID_CCW, false);
 			cParent->toolBarNav->EnableTool(ID_CW, false);
+			cParent->labelRight->SetLabel("");
 		}
 	
 		if (leftPage && (leftOk = leftPage->Ok()))
@@ -141,12 +147,16 @@ void ComicalCanvas::createBitmaps()
 			cParent->menuRotateLeft->FindItemByPosition(theBook->Orientations[leftNum])->Check();
 			cParent->toolBarNav->EnableTool(ID_CCWL, true);
 			cParent->toolBarNav->EnableTool(ID_CWL, true);
+
+			cParent->labelLeft->SetLabel(wxString::Format("%d of %d", leftNum + 1, theBook->GetPageCount()));
 		}
 		else
 		{
 			cParent->menuView->FindItem(ID_RotateLeft)->Enable(false);
 			cParent->toolBarNav->EnableTool(ID_CCWL, false);
 			cParent->toolBarNav->EnableTool(ID_CWL, false);
+
+			cParent->labelLeft->SetLabel("");
 		}
 
 		xScroll *= 2;
@@ -700,14 +710,14 @@ void ComicalCanvas::OnKeyDown(wxKeyEvent& event)
 void ComicalCanvas::OnSize(wxSizeEvent& event)
 {
 	ComicalFrame *cParent = (ComicalFrame *) parent;
-	if (cParent->toolBarNav != NULL && cParent->progress != NULL) {
+	if (cParent->toolBarNav != NULL && cParent->labelLeft != NULL && cParent->labelRight != NULL) {
 		wxSize clientSize = GetClientSize();
 		wxSize canvasSize = GetSize();
 		wxSize toolBarSize = cParent->toolBarNav->GetSize();
-		wxSize progressSize = cParent->progress->GetSize();
 		int tbxPos = (clientSize.x - toolBarSize.x) / 2;
-		cParent->toolBarNav->SetSize(tbxPos, canvasSize.y + progressSize.y, toolBarSize.x, -1);
-		cParent->progress->SetSize(0, canvasSize.y, canvasSize.x, 10);
+		cParent->toolBarNav->SetSize(tbxPos, canvasSize.y, toolBarSize.x, -1);
+		cParent->labelLeft->SetSize(tbxPos - 70, canvasSize.y + 6, 50, toolBarSize.y);
+		cParent->labelRight->SetSize(tbxPos + toolBarSize.x + 20, canvasSize.y + 6, 50, toolBarSize.y);		
 	}
 	if (theBook) {
 		SetParams();
@@ -719,7 +729,5 @@ void ComicalCanvas::setPage(int pagenumber)
 {
 	if (theBook) {
 		theBook->Current = pagenumber;
-		ComicalFrame *cParent = (ComicalFrame *) parent;
-		cParent->progress->SetValue(pagenumber);
 	}
 }

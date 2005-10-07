@@ -29,6 +29,8 @@
 
 #ifndef __WXMAC__
 #include "../Comical Icons/comical.xpm"  // the icon!
+#endif
+
 #include "../Comical Icons/firstpage.xpm"
 #include "../Comical Icons/prevpage.xpm"
 #include "../Comical Icons/prev.xpm"
@@ -37,7 +39,6 @@
 #include "../Comical Icons/lastpage.xpm"
 #include "../Comical Icons/rot_cw.xpm"
 #include "../Comical Icons/rot_ccw.xpm"
-#endif
 
 // Create a new application object.
 IMPLEMENT_APP(ComicalApp)
@@ -54,7 +55,9 @@ bool ComicalApp::OnInit()
 	ComicalFrame *frame = new ComicalFrame(_T("Comical"), wxPoint(50, 50), wxSize(600, 400), wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE);
 
 #ifndef __WXMAC__
+#ifndef __WXCOCOA__
 	frame->SetIcon(wxICON(Comical));
+#endif
 #endif
 	frame->Show(TRUE);
 	SetTopWindow(frame);
@@ -75,7 +78,10 @@ bool ComicalApp::OnInit()
 ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSize& size, long style) : wxFrame(NULL, -1, title, pos, size, style)
 {
 	theBook = NULL;
-
+	toolBarNav = NULL;
+	labelLeft = NULL;
+	labelRight = NULL;
+	
 	ComicalLog = new wxLogStderr();
 	ComicalLog->SetVerbose(FALSE);
 	wxLog::SetActiveTarget(ComicalLog);
@@ -175,8 +181,6 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	
 	theCanvas = new ComicalCanvas(this, wxPoint(0,0), this->GetClientSize());
 
-	progress = new wxGauge(this, -1, 10, wxPoint(0, this->GetClientSize().y), wxSize(this->GetClientSize().x, 10));
-
 	toolBarNav = new wxToolBar(this, -1, wxPoint(0, this->GetClientSize().y + 10), wxDefaultSize, wxNO_BORDER | wxTB_HORIZONTAL | wxTB_FLAT);
 	toolBarNav->SetToolBitmapSize(wxSize(16, 16));
 	toolBarNav->AddTool(ID_CCWL, _T("Rotate Counter-Clockwise (left page)"), wxBITMAP(rot_ccw), _T("Rotate Counter-Clockwise (left page)"));
@@ -197,9 +201,17 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	wxSize clientSize = GetClientSize();
 
 	int tbX = (clientSize.x - toolBarNav->GetSize().x) / 2;
-	progress->SetSize(0, clientSize.y, clientSize.x, 10);
-	toolBarNav->SetSize(tbX, clientSize.y + 10, toolBarNav->GetSize().x, -1);
+	toolBarNav->SetSize(tbX, clientSize.y, toolBarNav->GetSize().x, -1);
 	toolBarNav->Realize();
+	
+	wxPoint tbPoint = toolBarNav->GetPosition();
+	wxSize tbSize = toolBarNav->GetSize();
+	labelLeft = new wxStaticText(this, -1, "", wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT | wxST_NO_AUTORESIZE);
+	labelRight = new wxStaticText(this, -1, "");
+	wxFont font = labelLeft->GetFont();
+	font.SetPointSize(10);
+	labelLeft->SetFont(font);
+	labelRight->SetFont(font);
 }
 
 BEGIN_EVENT_TABLE(ComicalFrame, wxFrame)
@@ -289,8 +301,6 @@ void ComicalFrame::OpenFile(wxString filename)
 			theCanvas->SetParams();
 
 			toolBarNav->Enable(true);
-			progress->SetRange(theBook->GetPageCount() - 1);
-			progress->SetValue(0);
 	
 			theBook->Run(); // start the thread
 	
@@ -488,8 +498,6 @@ wxSize ComicalFrame::GetClientSize()
 	int y = clientSize.y;
 	if (toolBarNav != NULL)
 		y -= toolBarNav->GetSize().y;
-	if (progress != NULL)
-		y -= progress->GetSize().y;
 	clientSize.SetHeight(y);
 	return clientSize;
 }

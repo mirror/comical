@@ -49,7 +49,7 @@
 #include <wx/config.h>
 #include <wx/log.h>
 #include <wx/toolbar.h>
-#include <wx/gauge.h>
+#include <wx/stattext.h>
 #endif
 
 #include "ComicalCanvas.h"
@@ -82,7 +82,7 @@ class ComicalFrame : public wxFrame {
     wxToolBar *toolBarNav;
     wxMenuBar *menuBar;
     wxMenu *menuFile, *menuGo, *menuView, *menuHelp, *menuZoom, *menuMode, *menuFilter, *menuRotate, *menuRotateLeft, *menuRotateRight;
-    wxGauge *progress;
+	wxStaticText *labelLeft, *labelRight;
 
   protected:
     wxSize GetClientSize();
