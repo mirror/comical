@@ -45,7 +45,13 @@ sfx:	$(OBJECTS)
 	$(LINK) -o default.sfx $(LDFLAGS) $(OBJECTS)
 	$(STRIP) default.sfx
 
+shlib:	WHAT=RARDLL -DSILENT
+shlib:	$(OBJECTS) $(LIB_OBJ)
+	@rm -f libunrar.so
+	$(LINK) -shared -o libunrar.so $(LDFLAGS) $(OBJECTS) $(LIB_OBJ)
+	$(STRIP) libunrar.so
+
 lib:	WHAT=RARDLL -DSILENT
 lib:	$(OBJECTS) $(LIB_OBJ)
-	@rm -f libunrar.dylib
-	$(LINK) -dynamiclib -o libunrar.dylib $(LDFLAGS) $(OBJECTS) $(LIB_OBJ)
+	@rm -f libunrar.a
+	ar rcs libunrar.a $(OBJECTS) $(LIB_OBJ)

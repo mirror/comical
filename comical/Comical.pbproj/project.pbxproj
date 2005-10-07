@@ -25,7 +25,6 @@
 		04313892FE3035C9C02AAC07 = {
 			buildActionMask = 2147483647;
 			files = (
-				D473E37B07E9424E00318A30,
 			);
 			isa = PBXRezBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -124,6 +123,7 @@
 		};
 		20286C2AFDCF999611CA2CEA = {
 			children = (
+				D4582FF508AAD149007DD6F9,
 				D45592B607E69E73001881E8,
 				D45592B707E69E73001881E8,
 				D45592B807E69E73001881E8,
@@ -158,27 +158,22 @@
 		};
 		20286C32FDCF999611CA2CEA = {
 			children = (
-				D473E37907E9424D00318A30,
-				D473E37A07E9424E00318A30,
-				20286C33FDCF999611CA2CEA,
+				D47336B008F60FAD00968436,
+				D47336A508F60E2700968436,
+				D45830A008AAD3A6007DD6F9,
+				D45830A108AAD3A6007DD6F9,
+				D45830A208AAD3A6007DD6F9,
+				D458309908AAD36A007DD6F9,
+				D4444B6B085271940018BD68,
 				D473E31307E90F8C00318A30,
 				D473E27107E90E6700318A30,
 				D4508E6A07E7CB440029AD21,
-				D45592E807E6AC9B001881E8,
 			);
 			isa = PBXGroup;
 			name = "External Frameworks and Libraries";
 			path = "";
 			refType = 4;
 			sourceTree = "<group>";
-		};
-		20286C33FDCF999611CA2CEA = {
-			isa = PBXFileReference;
-			lastKnownFileType = wrapper.framework;
-			name = Carbon.framework;
-			path = /System/Library/Frameworks/Carbon.framework;
-			refType = 0;
-			sourceTree = "<absolute>";
 		};
 		20286C34FDCF999611CA2CEA = {
 			buildPhases = (
@@ -190,9 +185,9 @@
 			);
 			buildSettings = {
 				FRAMEWORK_SEARCH_PATHS = "";
-				HEADER_SEARCH_PATHS = "unrar /usr/local/lib/wx/include/mac-2.4 /usr/local/include";
-				LIBRARY_SEARCH_PATHS = "unrar ./";
-				OPTIMIZATION_CFLAGS = "-O0";
+				HEADER_SEARCH_PATHS = "/usr/local/lib/wx/include/mac-ansi-release-static-2.6 /usr/local/include/wx-2.6 unrar";
+				LIBRARY_SEARCH_PATHS = unrar;
+				OPTIMIZATION_CFLAGS = "-O2";
 				OTHER_CFLAGS = "\U0001-D__WXMAC__ -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -mcpu=750 -DBIG_ENDIAN -D_LARGEFILE_SOURCE -D_BSD_COMPAT -D_UNIX -DNO_GCC_PRAGMA";
 				OTHER_REZFLAGS = "\U0001";
 				PREBINDING = NO;
@@ -274,6 +269,7 @@
 				D45592BE07E69E73001881E8,
 				D45592C007E69E73001881E8,
 				D45592C107E69E73001881E8,
+				D4582FF608AAD149007DD6F9,
 			);
 			isa = PBXHeadersBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -305,12 +301,16 @@
 		20286C3BFDCF999611CA2CEA = {
 			buildActionMask = 2147483647;
 			files = (
-				F7EF2B04056DAD7301A80064,
-				D45592E907E6AC9B001881E8,
 				D4508E6B07E7CB440029AD21,
 				D473E27207E90E6700318A30,
 				D473E31407E90F8C00318A30,
-				D473E37C07E9424E00318A30,
+				D4444B6C085271940018BD68,
+				D458309A08AAD36A007DD6F9,
+				D45830A308AAD3A6007DD6F9,
+				D45830A408AAD3A6007DD6F9,
+				D45830A508AAD3A6007DD6F9,
+				D47336A608F60E2700968436,
+				D47336B108F60FAD00968436,
 			);
 			isa = PBXFrameworksBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -325,6 +325,20 @@
 //D42
 //D43
 //D44
+		D4444B6B085271940018BD68 = {
+			isa = PBXFileReference;
+			lastKnownFileType = archive.ar;
+			name = libunrar.a;
+			path = unrar/libunrar.a;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D4444B6C085271940018BD68 = {
+			fileRef = D4444B6B085271940018BD68;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
 		D4508E6A07E7CB440029AD21 = {
 			isa = PBXFileReference;
 			lastKnownFileType = "compiled.mach-o.dylib";
@@ -473,16 +487,101 @@
 			settings = {
 			};
 		};
-		D45592E807E6AC9B001881E8 = {
+		D4582FF508AAD149007DD6F9 = {
+			fileEncoding = 30;
 			isa = PBXFileReference;
-			lastKnownFileType = "compiled.mach-o.dylib";
-			name = libunrar.dylib;
-			path = unrar/libunrar.dylib;
+			lastKnownFileType = sourcecode.c.h;
+			name = Exceptions.h;
+			path = src/Exceptions.h;
 			refType = 4;
 			sourceTree = "<group>";
 		};
-		D45592E907E6AC9B001881E8 = {
-			fileRef = D45592E807E6AC9B001881E8;
+		D4582FF608AAD149007DD6F9 = {
+			fileRef = D4582FF508AAD149007DD6F9;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D458309908AAD36A007DD6F9 = {
+			isa = PBXFileReference;
+			lastKnownFileType = wrapper.framework;
+			name = IOKit.framework;
+			path = /System/Library/Frameworks/IOKit.framework;
+			refType = 0;
+			sourceTree = "<absolute>";
+		};
+		D458309A08AAD36A007DD6F9 = {
+			fileRef = D458309908AAD36A007DD6F9;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D45830A008AAD3A6007DD6F9 = {
+			isa = PBXFileReference;
+			lastKnownFileType = archive.ar;
+			name = "libwxjpeg-2.6.a";
+			path = "/usr/local/lib/libwxjpeg-2.6.a";
+			refType = 0;
+			sourceTree = "<absolute>";
+		};
+		D45830A108AAD3A6007DD6F9 = {
+			isa = PBXFileReference;
+			lastKnownFileType = archive.ar;
+			name = "libwxpng-2.6.a";
+			path = "/usr/local/lib/libwxpng-2.6.a";
+			refType = 0;
+			sourceTree = "<absolute>";
+		};
+		D45830A208AAD3A6007DD6F9 = {
+			isa = PBXFileReference;
+			lastKnownFileType = archive.ar;
+			name = "libwxtiff-2.6.a";
+			path = "/usr/local/lib/libwxtiff-2.6.a";
+			refType = 0;
+			sourceTree = "<absolute>";
+		};
+		D45830A308AAD3A6007DD6F9 = {
+			fileRef = D45830A008AAD3A6007DD6F9;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D45830A408AAD3A6007DD6F9 = {
+			fileRef = D45830A108AAD3A6007DD6F9;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D45830A508AAD3A6007DD6F9 = {
+			fileRef = D45830A208AAD3A6007DD6F9;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D47336A508F60E2700968436 = {
+			isa = PBXFileReference;
+			lastKnownFileType = wrapper.framework;
+			name = Carbon.framework;
+			path = /System/Library/Frameworks/Carbon.framework;
+			refType = 0;
+			sourceTree = "<absolute>";
+		};
+		D47336A608F60E2700968436 = {
+			fileRef = D47336A508F60E2700968436;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D47336B008F60FAD00968436 = {
+			isa = PBXFileReference;
+			lastKnownFileType = archive.ar;
+			name = "libwx_mac-2.6.a";
+			path = "/usr/local/lib/libwx_mac-2.6.a";
+			refType = 0;
+			sourceTree = "<absolute>";
+		};
+		D47336B108F60FAD00968436 = {
+			fileRef = D47336B008F60FAD00968436;
 			isa = PBXBuildFile;
 			settings = {
 			};
@@ -539,34 +638,6 @@
 		};
 		D473E31407E90F8C00318A30 = {
 			fileRef = D473E31307E90F8C00318A30;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
-		D473E37907E9424D00318A30 = {
-			isa = PBXFileReference;
-			lastKnownFileType = archive.rsrc;
-			name = "libwx_mac-2.4.0.rsrc";
-			path = "/usr/local/lib/libwx_mac-2.4.0.rsrc";
-			refType = 0;
-			sourceTree = "<absolute>";
-		};
-		D473E37A07E9424E00318A30 = {
-			isa = PBXFileReference;
-			lastKnownFileType = archive.ar;
-			name = "libwx_mac-2.4.a";
-			path = "/usr/local/lib/libwx_mac-2.4.a";
-			refType = 0;
-			sourceTree = "<absolute>";
-		};
-		D473E37B07E9424E00318A30 = {
-			fileRef = D473E37907E9424D00318A30;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
-		D473E37C07E9424E00318A30 = {
-			fileRef = D473E37A07E9424E00318A30;
 			isa = PBXBuildFile;
 			settings = {
 			};
@@ -689,12 +760,6 @@
 		};
 		F70D16B1056C429001B74F27 = {
 			fileRef = F70D16A9056C429001B74F27;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
-		F7EF2B04056DAD7301A80064 = {
-			fileRef = 20286C33FDCF999611CA2CEA;
 			isa = PBXBuildFile;
 			settings = {
 			};
