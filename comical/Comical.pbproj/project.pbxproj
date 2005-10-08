@@ -184,6 +184,7 @@
 				04313892FE3035C9C02AAC07,
 			);
 			buildSettings = {
+				DEBUGGING_SYMBOLS = NO;
 				FRAMEWORK_SEARCH_PATHS = "";
 				HEADER_SEARCH_PATHS = "/usr/local/lib/wx/include/mac-ansi-release-static-2.6 /usr/local/include/wx-2.6 unrar";
 				LIBRARY_SEARCH_PATHS = unrar;
