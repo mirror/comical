@@ -27,7 +27,7 @@
 
 #include "ComicalApp.h"
 
-#ifndef __WXMAC__
+#ifndef __WXMAC__ || __WXCOCOA__
 #include "../Comical Icons/comical.xpm"  // the icon!
 #endif
 
@@ -49,8 +49,6 @@ bool ComicalApp::OnInit()
 	wxImage::AddHandler(new wxPNGHandler);
 	wxImage::AddHandler(new wxGIFHandler);
 	wxImage::AddHandler(new wxTIFFHandler);
-
-	//wxFileSystem::AddHandler(new wxZipFSHandler);
 	
 	wxConfig *config = new wxConfig("Comical");
 	
@@ -59,10 +57,8 @@ bool ComicalApp::OnInit()
 	
 	ComicalFrame *frame = new ComicalFrame(_T("Comical"), wxPoint(50, 50), wxSize(width, height), wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE);
 
-#ifndef __WXMAC__
-#ifndef __WXCOCOA__
+#ifndef __WXMAC__ || __WXCOCOA__
 	frame->SetIcon(wxICON(Comical));
-#endif
 #endif
 	frame->Show(TRUE);
 	SetTopWindow(frame);
