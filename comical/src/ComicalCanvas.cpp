@@ -45,6 +45,12 @@ ComicalCanvas::ComicalCanvas(wxWindow *prnt, const wxPoint &pos, const wxSize &s
 	filter = (FREE_IMAGE_FILTER) config->Read("/Comical/Filter", 4l); // Catmull-Rom is default
 	leftPage = rightPage = centerPage = NULL;
 	theBook = NULL;
+	
+	// Get the thickness of scrollbars.  Knowing this, we can precalculate
+	// whether the current page(s) will need scrollbars.
+	wxScrollBar *tempBar = new wxScrollBar(this, -1);
+	scrollBarThickness = tempBar->GetSize().y;
+	tempBar->Destroy();
 }
 
 BEGIN_EVENT_TABLE(ComicalCanvas, wxScrolledWindow)
@@ -83,8 +89,6 @@ void ComicalCanvas::createBitmaps()
 	int xScroll = 0, yScroll = 0, xWindow, yWindow;
 	bool leftOk = false, rightOk = false;
 	
-	GetClientSize(&xWindow, &yWindow);
-
 	ComicalFrame *cParent = (ComicalFrame *) parent;
 
 	if (mode == SINGLE || theBook->GetPageCount() == 1 || leftNum == rightNum) {
@@ -141,6 +145,7 @@ void ComicalCanvas::createBitmaps()
 		if (leftPage && (leftOk = leftPage->Ok()))
 		{
 			xScroll = (leftPage->GetWidth() > xScroll) ? leftPage->GetWidth() : xScroll;
+			//xScroll += leftPage->GetWidth();
 			yScroll = (leftPage->GetHeight() > yScroll) ? leftPage->GetHeight() : yScroll;
 
 			cParent->menuView->FindItem(ID_RotateLeft)->Enable(true);
@@ -163,15 +168,30 @@ void ComicalCanvas::createBitmaps()
 	}
 
 	cParent->toolBarNav->Realize();
-	
-#if wxCHECK_VERSION(2, 5, 1)
-	// Add the remainder before dividing, so we have round-up instead of round-down integer division
-	// Keeps those pesky scrollbars from appearing when they're not needed
-	xScroll += xScroll % 10;
-	yScroll += yScroll % 10;
-#endif
-	SetScrollbars(10, 10, xScroll / 10, yScroll / 10);
-	Scroll((xScroll / 20) - (xWindow / 20), 0);
+
+	GetSize(&xWindow, &yWindow);
+
+	if (xScroll <= xWindow && yScroll <= yWindow) { // no scrollbars neccessary
+		xScroll = xWindow;
+		yScroll = yWindow;
+	}
+	else {
+		if (xScroll < (xWindow - scrollBarThickness))
+			xScroll = xWindow - scrollBarThickness;
+		if (yScroll < (yWindow - scrollBarThickness))
+			yScroll = yWindow - scrollBarThickness;
+	}
+	SetVirtualSize(xScroll, yScroll);
+	int xStep = 1, yStep = 1;
+	// if the pages will fit, make sure the scroll bars don't show up by making
+	// the scroll step == 1 pixel.  Otherwise, make the scroll step 10 so that
+	// one can navigate quickly using the arrow keys.
+	if (xScroll > xWindow - scrollBarThickness)
+		xStep = 10;
+	if (yScroll > yWindow - scrollBarThickness)
+		yStep = 10;
+	SetScrollbars(xStep, yStep, xScroll / xStep, yScroll / yStep, 0, 0, TRUE);
+	Scroll((xScroll / (2 * xStep)) - (xWindow / (2 * xStep)), 0); // center horizontally
 	Refresh();
 }
 
@@ -550,17 +570,15 @@ void ComicalCanvas::Mode(COMICAL_MODE value)
 
 void ComicalCanvas::SetParams()
 {
-	wxSize clientSize = GetClientSize(); // Client Size is the visible area
-	theBook->SetParams(mode, filter, zoom, clientSize.x, clientSize.y);
+	wxSize canvasSize = GetSize();
+	theBook->SetParams(mode, filter, zoom, canvasSize.x, canvasSize.y, scrollBarThickness);
 }
 
 void ComicalCanvas::Rotate(bool clockwise)
 {
 	COMICAL_ROTATE direction = theBook->Orientations[theBook->Current];
-	if (clockwise)
-	{
-		switch (direction)
-		{
+	if (clockwise) {
+		switch (direction) {
 		case NORTH:
 			theBook->RotatePage(theBook->Current, EAST);
 			break;
@@ -574,11 +592,8 @@ void ComicalCanvas::Rotate(bool clockwise)
 			theBook->RotatePage(theBook->Current, NORTH);
 			break;
 		}
-	}
-	else
-	{
-		switch (direction)
-		{
+	} else {
+		switch (direction) {
 		case NORTH:
 			theBook->RotatePage(theBook->Current, WEST);
 			break;
@@ -660,9 +675,9 @@ void ComicalCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 	PrepareDC(dc);
 
 	GetVirtualSize(&xCanvas, &yCanvas);
-
+	
 	if (centerPage && centerPage->Ok()) {
-		dc.DrawBitmap(*centerPage, (xCanvas/2) - centerPage->GetWidth()/2, 0, false);
+		dc.DrawBitmap(*centerPage, xCanvas/2 - centerPage->GetWidth()/2, 0, false);
 	} else {
 		if (leftPage && leftPage->Ok())
 			dc.DrawBitmap(*leftPage, xCanvas/2 - leftPage->GetWidth(), 0, false);
@@ -711,8 +726,8 @@ void ComicalCanvas::OnSize(wxSizeEvent& event)
 {
 	ComicalFrame *cParent = (ComicalFrame *) parent;
 	if (cParent->toolBarNav != NULL && cParent->labelLeft != NULL && cParent->labelRight != NULL) {
-		wxSize clientSize = GetClientSize();
 		wxSize canvasSize = GetSize();
+		wxSize clientSize = GetClientSize();
 		wxSize toolBarSize = cParent->toolBarNav->GetSize();
 		int tbxPos = (clientSize.x - toolBarSize.x) / 2;
 		cParent->toolBarNav->SetSize(tbxPos, canvasSize.y, toolBarSize.x, -1);

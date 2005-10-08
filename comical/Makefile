@@ -4,7 +4,6 @@ INCLUDE = -Iunrar
 CFLAGS =  `wx-config --cxxflags` -g -Wall -pedantic -pipe -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -DRARDLL -D_UNIX $(INCLUDE)
 LDFLAGS = `wx-config --libs` -Lunrar -lunrar
 
-
 .SUFFIXES: .o .cpp .c .h
 
 .cpp.o:

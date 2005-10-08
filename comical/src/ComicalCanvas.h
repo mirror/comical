@@ -39,6 +39,7 @@
 // Include your minimal set of headers here, or wx.h
 #include <wx/bitmap.h>
 #include <wx/scrolwin.h>
+#include <wx/scrolbar.h>
 #include <wx/dcclient.h>
 #include <wx/dcmemory.h>
 #include <wx/stream.h>
@@ -88,8 +89,10 @@ class ComicalCanvas : public wxScrolledWindow
     void OnSize(wxSizeEvent &event);
 
     wxBitmap *leftPage, *rightPage, *centerPage;
-    int leftNum, rightNum;
+    uint leftNum, rightNum;
     PAGETYPE leftPart, rightPart;
+
+	int scrollBarThickness;
 
     COMICAL_ZOOM zoom;
     COMICAL_MODE mode;

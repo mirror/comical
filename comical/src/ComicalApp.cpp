@@ -52,7 +52,12 @@ bool ComicalApp::OnInit()
 
 	//wxFileSystem::AddHandler(new wxZipFSHandler);
 	
-	ComicalFrame *frame = new ComicalFrame(_T("Comical"), wxPoint(50, 50), wxSize(600, 400), wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE);
+	wxConfig *config = new wxConfig("Comical");
+	
+	int width = (int) config->Read("/Comical/FrameWidth", 600l);
+	int height = (int) config->Read("/Comical/FrameHeight", 400l);
+	
+	ComicalFrame *frame = new ComicalFrame(_T("Comical"), wxPoint(50, 50), wxSize(width, height), wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE);
 
 #ifndef __WXMAC__
 #ifndef __WXCOCOA__
@@ -87,7 +92,7 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	wxLog::SetActiveTarget(ComicalLog);
 	
 	config = new wxConfig("Comical");
-	wxConfigBase::Set(config); // Registers config globally
+	wxConfigBase::Set(config); // Registers config globally	
 	
 	menuFile = new wxMenu;
 	menuFile->Append(wxID_OPEN, _T("&Open\tAlt-O"), _T("Open a Comic Book."));
@@ -206,7 +211,7 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	
 	wxPoint tbPoint = toolBarNav->GetPosition();
 	wxSize tbSize = toolBarNav->GetSize();
-	labelLeft = new wxStaticText(this, -1, "", wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT | wxST_NO_AUTORESIZE);
+	labelLeft = new wxStaticText(this, -1, "", wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT/* | wxST_NO_AUTORESIZE*/);
 	labelRight = new wxStaticText(this, -1, "");
 	wxFont font = labelLeft->GetFont();
 	font.SetPointSize(10);
@@ -242,11 +247,6 @@ END_EVENT_TABLE()
 
 void ComicalFrame::OnClose(wxCloseEvent& event)
 {
-	Destroy();	// Close the window
-}
-
-void ComicalFrame::OnQuit(wxCommandEvent& event)
-{
 	if (theBook)
 	{
 		theBook->Delete(); // delete the ComicBook thread
@@ -254,6 +254,14 @@ void ComicalFrame::OnQuit(wxCommandEvent& event)
 		delete theBook; // clear out the rest of the ComicBook
 		theBook = NULL;
 	}
+	wxSize frameSize = GetSize();
+	config->Write("/Comical/FrameWidth", frameSize.x);
+	config->Write("/Comical/FrameHeight", frameSize.y);
+	Destroy();	// Close the window
+}
+
+void ComicalFrame::OnQuit(wxCommandEvent& event)
+{
 	Close(TRUE);
 }
 

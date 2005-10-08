@@ -101,7 +101,6 @@ ComicBookZIP::ComicBookZIP(wxString file, uint cachelen) : ComicBook()
 	Orientations = new COMICAL_ROTATE[pageCount];
 	for (uint i = 0; i < pageCount; i++)
 		Orientations[i] = NORTH;
-	imageProtectors = new wxMutex[pageCount];
 	
 	Create(); // create the wxThread
 }

@@ -35,35 +35,39 @@ ComicBook::~ComicBook()
 	delete[] originals;
 	delete[] resamples;
 	delete[] Orientations;
-	delete[] imageProtectors;
 }
 
 void ComicBook::RotatePage(uint pagenumber, COMICAL_ROTATE direction)
 {
 	if (Orientations[pagenumber] != direction)
 	{
-		wxMutexLocker lock(imageProtectors[pagenumber]);
+		if (IsRunning())
+			Pause(); // pause the thread
 		Orientations[pagenumber] = direction;
 		resamples[pagenumber].Destroy();
+		if (IsPaused())
+			Resume();
 	}
 }
 
-void ComicBook::SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COMICAL_ZOOM newZoom, uint newWidth, uint newHeight)
+void ComicBook::SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COMICAL_ZOOM newZoom, int newWidth, int newHeight, int newScrollBarThickness)
 {
-	if(mode != newMode || fiFilter != newFilter || zoom != newZoom || width != newWidth || height != newHeight)
+	if(mode != newMode || fiFilter != newFilter || zoom != newZoom || canvasWidth != newWidth || canvasHeight != newHeight)
 	{
+		if (IsRunning())
+			Pause(); // pause the thread
 		for (uint i = 0; i < pageCount; i++)
 		{
-			imageProtectors[i].Lock(); // race condition possible?
 			resamples[i].Destroy();
 		}
 		mode = newMode;
 		fiFilter = newFilter;
 		zoom = newZoom;
-		width = newWidth;
-		height = newHeight;
-		for (uint i = 0; i < pageCount; i++)
-			imageProtectors[i].Unlock();
+		canvasWidth = newWidth;
+		canvasHeight = newHeight;
+		scrollBarThickness = newScrollBarThickness;
+		if (IsPaused())
+			Resume();
 	}
 }
 
@@ -84,9 +88,9 @@ wxBitmap * ComicBook::GetPageLeftHalf(uint pagenumber)
 	{
 		Sleep(50);
 	}
-	int width = resamples[pagenumber].GetWidth();
-	int height = resamples[pagenumber].GetHeight();
-	return new wxBitmap(resamples[pagenumber].GetSubImage(wxRect(0, 0, width / 2, height)));
+	int rWidth = resamples[pagenumber].GetWidth();
+	int rHeight = resamples[pagenumber].GetHeight();
+	return new wxBitmap(resamples[pagenumber].GetSubImage(wxRect(0, 0, rWidth / 2, rHeight)));
 }
 
 wxBitmap * ComicBook::GetPageRightHalf(uint pagenumber)
@@ -96,9 +100,9 @@ wxBitmap * ComicBook::GetPageRightHalf(uint pagenumber)
 	{
 		Sleep(50);
 	}
-	int width = resamples[pagenumber].GetWidth();
-	int height = resamples[pagenumber].GetHeight();
-	return new wxBitmap(resamples[pagenumber].GetSubImage(wxRect(width / 2, 0, (width / 2) + (width % 2), height)));
+	int rWidth = resamples[pagenumber].GetWidth();
+	int rHeight = resamples[pagenumber].GetHeight();
+	return new wxBitmap(resamples[pagenumber].GetSubImage(wxRect(rWidth / 2, 0, (rWidth / 2) + (rWidth % 2), rHeight)));
 }
 
 bool ComicBook::IsPageLandscape(uint pagenumber)
@@ -110,9 +114,9 @@ bool ComicBook::IsPageLandscape(uint pagenumber)
 	{
 		Sleep(50);
 	}
-	int width = resamples[pagenumber].GetWidth();
-	int height = resamples[pagenumber].GetHeight();
-	if ((float(width)/float(height)) > 1.0f)
+	int rWidth = resamples[pagenumber].GetWidth();
+	int rHeight = resamples[pagenumber].GetHeight();
+	if ((float(rWidth)/float(rHeight)) > 1.0f)
 		return true;
 	else
 		return false;
@@ -168,7 +172,6 @@ void * ComicBook::Entry()
 			if (target > high)
 				target = currentPage - (target - high);
 			
-			imageProtectors[target].Lock();
 			if (!resamples[target].Ok())
 			{
 				if (!originals[target].Ok())
@@ -187,10 +190,8 @@ void * ComicBook::Entry()
 				ScaleImage(target);
 				if (!resamples[target].Ok())
 					wxLogError("Failed to scale page %d.", target);
-				imageProtectors[target].Unlock();
 				break;
 			}
-			imageProtectors[target].Unlock();
 		}
 
 		if (i < cacheLen && i < pageCount)
@@ -200,32 +201,29 @@ void * ComicBook::Entry()
 				// Delete pages outside of the cache's range.
 				for (i = 0; int(i) < low; i++)
 				{
-					imageProtectors[i].Lock();
 					if(resamples[i].Ok())
 						resamples[i].Destroy();
 					if(originals[i].Ok())
 						originals[i].Destroy();
-					imageProtectors[i].Unlock();
 				}
 				
 				for (i = pageCount - 1; int(i) > high; i--)
 				{
-					imageProtectors[i].Lock();
 					if(resamples[i].Ok())
 						resamples[i].Destroy();
 					if(originals[i].Ok())
 						originals[i].Destroy();
-					imageProtectors[i].Unlock();
 				}
 			}
 		}
 
+		Yield();
 		Sleep(20);
 	}
 	return 0;
 }
 
-/* Resizes an image to fit within half of the Comical window. */
+/* Resizes an image to fit. */
 void ComicBook::ScaleImage(uint pagenumber)
 {
 	int xImage, yImage;
@@ -264,35 +262,56 @@ void ComicBook::ScaleImage(uint pagenumber)
 		rImage = float(xImage) / float(yImage);
 		if (rImage >= 1.0f || mode == SINGLE)
 		{
-			rCanvas = float(width) / float(height);
+			rCanvas = float(canvasWidth) / float(canvasHeight);
 			if (rCanvas > rImage)
-				scalingFactor = float(height) / float(yImage);
+				scalingFactor = float(canvasHeight) / float(yImage);
 			else
-				scalingFactor = float(width) / float(xImage);
+				scalingFactor = float(canvasWidth) / float(xImage);
 		}
 		else
 		{
-			rCanvas = (float(width)/2.0f) / float(height);
+			rCanvas = (float(canvasWidth)/2.0f) / float(canvasHeight);
 			if (rCanvas > rImage)
-				scalingFactor = float(height) / float(yImage);
+				scalingFactor = float(canvasHeight) / float(yImage);
 			else
-				scalingFactor = (float(width)/2.0f) / float(xImage);
+				scalingFactor = (float(canvasWidth)/2.0f) / float(xImage);
 		}
 
 		break;
 
-	case FITH: // fit horizontally
-
+	case FITH: // fit to width
 		rImage = float(xImage) / float(yImage);
-		if (rImage >= 1.0f || mode == SINGLE)
-			scalingFactor = float(width) / float(xImage);
-		else
-			scalingFactor = (float(width)/2.0f) / float(xImage);
+		// The page will have to be made narrower if it will not fit on the canvas without vertical scrolling
+		int withoutScrollBarHeight;
+		if (rImage >= 1.0f || mode == SINGLE) {
+			scalingFactor = float(canvasWidth) / float(xImage);
+			withoutScrollBarHeight = int(float(yImage) * scalingFactor);
+			if (withoutScrollBarHeight > canvasHeight)
+				scalingFactor = float(canvasWidth - scrollBarThickness) / float(xImage);
+		}
+		else {
+			scalingFactor = float(canvasWidth/2) / float(xImage);
+			withoutScrollBarHeight = int(float(yImage) * scalingFactor);
+			if (withoutScrollBarHeight > canvasHeight)
+				scalingFactor = float((canvasWidth - scrollBarThickness)/2) / float(xImage);
+		}
 		break;
 
-	case FITV: // fit vertically
-
-		scalingFactor = float(height) / float(yImage);
+	case FITV: // fit to height
+		rImage = float(xImage) / float(yImage);
+		scalingFactor = float(canvasHeight) / float(yImage);
+		int withoutScrollBarWidth;
+		// The page will have to be made shorter if it will not fit on the canvas without horizontal scrolling
+		if (rImage >= 1.0f || mode == SINGLE) {
+			withoutScrollBarWidth = int(float(xImage) * scalingFactor);
+			if (withoutScrollBarWidth > canvasWidth)
+				scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
+		}
+		else {
+			withoutScrollBarWidth = int(float(xImage) * scalingFactor);
+			if (withoutScrollBarWidth > (canvasWidth / 2))
+				scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
+		}
 		break;
 
 	case FULL: // no resize

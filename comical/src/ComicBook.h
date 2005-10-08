@@ -75,7 +75,7 @@ public:
 
 	void RotatePage(uint pagenumber, COMICAL_ROTATE direction);
 	uint GetPageCount() { return pageCount;}
-	void SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COMICAL_ZOOM newZoom, uint newWidth, uint newHeight);
+	void SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COMICAL_ZOOM newZoom, int newWidth, int newHeight, int newScrollBarThickness);
 	void SetCacheLen(uint newCacheLen);
 	wxBitmap *GetPage(uint pagenumber);
 	wxBitmap *GetPageLeftHalf(uint pagenumber);
@@ -99,19 +99,18 @@ protected:
 	wxString filename;
 	wxImage *originals;
 	wxImage *resamples;
-	wxMutex *imageProtectors; // only one thread can touch an image at a time
 	
 	uint cacheLen;
+	
+	int scrollBarThickness;
 	
 	// window parameters
 	COMICAL_MODE mode;
 	FREE_IMAGE_FILTER fiFilter;
 	COMICAL_ZOOM zoom;
-	uint width;
-	uint height;
-  
-};
+	int canvasWidth;
+	int canvasHeight;
 
-// extern ComicBook *theBook;
+};
 
 #endif
