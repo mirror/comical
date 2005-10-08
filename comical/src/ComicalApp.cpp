@@ -54,8 +54,10 @@ bool ComicalApp::OnInit()
 	
 	int width = (int) config->Read("/Comical/FrameWidth", 600l);
 	int height = (int) config->Read("/Comical/FrameHeight", 400l);
+	int x = (int) config->Read("/Comical/FrameX", 50l);
+	int y = (int) config->Read("/Comical/FrameY", 50l);
 	
-	ComicalFrame *frame = new ComicalFrame(_T("Comical"), wxPoint(50, 50), wxSize(width, height), wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE);
+	ComicalFrame *frame = new ComicalFrame(_T("Comical"), wxPoint(x, y), wxSize(width, height), wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE);
 
 #ifndef __WXMAC__ || __WXCOCOA__
 	frame->SetIcon(wxICON(Comical));
@@ -250,9 +252,12 @@ void ComicalFrame::OnClose(wxCloseEvent& event)
 		delete theBook; // clear out the rest of the ComicBook
 		theBook = NULL;
 	}
-	wxSize frameSize = GetSize();
-	config->Write("/Comical/FrameWidth", frameSize.x);
-	config->Write("/Comical/FrameHeight", frameSize.y);
+	wxRect frameDim = GetRect();
+	config->Write("/Comical/FrameWidth", frameDim.width);
+	config->Write("/Comical/FrameHeight", frameDim.height);
+	config->Write("/Comical/FrameX", frameDim.x);
+	config->Write("/Comical/FrameY", frameDim.y);
+	
 	Destroy();	// Close the window
 }
 
@@ -263,7 +268,7 @@ void ComicalFrame::OnQuit(wxCommandEvent& event)
 
 void ComicalFrame::OnAbout(wxCommandEvent& event)
 {
-	wxMessageDialog AboutDlg(this, "Comical 0.5, (c) 2003-2005 James Athey.\nComical is licensed under the GPL, version 2,\nwith a linking exception; see COPYING for details.", _T("About Comical"), wxOK);
+	wxMessageDialog AboutDlg(this, "Comical 0.5, (c) 2003-2005 James Athey.\nComical is licensed under the GPL, version 2,\nwith a linking exception; see README for details.", _T("About Comical"), wxOK);
 	AboutDlg.ShowModal();
 }
 
