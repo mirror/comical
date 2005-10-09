@@ -189,7 +189,7 @@ void * ComicBook::Entry()
 				}
 				ScaleImage(target);
 				if (!resamples[target].Ok())
-					wxLogError("Failed to scale page %d.", target);
+					wxLogError(wxT("Failed to scale page %d."), target);
 				break;
 			}
 		}

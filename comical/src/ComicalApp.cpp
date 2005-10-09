@@ -2,7 +2,7 @@
               ComicalApp.cpp - ComicalApp class and gui functions
                              -------------------
     begin                : Wed Oct 22 2003
-    copyright            : (C) 2005 by James Athey
+    copyright            : (C) 2003-2005 by James Athey
     email                : jathey@comcast.net
  ***************************************************************************/
 
@@ -401,7 +401,7 @@ void ComicalFrame::OnZoom(wxCommandEvent& event)
 		theCanvas->Zoom(FITH);
 		break;
 	default:
-		wxLogError("Zoom mode %d is undefined.", event.GetId()); // we shouldn't be here... honest!
+		wxLogError(wxT("Zoom mode %d is undefined."), event.GetId()); // we shouldn't be here... honest!
 		break;
 	}
 }
@@ -429,7 +429,7 @@ void ComicalFrame::OnFilter(wxCommandEvent& event)
 		theCanvas->Filter(FILTER_LANCZOS3);
 		break;
 	default:
-		wxLogError("Filter %d is undefined.", event.GetId()); // we shouldn't be here... honest!
+		wxLogError(wxT("Filter %d is undefined."), event.GetId()); // we shouldn't be here... honest!
 		break;
 	}
 }
@@ -456,7 +456,7 @@ void ComicalFrame::OnRotate(wxCommandEvent& event)
 		theCanvas->Rotate(WEST);
 		break;
 	default:
-		wxLogError("I don't think I can turn that way: %d", event.GetId()); // we shouldn't be here... honest!
+		wxLogError(wxT("I don't think I can turn that way: %d"), event.GetId()); // we shouldn't be here... honest!
 		break;
 	}
 }
@@ -483,7 +483,7 @@ void ComicalFrame::OnRotateLeft(wxCommandEvent& event)
 		theCanvas->RotateLeft(WEST);
 		break;
 	default:
-		wxLogError("I don't think I can turn that way: %d", event.GetId()); // we shouldn't be here... honest!
+		wxLogError(wxT("I don't think I can turn that way: %d"), event.GetId()); // we shouldn't be here... honest!
 		break;
 	}
 }

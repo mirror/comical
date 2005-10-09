@@ -1,3 +1,32 @@
+/***************************************************************************
+ *   Copyright (C) 2005 by James Leighton Athey                            *
+ *   jathey@comcast.net                                                    *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   In addition, as a special exception, the author gives permission to   *
+ *   link the code of his release of Comical with Rarlabs' "unrar"         *
+ *   library (or with modified versions of it that use the same license    *
+ *   as the "unrar" library), and distribute the linked executables. You   *
+ *   must obey the GNU General Public License in all respects for all of   *
+ *   the code used other than "unrar". If you modify this file, you may    *
+ *   extend this exception to your version of the file, but you are not    *
+ *   obligated to do so. If you do not wish to do so, delete this          *
+ *   exception statement from your version.                                *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ***************************************************************************/
 
 #ifdef __GNUG__
 #pragma implementation "rarstrm.h"
@@ -44,7 +73,7 @@ wxRarInputStream::wxRarInputStream(const wxString& archive, const wxString& file
 	if ((RHCode=OpenArchiveData.OpenResult)!=0)
 	{
 		m_lasterror = wxSTREAM_READ_ERROR;
-		wxLogError("Could not open " + archive + " for reading.");
+		wxLogError(wxT("Could not open " + archive + " for reading."));
 		OpenArchiveError(RHCode);
 		return;
 	}
@@ -65,7 +94,7 @@ wxRarInputStream::wxRarInputStream(const wxString& archive, const wxString& file
 	if (m_Size == 0) // archived file not found
 	{
 		m_lasterror = wxSTREAM_READ_ERROR;
-		wxLogError(file + " not found in archive " + archive + ".");
+		wxLogError(wxT(file + " not found in archive " + archive + "."));
 	}
 
 	m_Buffer = new char[m_Size];
@@ -137,19 +166,19 @@ void wxRarInputStream::OpenArchiveError(int Error)
 	switch(Error)
 	{
 		case ERAR_NO_MEMORY:
-			wxLogVerbose("ERAR_NO_MEMORY: Not enough memory to open m_ArcName.");
+			wxLogError(wxT("ERAR_NO_MEMORY: Not enough memory to open m_ArcName."));
 			break;
 		case ERAR_EOPEN:
-			wxLogVerbose("ERAR_EOPEN: Cannot open " + m_ArcName + ".");
+			wxLogError(wxT("ERAR_EOPEN: Cannot open " + m_ArcName + "."));
 			break;
 		case ERAR_BAD_ARCHIVE:
-			wxLogVerbose("ERAR_BAD_ARCHIVE: " + m_ArcName + " is not a RAR archive.");
+			wxLogError(wxT("ERAR_BAD_ARCHIVE: " + m_ArcName + " is not a RAR archive."));
 			break;
 		case ERAR_BAD_DATA:
-			wxLogVerbose("ERAR_BAD_DATA: " + m_ArcName + " archive header broken.");
+			wxLogError(wxT("ERAR_BAD_DATA: " + m_ArcName + " archive header broken."));
 			break;
 		case ERAR_UNKNOWN:
-			wxLogVerbose("ERAR_UNKNOWN: Unknown error.");
+			wxLogError(wxT("ERAR_UNKNOWN: Unknown error."));
 			break;
 	}
 }
@@ -159,31 +188,31 @@ void wxRarInputStream::ProcessFileError(int Error)
 	switch(Error)
 	{
 		case ERAR_UNKNOWN_FORMAT:
-			wxLogVerbose("ERAR_UNKNOWN_FORMAT: Unknown archive format.");
+			wxLogError(wxT("ERAR_UNKNOWN_FORMAT: Unknown archive format."));
 			break;
 		case ERAR_BAD_ARCHIVE:
-			wxLogVerbose("ERAR_BAD_ARCHIVE: Bad volume.");
+			wxLogError(wxT("ERAR_BAD_ARCHIVE: Bad volume."));
 			break;
 		case ERAR_ECREATE:
-			wxLogVerbose("ERAR_ECREATE: File create error.");
+			wxLogError(wxT("ERAR_ECREATE: File create error."));
 			break;
 		case ERAR_EOPEN:
-			wxLogVerbose("ERAR_EOPEN: Volume open error.");
+			wxLogError(wxT("ERAR_EOPEN: Volume open error."));
 			break;
 		case ERAR_ECLOSE:
-			wxLogVerbose("ERAR_ECLOSE: File close error.");
+			wxLogError(wxT("ERAR_ECLOSE: File close error."));
 			break;
 		case ERAR_EREAD:
-			wxLogVerbose("ERAR_EREAD: Read error.");
+			wxLogError(wxT("ERAR_EREAD: Read error."));
 			break;
 		case ERAR_EWRITE:
-			wxLogVerbose("ERAR_EWRITE: Write error.");
+			wxLogError(wxT("ERAR_EWRITE: Write error."));
 			break;
 		case ERAR_BAD_DATA:
-			wxLogVerbose("ERAR_BAD_DATA: CRC error.");
+			wxLogError(wxT("ERAR_BAD_DATA: CRC error."));
 			break;
 		case ERAR_UNKNOWN:
-			wxLogVerbose("ERAR_UNKNOWN: Unknown error.");
+			wxLogError(wxT("ERAR_UNKNOWN: Unknown error."));
 			break;
 	}
 }
