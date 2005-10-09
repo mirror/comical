@@ -75,7 +75,7 @@ public:
 
 	void RotatePage(uint pagenumber, COMICAL_ROTATE direction);
 	uint GetPageCount() { return pageCount;}
-	void SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COMICAL_ZOOM newZoom, int newWidth, int newHeight, int newScrollBarThickness);
+	bool SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COMICAL_ZOOM newZoom, int newWidth, int newHeight, int newScrollBarThickness);
 	void SetCacheLen(uint newCacheLen);
 	wxBitmap *GetPage(uint pagenumber);
 	wxBitmap *GetPageLeftHalf(uint pagenumber);

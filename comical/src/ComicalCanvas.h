@@ -83,6 +83,7 @@ class ComicalCanvas : public wxScrolledWindow
     void clearBitmaps();
     void createBitmaps();
     void setPage(int pagenumber);
+    void resetView();
 
     void OnPaint(wxPaintEvent &event);
     void OnKeyDown(wxKeyEvent &event);

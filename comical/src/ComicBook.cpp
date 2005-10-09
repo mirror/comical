@@ -50,9 +50,10 @@ void ComicBook::RotatePage(uint pagenumber, COMICAL_ROTATE direction)
 	}
 }
 
-void ComicBook::SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COMICAL_ZOOM newZoom, int newWidth, int newHeight, int newScrollBarThickness)
+/* returns TRUE if paramaters were different, FALSE if parameters were the same and no changes were made */
+bool ComicBook::SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COMICAL_ZOOM newZoom, int newWidth, int newHeight, int newScrollBarThickness)
 {
-	if(mode != newMode || fiFilter != newFilter || zoom != newZoom || canvasWidth != newWidth || canvasHeight != newHeight)
+	if(mode != newMode || fiFilter != newFilter || zoom != newZoom || canvasWidth != newWidth || canvasHeight != newHeight || scrollBarThickness != newScrollBarThickness)
 	{
 		if (IsRunning())
 			Pause(); // pause the thread
@@ -68,6 +69,10 @@ void ComicBook::SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COM
 		scrollBarThickness = newScrollBarThickness;
 		if (IsPaused())
 			Resume();
+		return TRUE;
+	}
+	else {
+		return FALSE;
 	}
 }
 

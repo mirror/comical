@@ -1,7 +1,7 @@
 CC = `wx-config --cxx`
 LD = `wx-config --ld`
 INCLUDE = -Iunrar
-CFLAGS =  `wx-config --cxxflags` -O2 -Wall -pipe -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -DRARDLL -D_UNIX $(INCLUDE)
+CFLAGS =  `wx-config --cxxflags` -g -O2 -Wall -pipe -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -DRARDLL -D_UNIX $(INCLUDE)
 LDFLAGS = `wx-config --libs` -Lunrar -lunrar
 
 .SUFFIXES: .o .cpp .c .h

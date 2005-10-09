@@ -324,6 +324,31 @@ void ComicalCanvas::GoToPage(uint pagenumber)
 	createBitmaps();
 }
 
+void ComicalCanvas::resetView()
+{
+	clearBitmaps();
+
+	if (mode == SINGLE)
+		centerPage = theBook->GetPage(theBook->Current);
+	else
+	{
+		if (leftPart == LEFT_HALF)
+			leftPage = theBook->GetPageLeftHalf(leftNum);
+		else if (leftPart == RIGHT_HALF)
+			leftPage = theBook->GetPageRightHalf(leftNum);
+		else // leftPart == FULL_PAGE
+			leftPage = theBook->GetPage(leftNum);
+			
+		if (rightPart == LEFT_HALF)
+			rightPage = theBook->GetPageLeftHalf(rightNum);
+		else if (rightPart == RIGHT_HALF)
+			rightPage = theBook->GetPageRightHalf(rightNum);
+		else // rightPart == FULL_PAGE
+			rightPage = theBook->GetPage(rightNum);
+	}
+	createBitmaps();
+}
+
 void ComicalCanvas::PrevPageTurn()
 {
 	if (theBook == NULL)
@@ -546,7 +571,6 @@ void ComicalCanvas::Zoom(COMICAL_ZOOM value)
 		EnableScrolling(true, true);	
 	if (theBook) {
 		SetParams();
-		GoToPage(theBook->Current);
 	}
 }
 
@@ -555,7 +579,6 @@ void ComicalCanvas::Filter(FREE_IMAGE_FILTER value)
 	filter = value;
 	if (theBook) {
 		SetParams();
-		GoToPage(theBook->Current);
 	}
 }
 
@@ -564,14 +587,14 @@ void ComicalCanvas::Mode(COMICAL_MODE value)
 	mode = value;
 	if (theBook) {
 		SetParams();
-		GoToPage(theBook->Current);
 	}
 }
 
 void ComicalCanvas::SetParams()
 {
 	wxSize canvasSize = GetSize();
-	theBook->SetParams(mode, filter, zoom, canvasSize.x, canvasSize.y, scrollBarThickness);
+	if (theBook->SetParams(mode, filter, zoom, canvasSize.x, canvasSize.y, scrollBarThickness) && theBook->IsRunning()) // if the parameters are actually different
+		resetView();
 }
 
 void ComicalCanvas::Rotate(bool clockwise)
@@ -736,7 +759,6 @@ void ComicalCanvas::OnSize(wxSizeEvent& event)
 	}
 	if (theBook) {
 		SetParams();
-		GoToPage(theBook->Current);
 	}
 }
 
