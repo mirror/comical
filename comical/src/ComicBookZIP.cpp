@@ -49,10 +49,10 @@ ComicBookZIP::ComicBookZIP(wxString file, uint cachelen) : ComicBook()
 		while ((entry = zipFile->GetNextEntry()) != NULL)
 		{
 			page = _T(entry->GetName());
-			if(	page.Right(5).Upper() == ".JPEG" || page.Right(4).Upper() == ".JPG" ||
-				page.Right(5).Upper() == ".TIFF" || page.Right(4).Upper() == ".TIF" ||
-				page.Right(4).Upper() == ".GIF" ||
-				page.Right(4).Upper() == ".PNG" )
+			if(	page.Right(5).Upper() == _T(".JPEG") || page.Right(4).Upper() == _T(".JPG") ||
+				page.Right(5).Upper() == _T(".TIFF") || page.Right(4).Upper() == _T(".TIF") ||
+				page.Right(4).Upper() == _T(".GIF") ||
+				page.Right(4).Upper() == _T(".PNG"))
 				Filenames.push_back(page);
 		}
 		delete zipFile;
@@ -78,10 +78,10 @@ ComicBookZIP::ComicBookZIP(wxString file, uint cachelen) : ComicBook()
 	do {
 		unzGetCurrentFileInfo(ZipFile, fileInfo, namebuf, 1024, NULL, 0, NULL, 0);
 		page = namebuf;
-		if(page.Right(5).Upper() == ".JPEG" || page.Right(4).Upper() == ".JPG" ||
-		page.Right(5).Upper() == ".TIFF" || page.Right(4).Upper() == ".TIF" ||
-		page.Right(4).Upper() == ".GIF" ||
-		page.Right(4).Upper() == ".PNG" )
+		if(page.Right(5).Upper() == _T(".JPEG") || page.Right(4).Upper() == _T(".JPG") ||
+		page.Right(5).Upper() == _T(".TIFF") || page.Right(4).Upper() == _T(".TIF") ||
+		page.Right(4).Upper() == _T(".GIF") ||
+		page.Right(4).Upper() == _T(".PNG"))
 			Filenames.push_back(page);
 	} while (unzGoToNextFile(ZipFile) == UNZ_OK);
 

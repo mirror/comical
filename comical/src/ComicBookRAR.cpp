@@ -57,10 +57,10 @@ ComicBookRAR::ComicBookRAR(wxString file, uint cachelen) : ComicBook()
 	
 	while ((RHCode=RARReadHeaderEx(RarFile,&HeaderData))==0) {
 		page = _T(HeaderData.FileName);
-		if(page.Right(5).Upper() == ".JPEG" || page.Right(4).Upper() == ".JPG" ||
-		page.Right(5).Upper() == ".TIFF" || page.Right(4).Upper() == ".TIF" ||
-		page.Right(4).Upper() == ".GIF" ||
-		page.Right(4).Upper() == ".PNG" )
+		if(page.Right(5).Upper() == _T(".JPEG") || page.Right(4).Upper() == _T(".JPG") ||
+		page.Right(5).Upper() == _T(".TIFF") || page.Right(4).Upper() == _T(".TIF") ||
+		page.Right(4).Upper() == _T(".GIF") ||
+		page.Right(4).Upper() == _T(".PNG"))
 			Filenames.push_back(page);
 		
 		if ((PFCode=RARProcessFile(RarFile,RAR_SKIP,NULL,NULL))!=0) {
@@ -104,10 +104,10 @@ void ComicBookRAR::OpenArchiveError(int Error, wxString ArcName)
 			wxLogError(wxT("libunrar: Cannot open " + ArcName));
 			break;
 		case ERAR_BAD_ARCHIVE:
-			wxLogError(wxT("libunrar: " + ArcName + " is not RAR archive"));
+			wxLogError(wxT("libunrar: ") + ArcName + wxT(" is not RAR archive"));
 			break;
 		case ERAR_BAD_DATA:
-			wxLogError(wxT("libunrar: " + ArcName + " archive header broken"));
+			wxLogError(wxT("libunrar: ") + ArcName + wxT(" archive header broken"));
 			break;
 		case ERAR_UNKNOWN:
 			wxLogError(wxT("libunrar: Unknown error"));

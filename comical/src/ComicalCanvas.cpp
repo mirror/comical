@@ -117,7 +117,7 @@ void ComicalCanvas::createBitmaps()
 		cParent->toolBarNav->EnableTool(ID_CCW, true);
 		cParent->toolBarNav->EnableTool(ID_CW, true);
 		
-		cParent->labelLeft->SetLabel("");
+		cParent->labelLeft->SetLabel(_T(""));
 		cParent->labelRight->SetLabel(wxString::Format("%d of %d", theBook->Current + 1, theBook->GetPageCount()));
 	} else {
 		cParent->menuView->FindItem(ID_Rotate)->Enable(false);
@@ -161,7 +161,7 @@ void ComicalCanvas::createBitmaps()
 			cParent->toolBarNav->EnableTool(ID_CCWL, false);
 			cParent->toolBarNav->EnableTool(ID_CWL, false);
 
-			cParent->labelLeft->SetLabel("");
+			cParent->labelLeft->SetLabel(_T(""));
 		}
 
 		xScroll *= 2;

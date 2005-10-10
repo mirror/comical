@@ -214,8 +214,8 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	
 	wxPoint tbPoint = toolBarNav->GetPosition();
 	wxSize tbSize = toolBarNav->GetSize();
-	labelLeft = new wxStaticText(this, -1, "", wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT/* | wxST_NO_AUTORESIZE*/);
-	labelRight = new wxStaticText(this, -1, "");
+	labelLeft = new wxStaticText(this, -1, _T(""), wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT/* | wxST_NO_AUTORESIZE*/);
+	labelRight = new wxStaticText(this, -1, _T(""));
 	wxFont font = labelLeft->GetFont();
 	font.SetPointSize(10);
 	labelLeft->SetFont(font);
@@ -273,7 +273,7 @@ void ComicalFrame::OnQuit(wxCommandEvent& event)
 
 void ComicalFrame::OnAbout(wxCommandEvent& event)
 {
-	wxMessageDialog AboutDlg(this, "Comical 0.5, (c) 2003-2005 James Athey.\nComical is licensed under the GPL, version 2,\nwith a linking exception; see README for details.", _T("About Comical"), wxOK);
+	wxMessageDialog AboutDlg(this, _T("Comical 0.5, (c) 2003-2005 James Athey.\nComical is licensed under the GPL, version 2,\nwith a linking exception; see README for details."), _T("About Comical"), wxOK);
 	AboutDlg.ShowModal();
 }
 
@@ -281,7 +281,7 @@ void ComicalFrame::OnOpen(wxCommandEvent& event)
 {
 	wxString cwd;
 	config->Read("/Comical/CWD", &cwd);
-	wxString filename = wxFileSelector("Open a Comic Book", cwd, "", "", "Comic Books (*.cbr,*.cbz,*.rar,*.zip)|*.cbr;*.CBR;*.cbz;*.CBZ;*.rar;*.RAR;*.zip;*.ZIP", wxOPEN | wxCHANGE_DIR | wxFILE_MUST_EXIST, this);
+	wxString filename = wxFileSelector(_T("Open a Comic Book"), cwd, _T(""), _T(""), _T("Comic Books (*.cbr,*.cbz,*.rar,*.zip)|*.cbr;*.CBR;*.cbz;*.CBZ;*.rar;*.RAR;*.zip;*.ZIP"), wxOPEN | wxCHANGE_DIR | wxFILE_MUST_EXIST, this);
 
 	if (!filename.empty())
 	{
@@ -304,9 +304,9 @@ void ComicalFrame::OpenFile(wxString filename)
 			theBook = NULL;
 		}
 
-		if (filename.Right(4).Upper() == ".CBR" || filename.Right(4).Upper() == ".RAR")
+		if (filename.Right(4).Upper() == _T(".CBR") || filename.Right(4).Upper() == _T(".RAR"))
 			theBook = new ComicBookRAR(filename, 10);
-		else if (filename.Right(4).Upper() == ".CBZ" || filename.Right(4).Upper() == ".ZIP")
+		else if (filename.Right(4).Upper() == _T(".CBZ") || filename.Right(4).Upper() == _T(".ZIP"))
 			theBook = new ComicBookZIP(filename, 10);
 
 		if (theBook)
@@ -361,9 +361,9 @@ void ComicalFrame::OnGoTo(wxCommandEvent& event)
 	long pagenumber;
 	if (theBook != NULL)
 	{
-		message = "Enter a page number from 1 to ";
+		message = _T("Enter a page number from 1 to ");
 		message += wxString::Format("%d", theBook->GetPageCount());
-		pagenumber = wxGetNumberFromUser(message, "Page", "Go To Page", theBook->Current + 1, 1, theBook->GetPageCount(), this);
+		pagenumber = wxGetNumberFromUser(message, _T("Page"), _T("Go To Page"), theBook->Current + 1, 1, theBook->GetPageCount(), this);
 		if (pagenumber != -1)
 			theCanvas->GoToPage(pagenumber - 1);
 	}
