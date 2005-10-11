@@ -52,14 +52,14 @@ bool ComicalApp::OnInit()
 	wxImage::AddHandler(new wxGIFHandler);
 	wxImage::AddHandler(new wxTIFFHandler);
 	
-	wxConfig *config = new wxConfig("Comical");
+	wxConfig *config = new wxConfig(wxT("Comical"));
 	
-	int width = (int) config->Read("/Comical/FrameWidth", 600l);
-	int height = (int) config->Read("/Comical/FrameHeight", 400l);
-	int x = (int) config->Read("/Comical/FrameX", 50l);
-	int y = (int) config->Read("/Comical/FrameY", 50l);
+	int width = (int) config->Read(wxT("/Comical/FrameWidth"), 600l);
+	int height = (int) config->Read(wxT("/Comical/FrameHeight"), 400l);
+	int x = (int) config->Read(wxT("/Comical/FrameX"), 50l);
+	int y = (int) config->Read(wxT("/Comical/FrameY"), 50l);
 	
-	ComicalFrame *frame = new ComicalFrame(_T("Comical"), wxPoint(x, y), wxSize(width, height), wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE);
+	ComicalFrame *frame = new ComicalFrame(wxT("Comical"), wxPoint(x, y), wxSize(width, height), wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE);
 
 #ifndef __WXMAC__
 #ifndef __WXCOCOA__
@@ -94,93 +94,93 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	ComicalLog->SetVerbose(FALSE);
 	wxLog::SetActiveTarget(ComicalLog);
 	
-	config = new wxConfig("Comical");
+	config = new wxConfig(wxT("Comical"));
 	wxConfigBase::Set(config); // Registers config globally	
 	
 	menuFile = new wxMenu;
-	menuFile->Append(wxID_OPEN, _T("&Open\tAlt-O"), _T("Open a Comic Book."));
+	menuFile->Append(wxID_OPEN, wxT("&Open\tAlt-O"), wxT("Open a Comic Book."));
 	menuFile->AppendSeparator();
-	menuFile->Append(wxID_EXIT, _T("E&xit\tAlt-X"), _T("Quit Comical."));
+	menuFile->Append(wxID_EXIT, wxT("E&xit\tAlt-X"), wxT("Quit Comical."));
 
 	menuGo = new wxMenu;
-	menuGo->Append(ID_PrevSlide, _T("Previous Page"), _T("Display the previous page."));
-	menuGo->Append(ID_NextSlide, _T("Next Page"), _T("Display the next page."));
+	menuGo->Append(ID_PrevSlide, wxT("Previous Page"), wxT("Display the previous page."));
+	menuGo->Append(ID_NextSlide, wxT("Next Page"), wxT("Display the next page."));
 	menuGo->AppendSeparator();
-	menuGo->Append(ID_PrevTurn, _T("&Previous Page Turn"), _T("Display the previous two pages."));
-	menuGo->Append(ID_NextTurn, _T("&Next Page Turn"), _T("Display the next two pages."));
+	menuGo->Append(ID_PrevTurn, wxT("&Previous Page Turn"), wxT("Display the previous two pages."));
+	menuGo->Append(ID_NextTurn, wxT("&Next Page Turn"), wxT("Display the next two pages."));
 	menuGo->AppendSeparator();
-	menuGo->Append(ID_First, _T("&First Page"), _T("Display the first page."));
-	menuGo->Append(ID_Last, _T("&Last Page"), _T("Display the last page."));
-	menuGo->Append(ID_GoTo, _T("&Go to page..."), _T("Jump to another page number."));
+	menuGo->Append(ID_First, wxT("&First Page"), wxT("Display the first page."));
+	menuGo->Append(ID_Last, wxT("&Last Page"), wxT("Display the last page."));
+	menuGo->Append(ID_GoTo, wxT("&Go to page..."), wxT("Jump to another page number."));
 
 	menuView = new wxMenu;
 
 	menuZoom = new wxMenu;
-	menuZoom->AppendRadioItem(ID_Fit, _T("Fit"), _T("Scale pages to fit the window."));
-	menuZoom->AppendRadioItem(ID_FitV, _T("Fit to Height"), _T("Scale pages to fit the window's height."));
-	menuZoom->AppendRadioItem(ID_FitH, _T("Fit to Width"), _T("Scale pages to fit the window's width."));
+	menuZoom->AppendRadioItem(ID_Fit, wxT("Fit"), wxT("Scale pages to fit the window."));
+	menuZoom->AppendRadioItem(ID_FitV, wxT("Fit to Height"), wxT("Scale pages to fit the window's height."));
+	menuZoom->AppendRadioItem(ID_FitH, wxT("Fit to Width"), wxT("Scale pages to fit the window's width."));
 	menuZoom->AppendSeparator();
-	menuZoom->AppendRadioItem(ID_Unzoomed, _T("100%"), _T("Original Size"));
-	menuZoom->AppendRadioItem(ID_3Q, _T("75%"), _T("75% Zoom."));
-	menuZoom->AppendRadioItem(ID_Half, _T("50%"), _T("50% Zoom."));
-	menuZoom->AppendRadioItem(ID_1Q, _T("25%"), _T("25% Zoom."));
-	menuView->Append(ID_S, _T("&Zoom"), menuZoom);
+	menuZoom->AppendRadioItem(ID_Unzoomed, wxT("100%"), wxT("Original Size"));
+	menuZoom->AppendRadioItem(ID_3Q, wxT("75%"), wxT("75% Zoom."));
+	menuZoom->AppendRadioItem(ID_Half, wxT("50%"), wxT("50% Zoom."));
+	menuZoom->AppendRadioItem(ID_1Q, wxT("25%"), wxT("25% Zoom."));
+	menuView->Append(ID_S, wxT("&Zoom"), menuZoom);
 
 	menuRotate = new wxMenu;
-	menuRotate->AppendRadioItem(ID_North, _T("Normal"), _T("No rotation."));
-	menuRotate->AppendRadioItem(ID_East, _T("90 Clockwise"), _T("Rotate 90 degrees clockwise."));
-	menuRotate->AppendRadioItem(ID_South, _T("180"), _T("Rotate 180 degrees."));
-	menuRotate->AppendRadioItem(ID_West, _T("90 Counter-Clockwise"), _T("Rotate 90 degrees counter-clockwise."));
-	menuView->Append(ID_Rotate, _T("&Rotate"), menuRotate);
+	menuRotate->AppendRadioItem(ID_North, wxT("Normal"), wxT("No rotation."));
+	menuRotate->AppendRadioItem(ID_East, wxT("90 Clockwise"), wxT("Rotate 90 degrees clockwise."));
+	menuRotate->AppendRadioItem(ID_South, wxT("180"), wxT("Rotate 180 degrees."));
+	menuRotate->AppendRadioItem(ID_West, wxT("90 Counter-Clockwise"), wxT("Rotate 90 degrees counter-clockwise."));
+	menuView->Append(ID_Rotate, wxT("&Rotate"), menuRotate);
 
 	menuRotateLeft = new wxMenu;
-	menuRotateLeft->AppendRadioItem(ID_NorthLeft, _T("Normal"), _T("No rotation."));
-	menuRotateLeft->AppendRadioItem(ID_EastLeft, _T("90 Clockwise"), _T("Rotate 90 degrees clockwise."));
-	menuRotateLeft->AppendRadioItem(ID_SouthLeft, _T("180"), _T("Rotate 180 degrees."));
-	menuRotateLeft->AppendRadioItem(ID_WestLeft, _T("90 Counter-Clockwise"), _T("Rotate 90 degrees counter-clockwise."));
-	menuView->Append(ID_RotateLeft, _T("Rotate Left Page"), menuRotateLeft);
+	menuRotateLeft->AppendRadioItem(ID_NorthLeft, wxT("Normal"), wxT("No rotation."));
+	menuRotateLeft->AppendRadioItem(ID_EastLeft, wxT("90 Clockwise"), wxT("Rotate 90 degrees clockwise."));
+	menuRotateLeft->AppendRadioItem(ID_SouthLeft, wxT("180"), wxT("Rotate 180 degrees."));
+	menuRotateLeft->AppendRadioItem(ID_WestLeft, wxT("90 Counter-Clockwise"), wxT("Rotate 90 degrees counter-clockwise."));
+	menuView->Append(ID_RotateLeft, wxT("Rotate Left Page"), menuRotateLeft);
 
 	menuRotateRight = new wxMenu;
-	menuRotateRight->AppendRadioItem(ID_North, _T("Normal"), _T("No rotation."));
-	menuRotateRight->AppendRadioItem(ID_East, _T("90 Clockwise"), _T("Rotate 90 degrees clockwise."));
-	menuRotateRight->AppendRadioItem(ID_South, _T("180"), _T("Rotate 180 degrees."));
-	menuRotateRight->AppendRadioItem(ID_West, _T("90 Counter-Clockwise"), _T("Rotate 90 degrees counter-clockwise."));
-	menuView->Append(ID_RotateRight, _T("Rotate Ri&ght Page"), menuRotateRight);
+	menuRotateRight->AppendRadioItem(ID_North, wxT("Normal"), wxT("No rotation."));
+	menuRotateRight->AppendRadioItem(ID_East, wxT("90 Clockwise"), wxT("Rotate 90 degrees clockwise."));
+	menuRotateRight->AppendRadioItem(ID_South, wxT("180"), wxT("Rotate 180 degrees."));
+	menuRotateRight->AppendRadioItem(ID_West, wxT("90 Counter-Clockwise"), wxT("Rotate 90 degrees counter-clockwise."));
+	menuView->Append(ID_RotateRight, wxT("Rotate Ri&ght Page"), menuRotateRight);
 
 	menuMode = new wxMenu;
-	menuMode->AppendRadioItem(ID_Single, _T("Single Page"), _T("Show only a single page at a time."));
-	menuMode->AppendRadioItem(ID_Double, _T("Double Page"), _T("Show two pages at a time."));
-	menuView->Append(ID_M, _T("&Mode"), menuMode);
+	menuMode->AppendRadioItem(ID_Single, wxT("Single Page"), wxT("Show only a single page at a time."));
+	menuMode->AppendRadioItem(ID_Double, wxT("Double Page"), wxT("Show two pages at a time."));
+	menuView->Append(ID_M, wxT("&Mode"), menuMode);
 
 	menuFilter = new wxMenu;
-	menuFilter->AppendRadioItem(ID_Box, _T("Box"), _T("Use the Box filter."));
-	menuFilter->AppendRadioItem(ID_Bilinear, _T("Bilinear"), _T("Use the Bilinear filter."));
-	menuFilter->AppendRadioItem(ID_Bicubic, _T("Bicubic"), _T("Use the Bicubic filter."));
-	menuFilter->AppendRadioItem(ID_BSpline, _T("B-Spline"), _T("Use the B-Spline filter."));
-	menuFilter->AppendRadioItem(ID_CatmullRom, _T("Catmull-Rom"), _T("Use the Catmull-Rom filter."));
-	menuFilter->AppendRadioItem(ID_Lanczos, _T("Lanczos 3"), _T("Use the Box filter."));
-	menuView->Append(ID_S, _T("&Image Filter"), menuFilter);
+	menuFilter->AppendRadioItem(ID_Box, wxT("Box"), wxT("Use the Box filter."));
+	menuFilter->AppendRadioItem(ID_Bilinear, wxT("Bilinear"), wxT("Use the Bilinear filter."));
+	menuFilter->AppendRadioItem(ID_Bicubic, wxT("Bicubic"), wxT("Use the Bicubic filter."));
+	menuFilter->AppendRadioItem(ID_BSpline, wxT("B-Spline"), wxT("Use the B-Spline filter."));
+	menuFilter->AppendRadioItem(ID_CatmullRom, wxT("Catmull-Rom"), wxT("Use the Catmull-Rom filter."));
+	menuFilter->AppendRadioItem(ID_Lanczos, wxT("Lanczos 3"), wxT("Use the Box filter."));
+	menuView->Append(ID_S, wxT("&Image Filter"), menuFilter);
 
 #ifndef __WXMAC__
 	menuView->AppendSeparator();
-	menuView->Append(ID_Full, _T("Full &Screen\tAlt-Return"), _T("Display Full Screen."));
+	menuView->Append(ID_Full, wxT("Full &Screen\tAlt-Return"), wxT("Display Full Screen."));
 #endif
 
 	menuHelp = new wxMenu;
-	menuHelp->Append(wxID_ABOUT, _T("&About...\tF1"), _T("Display About Dialog."));
+	menuHelp->Append(wxID_ABOUT, wxT("&About...\tF1"), wxT("Display About Dialog."));
 
 	menuBar = new wxMenuBar();
-	menuBar->Append(menuFile, _T("&File"));
-	menuBar->Append(menuGo, _T("&Go"));
-	menuBar->Append(menuView, _T("&View"));
-	menuBar->Append(menuHelp, _T("&Help"));
+	menuBar->Append(menuFile, wxT("&File"));
+	menuBar->Append(menuGo, wxT("&Go"));
+	menuBar->Append(menuView, wxT("&View"));
+	menuBar->Append(menuHelp, wxT("&Help"));
 
 	SetMenuBar(menuBar);
 
 	// Each of the long values is followed by the letter L not the number one
-	long Zoom = config->Read("/Comical/Zoom", 2l); // Fit-to-Width is default
-	long Mode = config->Read("/Comical/Mode", 1l); // Double-Page is default
-	long Filter = config->Read("/Comical/Filter", 4l); // Catmull-Rom is default
+	long Zoom = config->Read(wxT("/Comical/Zoom"), 2l); // Fit-to-Width is default
+	long Mode = config->Read(wxT("/Comical/Mode"), 1l); // Double-Page is default
+	long Filter = config->Read(wxT("/Comical/Filter"), 4l); // Catmull-Rom is default
 
 	// Record the settings from the config in the menus
 	menuZoom->FindItemByPosition(Zoom)->Check(true);
@@ -191,18 +191,18 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 
 	toolBarNav = new wxToolBar(this, -1, wxPoint(0, this->GetClientSize().y + 10), wxDefaultSize, wxNO_BORDER | wxTB_HORIZONTAL | wxTB_FLAT);
 	toolBarNav->SetToolBitmapSize(wxSize(16, 16));
-	toolBarNav->AddTool(ID_CCWL, _T("Rotate Counter-Clockwise (left page)"), wxBITMAP(rot_ccw), _T("Rotate Counter-Clockwise (left page)"));
-	toolBarNav->AddTool(ID_CWL, _T("Rotate Clockwise (left page)"), wxBITMAP(rot_cw), _T("Rotate Clockwise (left page)"));
+	toolBarNav->AddTool(ID_CCWL, wxT("Rotate Counter-Clockwise (left page)"), wxBITMAP(rot_ccw), wxT("Rotate Counter-Clockwise (left page)"));
+	toolBarNav->AddTool(ID_CWL, wxT("Rotate Clockwise (left page)"), wxBITMAP(rot_cw), wxT("Rotate Clockwise (left page)"));
 	toolBarNav->AddSeparator();
-	toolBarNav->AddTool(ID_First, _T("First Page"), wxBITMAP(firstpage), _T("First Page"));
-	toolBarNav->AddTool(ID_PrevTurn, _T("Previous Page Turn"), wxBITMAP(prevpage), _T("Previous Page Turn"));
-	toolBarNav->AddTool(ID_PrevSlide, _T("Previous Page"), wxBITMAP(prev), _T("Previous Page"));
-	toolBarNav->AddTool(ID_NextSlide, _T("Next Page"), wxBITMAP(next), _T("Next Page"));
-	toolBarNav->AddTool(ID_NextTurn, _T("Next Page Turn"), wxBITMAP(nextpage), _T("Next Page Turn"));
-	toolBarNav->AddTool(ID_Last, _T("Last Page"), wxBITMAP(lastpage), _T("Last Page"));
+	toolBarNav->AddTool(ID_First, wxT("First Page"), wxBITMAP(firstpage), wxT("First Page"));
+	toolBarNav->AddTool(ID_PrevTurn, wxT("Previous Page Turn"), wxBITMAP(prevpage), wxT("Previous Page Turn"));
+	toolBarNav->AddTool(ID_PrevSlide, wxT("Previous Page"), wxBITMAP(prev), wxT("Previous Page"));
+	toolBarNav->AddTool(ID_NextSlide, wxT("Next Page"), wxBITMAP(next), wxT("Next Page"));
+	toolBarNav->AddTool(ID_NextTurn, wxT("Next Page Turn"), wxBITMAP(nextpage), wxT("Next Page Turn"));
+	toolBarNav->AddTool(ID_Last, wxT("Last Page"), wxBITMAP(lastpage), wxT("Last Page"));
 	toolBarNav->AddSeparator();
-	toolBarNav->AddTool(ID_CCW, _T("Rotate Counter-Clockwise"), wxBITMAP(rot_ccw), _T("Rotate Counter-Clockwise"));
-	toolBarNav->AddTool(ID_CW, _T("Rotate Clockwise"), wxBITMAP(rot_cw), _T("Rotate Clockwise"));
+	toolBarNav->AddTool(ID_CCW, wxT("Rotate Counter-Clockwise"), wxBITMAP(rot_ccw), wxT("Rotate Counter-Clockwise"));
+	toolBarNav->AddTool(ID_CW, wxT("Rotate Clockwise"), wxBITMAP(rot_cw), wxT("Rotate Clockwise"));
 	toolBarNav->Enable(false);
 	toolBarNav->Fit();
 
@@ -214,8 +214,8 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	
 	wxPoint tbPoint = toolBarNav->GetPosition();
 	wxSize tbSize = toolBarNav->GetSize();
-	labelLeft = new wxStaticText(this, -1, _T(""), wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT/* | wxST_NO_AUTORESIZE*/);
-	labelRight = new wxStaticText(this, -1, _T(""));
+	labelLeft = new wxStaticText(this, -1, wxT(""), wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT/* | wxST_NO_AUTORESIZE*/);
+	labelRight = new wxStaticText(this, -1, wxT(""));
 	wxFont font = labelLeft->GetFont();
 	font.SetPointSize(10);
 	labelLeft->SetFont(font);
@@ -258,10 +258,10 @@ void ComicalFrame::OnClose(wxCloseEvent& event)
 		theBook = NULL;
 	}
 	wxRect frameDim = GetRect();
-	config->Write("/Comical/FrameWidth", frameDim.width);
-	config->Write("/Comical/FrameHeight", frameDim.height);
-	config->Write("/Comical/FrameX", frameDim.x);
-	config->Write("/Comical/FrameY", frameDim.y);
+	config->Write(wxT("/Comical/FrameWidth"), frameDim.width);
+	config->Write(wxT("/Comical/FrameHeight"), frameDim.height);
+	config->Write(wxT("/Comical/FrameX"), frameDim.x);
+	config->Write(wxT("/Comical/FrameY"), frameDim.y);
 	
 	Destroy();	// Close the window
 }
@@ -273,15 +273,15 @@ void ComicalFrame::OnQuit(wxCommandEvent& event)
 
 void ComicalFrame::OnAbout(wxCommandEvent& event)
 {
-	wxMessageDialog AboutDlg(this, _T("Comical 0.5, (c) 2003-2005 James Athey.\nComical is licensed under the GPL, version 2,\nwith a linking exception; see README for details."), _T("About Comical"), wxOK);
+	wxMessageDialog AboutDlg(this, wxT("Comical 0.5, (c) 2003-2005 James Athey.\nComical is licensed under the GPL, version 2,\nwith a linking exception; see README for details."), wxT("About Comical"), wxOK);
 	AboutDlg.ShowModal();
 }
 
 void ComicalFrame::OnOpen(wxCommandEvent& event)
 {
 	wxString cwd;
-	config->Read("/Comical/CWD", &cwd);
-	wxString filename = wxFileSelector(_T("Open a Comic Book"), cwd, _T(""), _T(""), _T("Comic Books (*.cbr,*.cbz,*.rar,*.zip)|*.cbr;*.CBR;*.cbz;*.CBZ;*.rar;*.RAR;*.zip;*.ZIP"), wxOPEN | wxCHANGE_DIR | wxFILE_MUST_EXIST, this);
+	config->Read(wxT("/Comical/CWD"), &cwd);
+	wxString filename = wxFileSelector(wxT("Open a Comic Book"), cwd, wxT(""), wxT(""), wxT("Comic Books (*.cbr,*.cbz,*.rar,*.zip)|*.cbr;*.CBR;*.cbz;*.CBZ;*.rar;*.RAR;*.zip;*.ZIP"), wxOPEN | wxCHANGE_DIR | wxFILE_MUST_EXIST, this);
 
 	if (!filename.empty())
 	{
@@ -304,9 +304,9 @@ void ComicalFrame::OpenFile(wxString filename)
 			theBook = NULL;
 		}
 
-		if (filename.Right(4).Upper() == _T(".CBR") || filename.Right(4).Upper() == _T(".RAR"))
+		if (filename.Right(4).Upper() == wxT(".CBR") || filename.Right(4).Upper() == wxT(".RAR"))
 			theBook = new ComicBookRAR(filename, 10);
-		else if (filename.Right(4).Upper() == _T(".CBZ") || filename.Right(4).Upper() == _T(".ZIP"))
+		else if (filename.Right(4).Upper() == wxT(".CBZ") || filename.Right(4).Upper() == wxT(".ZIP"))
 			theBook = new ComicBookZIP(filename, 10);
 
 		if (theBook)
@@ -318,9 +318,9 @@ void ComicalFrame::OpenFile(wxString filename)
 	
 			theBook->Run(); // start the thread
 	
-			OnFirst(*(new wxCommandEvent()));
-			SetTitle(_T("Comical - " + filename));
-			config->Write("/Comical/CWD", wxPathOnly(filename));
+			theCanvas->FirstPage();
+			SetTitle(wxT("Comical - " + filename));
+			config->Write(wxT("/Comical/CWD"), wxPathOnly(filename));
 		}
 	}
 }
@@ -361,9 +361,9 @@ void ComicalFrame::OnGoTo(wxCommandEvent& event)
 	long pagenumber;
 	if (theBook != NULL)
 	{
-		message = _T("Enter a page number from 1 to ");
-		message += wxString::Format("%d", theBook->GetPageCount());
-		pagenumber = wxGetNumberFromUser(message, _T("Page"), _T("Go To Page"), theBook->Current + 1, 1, theBook->GetPageCount(), this);
+		message = wxT("Enter a page number from 1 to ");
+		message += wxString::Format(wxT("%d"), theBook->GetPageCount());
+		pagenumber = wxGetNumberFromUser(message, wxT("Page"), wxT("Go To Page"), theBook->Current + 1, 1, theBook->GetPageCount(), this);
 		if (pagenumber != -1)
 			theCanvas->GoToPage(pagenumber - 1);
 	}

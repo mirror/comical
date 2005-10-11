@@ -48,11 +48,15 @@ ComicBookZIP::ComicBookZIP(wxString file, uint cachelen) : ComicBook()
 		wxZipEntry *entry;
 		while ((entry = zipFile->GetNextEntry()) != NULL)
 		{
-			page = _T(entry->GetName());
-			if(	page.Right(5).Upper() == _T(".JPEG") || page.Right(4).Upper() == _T(".JPG") ||
-				page.Right(5).Upper() == _T(".TIFF") || page.Right(4).Upper() == _T(".TIF") ||
-				page.Right(4).Upper() == _T(".GIF") ||
-				page.Right(4).Upper() == _T(".PNG"))
+#ifdef wxUSE_UNICODE
+			page = wxString(entry->GetName(), wxConvUTF8);
+#else // ANSI
+			page = entry->GetName();
+#endif
+			if(	page.Right(5).Upper() == wxT(".JPEG") || page.Right(4).Upper() == wxT(".JPG") ||
+				page.Right(5).Upper() == wxT(".TIFF") || page.Right(4).Upper() == wxT(".TIF") ||
+				page.Right(4).Upper() == wxT(".GIF") ||
+				page.Right(4).Upper() == wxT(".PNG"))
 				Filenames.push_back(page);
 		}
 		delete zipFile;
@@ -61,8 +65,12 @@ ComicBookZIP::ComicBookZIP(wxString file, uint cachelen) : ComicBook()
 #else
 	static char namebuf[1024];
 	unzFile ZipFile;
-	unz_file_info *fileInfo;	
+	unz_file_info *fileInfo;
+#ifdef wxUSE_UNICODE
+	ZipFile = unzOpen(filename.mb_str(wxConvUTF8));
+#else // ANSI
 	ZipFile = unzOpen(filename.c_str());
+#endif
 	fileInfo = (unz_file_info*) malloc(sizeof(unz_file_info_s));
 
 	if (ZipFile) {
@@ -78,10 +86,10 @@ ComicBookZIP::ComicBookZIP(wxString file, uint cachelen) : ComicBook()
 	do {
 		unzGetCurrentFileInfo(ZipFile, fileInfo, namebuf, 1024, NULL, 0, NULL, 0);
 		page = namebuf;
-		if(page.Right(5).Upper() == _T(".JPEG") || page.Right(4).Upper() == _T(".JPG") ||
-		page.Right(5).Upper() == _T(".TIFF") || page.Right(4).Upper() == _T(".TIF") ||
-		page.Right(4).Upper() == _T(".GIF") ||
-		page.Right(4).Upper() == _T(".PNG"))
+		if(page.Right(5).Upper() == wxT(".JPEG") || page.Right(4).Upper() == wxT(".JPG") ||
+		page.Right(5).Upper() == wxT(".TIFF") || page.Right(4).Upper() == wxT(".TIF") ||
+		page.Right(4).Upper() == wxT(".GIF") ||
+		page.Right(4).Upper() == wxT(".PNG"))
 			Filenames.push_back(page);
 	} while (unzGoToNextFile(ZipFile) == UNZ_OK);
 

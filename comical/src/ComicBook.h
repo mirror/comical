@@ -67,7 +67,7 @@ class ComicBook : public wxThread {
 public:
 
 	// Constructors / Destructors
-	ComicBook() : wxThread(wxTHREAD_JOINABLE) {}
+	ComicBook() : wxThread(wxTHREAD_JOINABLE) { pageCount = 0; }
 	virtual ~ComicBook();
   
 	// wxThread required functions

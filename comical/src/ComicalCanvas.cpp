@@ -40,9 +40,9 @@ ComicalCanvas::ComicalCanvas(wxWindow *prnt, const wxPoint &pos, const wxSize &s
 	SetBackgroundColour(* wxBLACK);
 	wxConfigBase *config = wxConfigBase::Get();
 	// Each of the long values is followed by the letter L not the number one
-	zoom = (COMICAL_ZOOM) config->Read("/Comical/Zoom", 2l); // Fit-to-Width is default
-	mode = (COMICAL_MODE) config->Read("/Comical/Mode", 1l); // Double-Page is default
-	filter = (FREE_IMAGE_FILTER) config->Read("/Comical/Filter", 4l); // Catmull-Rom is default
+	zoom = (COMICAL_ZOOM) config->Read(wxT("/Comical/Zoom"), 2l); // Fit-to-Width is default
+	mode = (COMICAL_MODE) config->Read(wxT("/Comical/Mode"), 1l); // Double-Page is default
+	filter = (FREE_IMAGE_FILTER) config->Read(wxT("/Comical/Filter"), 4l); // Catmull-Rom is default
 	leftPage = rightPage = centerPage = NULL;
 	theBook = NULL;
 	
@@ -63,9 +63,9 @@ ComicalCanvas::~ComicalCanvas()
 {
 	clearBitmaps();
 	wxConfigBase *config = wxConfigBase::Get();
-	config->Write("/Comical/Zoom", zoom);
-	config->Write("/Comical/Mode", mode);
-	config->Write("/Comical/Filter", filter);
+	config->Write(wxT("/Comical/Zoom"), zoom);
+	config->Write(wxT("/Comical/Mode"), mode);
+	config->Write(wxT("/Comical/Filter"), filter);
 }
 
 void ComicalCanvas::clearBitmap(wxBitmap *&bitmap)
@@ -117,8 +117,8 @@ void ComicalCanvas::createBitmaps()
 		cParent->toolBarNav->EnableTool(ID_CCW, true);
 		cParent->toolBarNav->EnableTool(ID_CW, true);
 		
-		cParent->labelLeft->SetLabel(_T(""));
-		cParent->labelRight->SetLabel(wxString::Format("%d of %d", theBook->Current + 1, theBook->GetPageCount()));
+		cParent->labelLeft->SetLabel(wxT(""));
+		cParent->labelRight->SetLabel(wxString::Format(wxT("%d of %d"), theBook->Current + 1, theBook->GetPageCount()));
 	} else {
 		cParent->menuView->FindItem(ID_Rotate)->Enable(false);
 
@@ -132,14 +132,14 @@ void ComicalCanvas::createBitmaps()
 			cParent->toolBarNav->EnableTool(ID_CCW, true);
 			cParent->toolBarNav->EnableTool(ID_CW, true);
 
-			cParent->labelRight->SetLabel(wxString::Format("%d of %d", rightNum + 1, theBook->GetPageCount()));
+			cParent->labelRight->SetLabel(wxString::Format(wxT("%d of %d"), rightNum + 1, theBook->GetPageCount()));
 		}
 		else
 		{
 			cParent->menuView->FindItem(ID_RotateRight)->Enable(false);
 			cParent->toolBarNav->EnableTool(ID_CCW, false);
 			cParent->toolBarNav->EnableTool(ID_CW, false);
-			cParent->labelRight->SetLabel("");
+			cParent->labelRight->SetLabel(wxT(""));
 		}
 	
 		if (leftPage && (leftOk = leftPage->Ok()))
@@ -153,7 +153,7 @@ void ComicalCanvas::createBitmaps()
 			cParent->toolBarNav->EnableTool(ID_CCWL, true);
 			cParent->toolBarNav->EnableTool(ID_CWL, true);
 
-			cParent->labelLeft->SetLabel(wxString::Format("%d of %d", leftNum + 1, theBook->GetPageCount()));
+			cParent->labelLeft->SetLabel(wxString::Format(wxT("%d of %d"), leftNum + 1, theBook->GetPageCount()));
 		}
 		else
 		{
@@ -161,7 +161,7 @@ void ComicalCanvas::createBitmaps()
 			cParent->toolBarNav->EnableTool(ID_CCWL, false);
 			cParent->toolBarNav->EnableTool(ID_CWL, false);
 
-			cParent->labelLeft->SetLabel(_T(""));
+			cParent->labelLeft->SetLabel(wxT(""));
 		}
 
 		xScroll *= 2;

@@ -41,7 +41,11 @@ ComicBookRAR::ComicBookRAR(wxString file, uint cachelen) : ComicBook()
 	Current = 0;
 	
 	memset(&OpenArchiveData,0,sizeof(OpenArchiveData));
+#ifdef wxUSE_UNICODE
+	OpenArchiveData.ArcNameW = (wchar_t *) filename.c_str();
+#else // ANSI
 	OpenArchiveData.ArcName = (char *) filename.c_str();
+#endif
 	OpenArchiveData.CmtBuf=CmtBuf;
 	OpenArchiveData.CmtBufSize=sizeof(CmtBuf);
 	OpenArchiveData.OpenMode=RAR_OM_LIST;
@@ -56,11 +60,11 @@ ComicBookRAR::ComicBookRAR(wxString file, uint cachelen) : ComicBook()
 	HeaderData.CmtBufSize=sizeof(CmtBuf);
 	
 	while ((RHCode=RARReadHeaderEx(RarFile,&HeaderData))==0) {
-		page = _T(HeaderData.FileName);
-		if(page.Right(5).Upper() == _T(".JPEG") || page.Right(4).Upper() == _T(".JPG") ||
-		page.Right(5).Upper() == _T(".TIFF") || page.Right(4).Upper() == _T(".TIF") ||
-		page.Right(4).Upper() == _T(".GIF") ||
-		page.Right(4).Upper() == _T(".PNG"))
+		page = wxString::FromAscii(HeaderData.FileName);
+		if(page.Right(5).Upper() == wxT(".JPEG") || page.Right(4).Upper() == wxT(".JPG") ||
+		page.Right(5).Upper() == wxT(".TIFF") || page.Right(4).Upper() == wxT(".TIF") ||
+		page.Right(4).Upper() == wxT(".GIF") ||
+		page.Right(4).Upper() == wxT(".PNG"))
 			Filenames.push_back(page);
 		
 		if ((PFCode=RARProcessFile(RarFile,RAR_SKIP,NULL,NULL))!=0) {
