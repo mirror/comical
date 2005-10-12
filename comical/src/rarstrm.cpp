@@ -55,7 +55,7 @@ wxRarInputStream::wxRarInputStream(const wxString& archive, const wxString& file
 	HANDLE RarFile;
 	int RHCode,PFCode;
 	char CmtBuf[16384];
-	struct RARHeaderData HeaderData;
+	struct RARHeaderDataEx HeaderData;
 	struct RAROpenArchiveDataEx OpenArchiveData;
 	char * CallBackBuffer;
 	
@@ -83,9 +83,9 @@ wxRarInputStream::wxRarInputStream(const wxString& archive, const wxString& file
     
 	HeaderData.CmtBuf=NULL;
 
-	while ((RHCode=RARReadHeader(RarFile,&HeaderData))==0) {
+	while ((RHCode=RARReadHeaderEx(RarFile,&HeaderData))==0) {
 #ifdef wxUSE_UNICODE
-		if (file.IsSameAs(wxString(HeaderData.FileName, wxConvUTF8))) {
+		if (file.IsSameAs(HeaderData.FileNameW)) {
 #else // ANSI
 		if (file.IsSameAs(HeaderData.FileName)) {
 #endif

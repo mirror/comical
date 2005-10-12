@@ -48,11 +48,7 @@ ComicBookZIP::ComicBookZIP(wxString file, uint cachelen) : ComicBook()
 		wxZipEntry *entry;
 		while ((entry = zipFile->GetNextEntry()) != NULL)
 		{
-#ifdef wxUSE_UNICODE
-			page = wxString(entry->GetName(), wxConvUTF8);
-#else // ANSI
 			page = entry->GetName();
-#endif
 			if(	page.Right(5).Upper() == wxT(".JPEG") || page.Right(4).Upper() == wxT(".JPG") ||
 				page.Right(5).Upper() == wxT(".TIFF") || page.Right(4).Upper() == wxT(".TIF") ||
 				page.Right(4).Upper() == wxT(".GIF") ||
@@ -85,7 +81,7 @@ ComicBookZIP::ComicBookZIP(wxString file, uint cachelen) : ComicBook()
 
 	do {
 		unzGetCurrentFileInfo(ZipFile, fileInfo, namebuf, 1024, NULL, 0, NULL, 0);
-		page = namebuf;
+		page = wxString::FromAscii(namebuf);
 		if(page.Right(5).Upper() == wxT(".JPEG") || page.Right(4).Upper() == wxT(".JPG") ||
 		page.Right(5).Upper() == wxT(".TIFF") || page.Right(4).Upper() == wxT(".TIF") ||
 		page.Right(4).Upper() == wxT(".GIF") ||
