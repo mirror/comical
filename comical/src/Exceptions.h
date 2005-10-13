@@ -31,8 +31,8 @@
 class PageOutOfRangeException
 {
 	public:
-		PageOutOfRangeException(uint pagenumber, uint pagecount) { PageNumber = pagenumber; PageCount = pagecount; }
-		uint PageNumber, PageCount;
+		PageOutOfRangeException(wxUint32 pagenumber, wxUint32 pagecount) { PageNumber = pagenumber; PageCount = pagecount; }
+		wxUint32 PageNumber, PageCount;
 };
 
 #endif

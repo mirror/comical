@@ -37,7 +37,7 @@ ComicBook::~ComicBook()
 	delete[] Orientations;
 }
 
-void ComicBook::RotatePage(uint pagenumber, COMICAL_ROTATE direction)
+void ComicBook::RotatePage(wxUint32 pagenumber, COMICAL_ROTATE direction)
 {
 	if (Orientations[pagenumber] != direction)
 	{
@@ -51,13 +51,13 @@ void ComicBook::RotatePage(uint pagenumber, COMICAL_ROTATE direction)
 }
 
 /* returns TRUE if paramaters were different, FALSE if parameters were the same and no changes were made */
-bool ComicBook::SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COMICAL_ZOOM newZoom, int newWidth, int newHeight, int newScrollBarThickness)
+bool ComicBook::SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COMICAL_ZOOM newZoom, wxInt32 newWidth, wxInt32 newHeight, wxInt32 newScrollBarThickness)
 {
 	if(mode != newMode || fiFilter != newFilter || zoom != newZoom || canvasWidth != newWidth || canvasHeight != newHeight || scrollBarThickness != newScrollBarThickness)
 	{
 		if (IsRunning())
 			Pause(); // pause the thread
-		for (uint i = 0; i < pageCount; i++)
+		for (wxUint32 i = 0; i < pageCount; i++)
 		{
 			resamples[i].Destroy();
 		}
@@ -76,7 +76,7 @@ bool ComicBook::SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COM
 	}
 }
 
-wxBitmap * ComicBook::GetPage(uint pagenumber)
+wxBitmap * ComicBook::GetPage(wxUint32 pagenumber)
 {
 	wxBusyCursor busy;
 	while (!resamples[pagenumber].Ok())
@@ -86,31 +86,31 @@ wxBitmap * ComicBook::GetPage(uint pagenumber)
 	return new wxBitmap(resamples[pagenumber]);
 }
 
-wxBitmap * ComicBook::GetPageLeftHalf(uint pagenumber)
+wxBitmap * ComicBook::GetPageLeftHalf(wxUint32 pagenumber)
 {
 	wxBusyCursor busy;
 	while (!resamples[pagenumber].Ok())
 	{
 		Sleep(50);
 	}
-	int rWidth = resamples[pagenumber].GetWidth();
-	int rHeight = resamples[pagenumber].GetHeight();
+	wxInt32 rWidth = resamples[pagenumber].GetWidth();
+	wxInt32 rHeight = resamples[pagenumber].GetHeight();
 	return new wxBitmap(resamples[pagenumber].GetSubImage(wxRect(0, 0, rWidth / 2, rHeight)));
 }
 
-wxBitmap * ComicBook::GetPageRightHalf(uint pagenumber)
+wxBitmap * ComicBook::GetPageRightHalf(wxUint32 pagenumber)
 {
 	wxBusyCursor busy;
 	while (!resamples[pagenumber].Ok())
 	{
 		Sleep(50);
 	}
-	int rWidth = resamples[pagenumber].GetWidth();
-	int rHeight = resamples[pagenumber].GetHeight();
+	wxInt32 rWidth = resamples[pagenumber].GetWidth();
+	wxInt32 rHeight = resamples[pagenumber].GetHeight();
 	return new wxBitmap(resamples[pagenumber].GetSubImage(wxRect(rWidth / 2, 0, (rWidth / 2) + (rWidth % 2), rHeight)));
 }
 
-bool ComicBook::IsPageLandscape(uint pagenumber)
+bool ComicBook::IsPageLandscape(wxUint32 pagenumber)
 {
 	if (pagenumber > pageCount)
 		throw new PageOutOfRangeException(pagenumber, pageCount);
@@ -119,8 +119,8 @@ bool ComicBook::IsPageLandscape(uint pagenumber)
 	{
 		Sleep(50);
 	}
-	int rWidth = resamples[pagenumber].GetWidth();
-	int rHeight = resamples[pagenumber].GetHeight();
+	wxInt32 rWidth = resamples[pagenumber].GetWidth();
+	wxInt32 rHeight = resamples[pagenumber].GetHeight();
 	if ((float(rWidth)/float(rHeight)) > 1.0f)
 		return true;
 	else
@@ -129,12 +129,12 @@ bool ComicBook::IsPageLandscape(uint pagenumber)
 
 void * ComicBook::Entry()
 {
-	uint i;
-	int low, high, target, currentPage, pageBytes;
+	wxUint32 i;
+	wxInt32 low, high, target, currentPage, pageBytes;
 
 	while (!TestDestroy())
 	{
-		currentPage = int(Current); // in case this value changes midloop
+		currentPage = wxInt32(Current); // in case this value changes midloop
 		
 		// The caching algorithm.  First calculates next highest
 		// priority page, then checks to see if that page needs
@@ -157,7 +157,7 @@ void * ComicBook::Entry()
 			low = currentPage - low;
 
 			/* Keep the window within 0 and pageCount. */
-			if (high >= int(pageCount))
+			if (high >= wxInt32(pageCount))
 			{
 				low -= (high - pageCount) + 1;
 				high = pageCount - 1;
@@ -204,7 +204,7 @@ void * ComicBook::Entry()
 			if (cacheLen < pageCount)
 			{
 				// Delete pages outside of the cache's range.
-				for (i = 0; int(i) < low; i++)
+				for (i = 0; wxInt32(i) < low; i++)
 				{
 					if(resamples[i].Ok())
 						resamples[i].Destroy();
@@ -212,7 +212,7 @@ void * ComicBook::Entry()
 						originals[i].Destroy();
 				}
 				
-				for (i = pageCount - 1; int(i) > high; i--)
+				for (i = pageCount - 1; wxInt32(i) > high; i--)
 				{
 					if(resamples[i].Ok())
 						resamples[i].Destroy();
@@ -229,9 +229,9 @@ void * ComicBook::Entry()
 }
 
 /* Resizes an image to fit. */
-void ComicBook::ScaleImage(uint pagenumber)
+void ComicBook::ScaleImage(wxUint32 pagenumber)
 {
-	int xImage, yImage;
+	wxInt32 xImage, yImage;
 	float rCanvas, rImage;  // width/height ratios
 	float scalingFactor;
   
@@ -265,7 +265,7 @@ void ComicBook::ScaleImage(uint pagenumber)
 
 	case FIT:
 		rImage = float(xImage) / float(yImage);
-		if (rImage >= 1.0f || mode == SINGLE)
+		if (rImage >= 1.0f || mode == ONEPAGE)
 		{
 			rCanvas = float(canvasWidth) / float(canvasHeight);
 			if (rCanvas > rImage)
@@ -287,16 +287,16 @@ void ComicBook::ScaleImage(uint pagenumber)
 	case FITH: // fit to width
 		rImage = float(xImage) / float(yImage);
 		// The page will have to be made narrower if it will not fit on the canvas without vertical scrolling
-		int withoutScrollBarHeight;
-		if (rImage >= 1.0f || mode == SINGLE) {
+		wxInt32 withoutScrollBarHeight;
+		if (rImage >= 1.0f || mode == ONEPAGE) {
 			scalingFactor = float(canvasWidth) / float(xImage);
-			withoutScrollBarHeight = int(float(yImage) * scalingFactor);
+			withoutScrollBarHeight = wxInt32(float(yImage) * scalingFactor);
 			if (withoutScrollBarHeight > canvasHeight)
 				scalingFactor = float(canvasWidth - scrollBarThickness) / float(xImage);
 		}
 		else {
 			scalingFactor = float(canvasWidth/2) / float(xImage);
-			withoutScrollBarHeight = int(float(yImage) * scalingFactor);
+			withoutScrollBarHeight = wxInt32(float(yImage) * scalingFactor);
 			if (withoutScrollBarHeight > canvasHeight)
 				scalingFactor = float((canvasWidth - scrollBarThickness)/2) / float(xImage);
 		}
@@ -305,15 +305,15 @@ void ComicBook::ScaleImage(uint pagenumber)
 	case FITV: // fit to height
 		rImage = float(xImage) / float(yImage);
 		scalingFactor = float(canvasHeight) / float(yImage);
-		int withoutScrollBarWidth;
+		wxInt32 withoutScrollBarWidth;
 		// The page will have to be made shorter if it will not fit on the canvas without horizontal scrolling
-		if (rImage >= 1.0f || mode == SINGLE) {
-			withoutScrollBarWidth = int(float(xImage) * scalingFactor);
+		if (rImage >= 1.0f || mode == ONEPAGE) {
+			withoutScrollBarWidth = wxInt32(float(xImage) * scalingFactor);
 			if (withoutScrollBarWidth > canvasWidth)
 				scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
 		}
 		else {
-			withoutScrollBarWidth = int(float(xImage) * scalingFactor);
+			withoutScrollBarWidth = wxInt32(float(xImage) * scalingFactor);
 			if (withoutScrollBarWidth > (canvasWidth / 2))
 				scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
 		}
@@ -344,16 +344,16 @@ void ComicBook::ScaleImage(uint pagenumber)
 	switch (Orientations[pagenumber])
 	{
 	case NORTH:
-		resamples[pagenumber] = FreeImage_Rescale(orig, int(xImage * scalingFactor), int(yImage * scalingFactor), fiFilter);
+		resamples[pagenumber] = FreeImage_Rescale(orig, wxInt32(xImage * scalingFactor), wxInt32(yImage * scalingFactor), fiFilter);
 		break;
 	case EAST:
-		resamples[pagenumber] = FreeImage_Rescale(orig, int(yImage * scalingFactor), int(xImage * scalingFactor), fiFilter).Rotate90(true);
+		resamples[pagenumber] = FreeImage_Rescale(orig, wxInt32(yImage * scalingFactor), wxInt32(xImage * scalingFactor), fiFilter).Rotate90(true);
 		break;
 	case SOUTH:
-		resamples[pagenumber] = FreeImage_Rescale(orig, int(xImage * scalingFactor), int(yImage * scalingFactor), fiFilter).Rotate90().Rotate90();
+		resamples[pagenumber] = FreeImage_Rescale(orig, wxInt32(xImage * scalingFactor), wxInt32(yImage * scalingFactor), fiFilter).Rotate90().Rotate90();
 		break;
 	case WEST:
-		resamples[pagenumber] = FreeImage_Rescale(orig, int(yImage * scalingFactor), int(xImage * scalingFactor), fiFilter).Rotate90(false);
+		resamples[pagenumber] = FreeImage_Rescale(orig, wxInt32(yImage * scalingFactor), wxInt32(xImage * scalingFactor), fiFilter).Rotate90(false);
 		break;
 	default:
 		break;

@@ -35,11 +35,11 @@
 class ComicBookRAR : public ComicBook {
 
 public:
-	ComicBookRAR(wxString file, uint cachelen);
+	ComicBookRAR(wxString file, wxUint32 cachelen);
 	virtual ~ComicBookRAR() {};
 
 protected:
-	wxInputStream * ExtractStream(unsigned int pageindex);
+	wxInputStream * ExtractStream(wxUint32 pageindex);
 
 private:
 	void OpenArchiveError(int Error, wxString ArcName);

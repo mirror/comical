@@ -58,7 +58,7 @@
 
 using namespace std;
 
-enum COMICAL_MODE {SINGLE, DOUBLE};
+enum COMICAL_MODE {ONEPAGE, TWOPAGE};
 enum COMICAL_ZOOM {FIT, FITV, FITH, FULL, THREEQ, HALF, ONEQ};
 enum COMICAL_ROTATE {NORTH = 0, EAST, SOUTH, WEST};
 
@@ -73,43 +73,43 @@ public:
 	// wxThread required functions
 	virtual void * Entry();
 
-	void RotatePage(uint pagenumber, COMICAL_ROTATE direction);
-	uint GetPageCount() { return pageCount;}
-	bool SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COMICAL_ZOOM newZoom, int newWidth, int newHeight, int newScrollBarThickness);
-	void SetCacheLen(uint newCacheLen);
-	wxBitmap *GetPage(uint pagenumber);
-	wxBitmap *GetPageLeftHalf(uint pagenumber);
-	wxBitmap *GetPageRightHalf(uint pagenumber);
-	bool IsPageLandscape(uint pagenumber);
+	void RotatePage(wxUint32 pagenumber, COMICAL_ROTATE direction);
+	wxUint32 GetPageCount() { return pageCount;}
+	bool SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COMICAL_ZOOM newZoom, wxInt32 newWidth, wxInt32 newHeight, wxInt32 newScrollBarThickness);
+	void SetCacheLen(wxUint32 newCacheLen);
+	wxBitmap *GetPage(wxUint32 pagenumber);
+	wxBitmap *GetPageLeftHalf(wxUint32 pagenumber);
+	wxBitmap *GetPageRightHalf(wxUint32 pagenumber);
+	bool IsPageLandscape(wxUint32 pagenumber);
 	vector<wxString> Filenames;
 
 	/* Used to prefetch nearby pages and discard distant pages. 
-	 * when mode = DOUBLE, Current is the pagenumber of the page on the right.
-	 * when mode = SINGLE, Current is the pagenumber of the displayed page. */
-	uint Current;
+	 * when mode = TWOPAGE, Current is the pagenumber of the page on the right.
+	 * when mode = ONEPAGE, Current is the pagenumber of the displayed page. */
+	wxUint32 Current;
 
 	COMICAL_ROTATE *Orientations;
 	
 protected:
-	virtual wxInputStream * ExtractStream(uint pageindex) = 0;
+	virtual wxInputStream * ExtractStream(wxUint32 pageindex) = 0;
 	
-	void ScaleImage(uint pagenumber);
+	void ScaleImage(wxUint32 pagenumber);
 	
-	uint pageCount;
+	wxUint32 pageCount;
 	wxString filename;
 	wxImage *originals;
 	wxImage *resamples;
 	
-	uint cacheLen;
+	wxUint32 cacheLen;
 	
-	int scrollBarThickness;
+	wxInt32 scrollBarThickness;
 	
 	// window parameters
 	COMICAL_MODE mode;
 	FREE_IMAGE_FILTER fiFilter;
 	COMICAL_ZOOM zoom;
-	int canvasWidth;
-	int canvasHeight;
+	wxInt32 canvasWidth;
+	wxInt32 canvasHeight;
 
 };
 

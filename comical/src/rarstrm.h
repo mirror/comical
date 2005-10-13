@@ -52,7 +52,7 @@ private:
     wxString m_ArcName;
 };
 
-int CallbackProc(uint msg, long UserData, long P1, long P2);
+int CallbackProc(wxUint32 msg, long UserData, long P1, long P2);
 
 #endif 
    // wxUSE_STREAMS

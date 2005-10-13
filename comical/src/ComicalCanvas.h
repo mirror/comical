@@ -61,7 +61,7 @@ class ComicalCanvas : public wxScrolledWindow
 
     void FirstPage();
     void LastPage();
-    void GoToPage(uint pagenumber);
+    void GoToPage(wxUint32 pagenumber);
     void PrevPageTurn();
     void NextPageTurn();
     void PrevPageSlide();
@@ -82,7 +82,7 @@ class ComicalCanvas : public wxScrolledWindow
     void clearBitmap(wxBitmap *&bitmap);
     void clearBitmaps();
     void createBitmaps();
-    void setPage(int pagenumber);
+    void setPage(wxInt32 pagenumber);
     void resetView();
 
     void OnPaint(wxPaintEvent &event);
@@ -90,10 +90,10 @@ class ComicalCanvas : public wxScrolledWindow
     void OnSize(wxSizeEvent &event);
 
     wxBitmap *leftPage, *rightPage, *centerPage;
-    uint leftNum, rightNum;
+    wxUint32 leftNum, rightNum;
     PAGETYPE leftPart, rightPart;
 
-	int scrollBarThickness;
+	wxInt32 scrollBarThickness;
 
     COMICAL_ZOOM zoom;
     COMICAL_MODE mode;

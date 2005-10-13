@@ -216,7 +216,7 @@ void wxRarInputStream::ProcessFileError(int Error)
 	}
 }
 
-int CallbackProc(uint msg, long UserData, long P1, long P2)
+int CallbackProc(wxUint32 msg, long UserData, long P1, long P2)
 {
 	char **buffer;
 	switch(msg) {

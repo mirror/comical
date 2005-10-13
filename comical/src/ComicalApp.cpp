@@ -54,10 +54,10 @@ bool ComicalApp::OnInit()
 	
 	wxConfig *config = new wxConfig(wxT("Comical"));
 	
-	int width = (int) config->Read(wxT("/Comical/FrameWidth"), 600l);
-	int height = (int) config->Read(wxT("/Comical/FrameHeight"), 400l);
-	int x = (int) config->Read(wxT("/Comical/FrameX"), 50l);
-	int y = (int) config->Read(wxT("/Comical/FrameY"), 50l);
+	wxInt32 width = (wxInt32) config->Read(wxT("/Comical/FrameWidth"), 600l);
+	wxInt32 height = (wxInt32) config->Read(wxT("/Comical/FrameHeight"), 400l);
+	wxInt32 x = (wxInt32) config->Read(wxT("/Comical/FrameX"), 50l);
+	wxInt32 y = (wxInt32) config->Read(wxT("/Comical/FrameY"), 50l);
 	
 	ComicalFrame *frame = new ComicalFrame(wxT("Comical"), wxPoint(x, y), wxSize(width, height), wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE);
 
@@ -208,7 +208,7 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 
 	wxSize clientSize = GetClientSize();
 
-	int tbX = (clientSize.x - toolBarNav->GetSize().x) / 2;
+	wxInt32 tbX = (clientSize.x - toolBarNav->GetSize().x) / 2;
 	toolBarNav->SetSize(tbX, clientSize.y, toolBarNav->GetSize().x, -1);
 	toolBarNav->Realize();
 	
@@ -494,7 +494,7 @@ void ComicalFrame::OnSingle(wxCommandEvent& event)
 	wxMenuItem *next = menuGo->FindItem(ID_NextTurn);
 	prev->Enable(false);
 	next->Enable(false);
-	theCanvas->Mode(SINGLE);
+	theCanvas->Mode(ONEPAGE);
 }
 
 void ComicalFrame::OnDouble(wxCommandEvent& event)
@@ -503,13 +503,13 @@ void ComicalFrame::OnDouble(wxCommandEvent& event)
 	wxMenuItem *next = menuGo->FindItem(ID_NextTurn);
 	prev->Enable(true);
 	next->Enable(true);
-	theCanvas->Mode(DOUBLE);
+	theCanvas->Mode(TWOPAGE);
 }
 
 wxSize ComicalFrame::GetClientSize()
 {
 	wxSize clientSize = this->wxFrame::GetClientSize();
-	int y = clientSize.y;
+	wxInt32 y = clientSize.y;
 	if (toolBarNav != NULL)
 		y -= toolBarNav->GetSize().y;
 	clientSize.SetHeight(y);

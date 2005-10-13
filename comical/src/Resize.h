@@ -51,7 +51,7 @@ enum FREE_IMAGE_FILTER {
 	FILTER_LANCZOS3	  = 5	// Lanczos3 filter
 };
 
-wxImage FreeImage_Rescale(wxImage dib, int dst_width, int dst_height, FREE_IMAGE_FILTER filter);
+wxImage FreeImage_Rescale(wxImage dib, wxInt32 dst_width, wxInt32 dst_height, FREE_IMAGE_FILTER filter);
 
 /**
   Filter weights table.
@@ -67,7 +67,7 @@ typedef struct {
 	/// Normalized weights of neighboring pixels
 	double *Weights;
 	/// Bounds of source pixels window
-	int Left, Right;
+	wxInt32 Left, Right;
 } Contribution;
 
 public:
@@ -105,7 +105,7 @@ public:
 		// Allocate a new line contributions structure
 		//
 		// Window size is the number of sampled pixels
-		m_WindowSize = 2 * (int)ceil(dWidth) + 1;
+		m_WindowSize = 2 * (wxInt32)ceil(dWidth) + 1;
 		m_LineLength = uDstSize;
 		 // Allocate list of contributions
 		m_WeightTable = new Contribution[m_LineLength];
@@ -119,12 +119,12 @@ public:
 			// Scan through line of contributions
 			double dCenter = (double)u / dScale;   // Reverse mapping
 			// Find the significant edge points that affect the pixel
-			int iLeft = MAX (0, (int)floor (dCenter - dWidth));
-			int iRight = MIN ((int)ceil (dCenter + dWidth), int(uSrcSize) - 1);
+			wxInt32 iLeft = MAX (0, (wxInt32)floor (dCenter - dWidth));
+			wxInt32 iRight = MIN ((wxInt32)ceil (dCenter + dWidth), wxInt32(uSrcSize) - 1);
 
 			// Cut edge points to fit in filter window in case of spill-off
-			if((iRight - iLeft + 1) > int(m_WindowSize)) {
-				if(iLeft < (int(uSrcSize) - 1 / 2)) {
+			if((iRight - iLeft + 1) > wxInt32(m_WindowSize)) {
+				if(iLeft < (wxInt32(uSrcSize) - 1 / 2)) {
 					iLeft++;
 				} else {
 					iRight--;
@@ -134,7 +134,7 @@ public:
 			m_WeightTable[u].Left = iLeft;
 			m_WeightTable[u].Right = iRight;
 
-			int iSrc = 0;
+			wxInt32 iSrc = 0;
 			double dTotalWeight = 0.0;  // Zero sum of weights
 			for(iSrc = iLeft; iSrc <= iRight; iSrc++) {
 				// Calculate weights
@@ -170,7 +170,7 @@ public:
 	@param src_pos Pixel position in source line buffer
 	@return Returns the filter weight
 	*/
-	double GetWeight(int dst_pos, int src_pos) {
+	double GetWeight(wxInt32 dst_pos, wxInt32 src_pos) {
 		return m_WeightTable[dst_pos].Weights[src_pos];
 	}
 
@@ -178,7 +178,7 @@ public:
 	@param dst_pos Pixel position in destination line buffer
 	@return Returns the left boundary of source line buffer
 	*/
-	int GetLeftBoundary(int dst_pos) {
+	wxInt32 GetLeftBoundary(wxInt32 dst_pos) {
 		return m_WeightTable[dst_pos].Left;
 	}
 
@@ -186,7 +186,7 @@ public:
 	@param dst_pos Pixel position in destination line buffer
 	@return Returns the right boundary of source line buffer
 	*/
-	int GetRightBoundary(int dst_pos) {
+	wxInt32 GetRightBoundary(wxInt32 dst_pos) {
 		return m_WeightTable[dst_pos].Right;
 	}
 };
@@ -278,9 +278,9 @@ private:
 				double g = 0;
 				double b = 0;
 				//double a = 0;
-				int iLeft = weightsTable.GetLeftBoundary(x);    // retrieve left boundary
-				int iRight = weightsTable.GetRightBoundary(x);  // retrieve right boundary
-				for(int i = iLeft; i <= iRight; i++) {
+				wxInt32 iLeft = weightsTable.GetLeftBoundary(x);    // retrieve left boundary
+				wxInt32 iRight = weightsTable.GetRightBoundary(x);  // retrieve right boundary
+				for(wxInt32 i = iLeft; i <= iRight; i++) {
 					// scan between boundaries
 					// accumulate weighted effect of each neighboring pixel
 					double weight = weightsTable.GetWeight(x, i-iLeft);
@@ -292,10 +292,10 @@ private:
 				}
 				// place result in destination pixel
 				unsigned long xReal = x * 3;
-				pDstRow[xReal]     = MIN(MAX((int)0, (int)(r + 0.5)), (int)255); // red
-				pDstRow[xReal + 1] = MIN(MAX((int)0, (int)(g + 0.5)), (int)255); // green
-				pDstRow[xReal + 2] = MIN(MAX((int)0, (int)(b + 0.5)), (int)255); // blue
-				//pDstRow[x].rgbReserved = (BYTE)MIN(MAX((int)0, (int)(a + 0.5)), (int)255);
+				pDstRow[xReal]     = MIN(MAX((wxInt32)0, (wxInt32)(r + 0.5)), (wxInt32)255); // red
+				pDstRow[xReal + 1] = MIN(MAX((wxInt32)0, (wxInt32)(g + 0.5)), (wxInt32)255); // green
+				pDstRow[xReal + 2] = MIN(MAX((wxInt32)0, (wxInt32)(b + 0.5)), (wxInt32)255); // blue
+				//pDstRow[x].rgbReserved = (BYTE)MIN(MAX((wxInt32)0, (wxInt32)(a + 0.5)), (wxInt32)255);
 			}
 		}
 	}
@@ -318,10 +318,10 @@ private:
 				double g = 0;
 				double b = 0;
 				//double a = 0;
-				int iLeft = weightsTable.GetLeftBoundary(y);    // retrieve left boundary
-				int iRight = weightsTable.GetRightBoundary(y);  // retrieve right boundary
+				wxInt32 iLeft = weightsTable.GetLeftBoundary(y);    // retrieve left boundary
+				wxInt32 iRight = weightsTable.GetRightBoundary(y);  // retrieve right boundary
 
-				for(int i = iLeft; i <= iRight; i++) {
+				for(wxInt32 i = iLeft; i <= iRight; i++) {
 					// scan between boundaries
 					// accumulate weighted effect of each neighboring pixel
 					//unsigned char pCurSrc = pSrc[i * uSrcWidth * 3 + uCol];
@@ -334,10 +334,10 @@ private:
 				}
 				// clamp and place result in destination pixel
 				unsigned long index = y * uDstWidth * 3 + uCol * 3;
-				pDst[index]	= MIN(MAX((int)0, (int)(r + 0.5)), (int)255);
-				pDst[index + 1]	= MIN(MAX((int)0, (int)(g + 0.5)), (int)255);
-				pDst[index + 2]	= MIN(MAX((int)0, (int)(b + 0.5)), (int)255);
-				//pDst[index].rgbReserved = (BYTE)MIN(MAX((int)0, (int)(a + 0.5)), (int)255);
+				pDst[index]	= MIN(MAX((wxInt32)0, (wxInt32)(r + 0.5)), (wxInt32)255);
+				pDst[index + 1]	= MIN(MAX((wxInt32)0, (wxInt32)(g + 0.5)), (wxInt32)255);
+				pDst[index + 2]	= MIN(MAX((wxInt32)0, (wxInt32)(b + 0.5)), (wxInt32)255);
+				//pDst[index].rgbReserved = (BYTE)MIN(MAX((wxInt32)0, (wxInt32)(a + 0.5)), (wxInt32)255);
 			}
 		}
 	}

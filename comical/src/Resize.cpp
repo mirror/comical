@@ -25,7 +25,7 @@
 #include "Resize.h"
 
 wxImage
-FreeImage_Rescale(wxImage src, int dst_width, int dst_height, FREE_IMAGE_FILTER filter) {
+FreeImage_Rescale(wxImage src, wxInt32 dst_width, wxInt32 dst_height, FREE_IMAGE_FILTER filter) {
 
 	wxImage dst;
 
@@ -60,8 +60,8 @@ FreeImage_Rescale(wxImage src, int dst_width, int dst_height, FREE_IMAGE_FILTER 
 		// perform upsampling or downsampling
 		unsigned char *pSrc = src.GetData();
 		unsigned char *pDst = dst.GetData();
-		int src_width  = src.GetWidth();
-		int src_height = src.GetHeight();
+		wxInt32 src_width  = src.GetWidth();
+		wxInt32 src_height = src.GetHeight();
 
 		Engine.Scale(pSrc, src_width, src_height, pDst, dst_width, dst_height);
 

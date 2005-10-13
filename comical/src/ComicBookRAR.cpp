@@ -27,7 +27,7 @@
 
 #include "ComicBookRAR.h"
 
-ComicBookRAR::ComicBookRAR(wxString file, uint cachelen) : ComicBook()
+ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cachelen) : ComicBook()
 {
 	HANDLE RarFile;
 	int RHCode,PFCode;
@@ -89,7 +89,7 @@ ComicBookRAR::ComicBookRAR(wxString file, uint cachelen) : ComicBook()
 	originals = new wxImage[pageCount];
 	resamples = new wxImage[pageCount];
 	Orientations = new COMICAL_ROTATE[pageCount]; // NORTH == 0
-	for (uint i = 0; i < pageCount; i++)
+	for (wxUint32 i = 0; i < pageCount; i++)
 		Orientations[i] = NORTH;
 	
 	RARCloseArchive(RarFile);
@@ -97,7 +97,7 @@ ComicBookRAR::ComicBookRAR(wxString file, uint cachelen) : ComicBook()
 	Create(); // create the wxThread
 }
 
-wxInputStream * ComicBookRAR::ExtractStream(unsigned int pageindex)
+wxInputStream * ComicBookRAR::ExtractStream(wxUint32 pageindex)
 {
 	return new wxRarInputStream(filename, Filenames[pageindex]);
 }

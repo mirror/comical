@@ -86,13 +86,13 @@ void ComicalCanvas::clearBitmaps()
 
 void ComicalCanvas::createBitmaps()
 {
-	int xScroll = 0, yScroll = 0, xWindow, yWindow;
+	wxInt32 xScroll = 0, yScroll = 0, xWindow, yWindow;
 	bool leftOk = false, rightOk = false;
 	
 	ComicalFrame *cParent = (ComicalFrame *) parent;
 
-	if (mode == SINGLE || theBook->GetPageCount() == 1 || leftNum == rightNum) {
-		if (mode == SINGLE || theBook->GetPageCount() == 1) {
+	if (mode == ONEPAGE || theBook->GetPageCount() == 1 || leftNum == rightNum) {
+		if (mode == ONEPAGE || theBook->GetPageCount() == 1) {
 			if (centerPage && centerPage->Ok()) {
 				xScroll = centerPage->GetWidth();
 				yScroll = centerPage->GetHeight();
@@ -182,7 +182,7 @@ void ComicalCanvas::createBitmaps()
 			yScroll = yWindow - scrollBarThickness;
 	}
 	SetVirtualSize(xScroll, yScroll);
-	int xStep = 1, yStep = 1;
+	wxInt32 xStep = 1, yStep = 1;
 	// if the pages will fit, make sure the scroll bars don't show up by making
 	// the scroll step == 1 pixel.  Otherwise, make the scroll step 10 so that
 	// one can navigate quickly using the arrow keys.
@@ -203,7 +203,7 @@ void ComicalCanvas::FirstPage()
 	setPage(0);
 	clearBitmaps();
 
-	if (mode == SINGLE || theBook->GetPageCount() == 1)
+	if (mode == ONEPAGE || theBook->GetPageCount() == 1)
 		centerPage = theBook->GetPage(0);
 	else
 	{
@@ -244,7 +244,7 @@ void ComicalCanvas::LastPage()
 	setPage(theBook->GetPageCount() - 1);
 	clearBitmaps();
 
-	if (mode == SINGLE || theBook->GetPageCount() == 1)
+	if (mode == ONEPAGE || theBook->GetPageCount() == 1)
 		centerPage = theBook->GetPage(theBook->Current);
 	else if (theBook->IsPageLandscape(theBook->Current)) {
 		leftNum = theBook->Current;
@@ -269,7 +269,7 @@ void ComicalCanvas::LastPage()
 	createBitmaps();
 }
 
-void ComicalCanvas::GoToPage(uint pagenumber)
+void ComicalCanvas::GoToPage(wxUint32 pagenumber)
 {
 	if (theBook == NULL)
 		return;
@@ -290,7 +290,7 @@ void ComicalCanvas::GoToPage(uint pagenumber)
 	setPage(pagenumber);
 	clearBitmaps();
 
-	if (mode == SINGLE)
+	if (mode == ONEPAGE)
 		centerPage = theBook->GetPage(pagenumber);
 	else
 	{
@@ -328,7 +328,7 @@ void ComicalCanvas::resetView()
 {
 	clearBitmaps();
 
-	if (mode == SINGLE)
+	if (mode == ONEPAGE)
 		centerPage = theBook->GetPage(theBook->Current);
 	else
 	{
@@ -359,7 +359,7 @@ void ComicalCanvas::PrevPageTurn()
 		FirstPage();
 		return;
 	}
-	if (mode == SINGLE) {
+	if (mode == ONEPAGE) {
 		PrevPageSlide();
 		return;
 	}
@@ -412,7 +412,7 @@ void ComicalCanvas::NextPageTurn()
 		return;
 	if (theBook->Current >= theBook->GetPageCount() - 1)
 		return;
-	if (mode == SINGLE) {
+	if (mode == ONEPAGE) {
 		NextPageSlide();
 		return;
 	}
@@ -474,7 +474,7 @@ void ComicalCanvas::PrevPageSlide()
 		FirstPage();
 		return;
 	}
-	if (mode == SINGLE) {
+	if (mode == ONEPAGE) {
 		GoToPage(theBook->Current - 1);
 		return;
 	}
@@ -521,7 +521,7 @@ void ComicalCanvas::NextPageSlide()
 		LastPage();
 		return;
 	}
-	if (mode == SINGLE) {
+	if (mode == ONEPAGE) {
 		GoToPage(theBook->Current + 1);
 		return;
 	}
@@ -692,7 +692,7 @@ void ComicalCanvas::RotateLeft(COMICAL_ROTATE direction)
 
 void ComicalCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 {
-	int xCanvas, yCanvas;
+	wxInt32 xCanvas, yCanvas;
 
 	wxPaintDC dc(this);
 	PrepareDC(dc);
@@ -752,7 +752,7 @@ void ComicalCanvas::OnSize(wxSizeEvent& event)
 		wxSize canvasSize = GetSize();
 		wxSize clientSize = GetClientSize();
 		wxSize toolBarSize = cParent->toolBarNav->GetSize();
-		int tbxPos = (clientSize.x - toolBarSize.x) / 2;
+		wxInt32 tbxPos = (clientSize.x - toolBarSize.x) / 2;
 		cParent->toolBarNav->SetSize(tbxPos, canvasSize.y, toolBarSize.x, -1);
 		cParent->labelLeft->SetSize(tbxPos - 70, canvasSize.y + 6, 50, toolBarSize.y);
 		cParent->labelRight->SetSize(tbxPos + toolBarSize.x + 20, canvasSize.y + 6, 50, toolBarSize.y);		
@@ -762,7 +762,7 @@ void ComicalCanvas::OnSize(wxSizeEvent& event)
 	}
 }
 
-void ComicalCanvas::setPage(int pagenumber)
+void ComicalCanvas::setPage(wxInt32 pagenumber)
 {
 	if (theBook) {
 		theBook->Current = pagenumber;

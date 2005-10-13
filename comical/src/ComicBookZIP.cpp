@@ -33,7 +33,7 @@
 #include <cstdlib>
 #endif
 
-ComicBookZIP::ComicBookZIP(wxString file, uint cachelen) : ComicBook()
+ComicBookZIP::ComicBookZIP(wxString file, wxUint32 cachelen) : ComicBook()
 {
 	wxString page;
 	filename = file;
@@ -100,13 +100,13 @@ ComicBookZIP::ComicBookZIP(wxString file, uint cachelen) : ComicBook()
 	originals = new wxImage[pageCount];
 	resamples = new wxImage[pageCount];
 	Orientations = new COMICAL_ROTATE[pageCount];
-	for (uint i = 0; i < pageCount; i++)
+	for (wxUint32 i = 0; i < pageCount; i++)
 		Orientations[i] = NORTH;
 	
 	Create(); // create the wxThread
 }
 
-wxInputStream * ComicBookZIP::ExtractStream(unsigned int pageindex)
+wxInputStream * ComicBookZIP::ExtractStream(wxUint32 pageindex)
 {
 	return new wxZipInputStream(filename, Filenames[pageindex]);
 }
