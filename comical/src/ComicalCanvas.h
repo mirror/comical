@@ -28,15 +28,6 @@
 #ifndef _ComicalCanvas_h_
 #define _ComicalCanvas_h_
 
-// For compilers that support precompilation, includes "wx.h".
-#include <wx/wxprec.h>
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
-#ifndef WX_PRECOMP
-// Include your minimal set of headers here, or wx.h
 #include <wx/bitmap.h>
 #include <wx/scrolwin.h>
 #include <wx/scrolbar.h>
@@ -45,7 +36,6 @@
 #include <wx/stream.h>
 #include <wx/log.h>
 #include <wx/config.h>
-#endif
 
 #include "ComicBook.h"
 

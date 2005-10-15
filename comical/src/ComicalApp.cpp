@@ -27,12 +27,11 @@
 
 #include "ComicalApp.h"
 
-#ifndef __WXMAC__
-#ifndef __WXCOCOA__
+#if !defined(__WXMAC__) && !defined(__WXCOCOA__) && !defined(__WXMSW__) && !defined(__WXPM__)
 #include "../Comical Icons/comical.xpm"  // the icon!
 #endif
-#endif
 
+#if !defined(__WXMSW__) && !defined(__WXPM__)
 #include "../Comical Icons/firstpage.xpm"
 #include "../Comical Icons/prevpage.xpm"
 #include "../Comical Icons/prev.xpm"
@@ -41,6 +40,7 @@
 #include "../Comical Icons/lastpage.xpm"
 #include "../Comical Icons/rot_cw.xpm"
 #include "../Comical Icons/rot_ccw.xpm"
+#endif
 
 // Create a new application object.
 IMPLEMENT_APP(ComicalApp)
@@ -61,10 +61,8 @@ bool ComicalApp::OnInit()
 	
 	ComicalFrame *frame = new ComicalFrame(wxT("Comical"), wxPoint(x, y), wxSize(width, height), wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE);
 
-#ifndef __WXMAC__
-#ifndef __WXCOCOA__
+#if !defined(__WXMAC__) && !defined(__WXCOCOA__)
 	frame->SetIcon(wxICON(Comical));
-#endif
 #endif
 
 	frame->Show(TRUE);
@@ -90,9 +88,9 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	labelLeft = NULL;
 	labelRight = NULL;
 	
-	ComicalLog = new wxLogStderr();
-	ComicalLog->SetVerbose(FALSE);
-	wxLog::SetActiveTarget(ComicalLog);
+	//ComicalLog = new wxLogStderr();
+	//ComicalLog->SetVerbose(FALSE);
+	//wxLog::SetActiveTarget(ComicalLog);
 	
 	config = new wxConfig(wxT("Comical"));
 	wxConfigBase::Set(config); // Registers config globally	

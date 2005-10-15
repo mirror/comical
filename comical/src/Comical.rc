@@ -1,0 +1,12 @@
+comical ICON "../Comical Icons/comical.ico"
+
+firstpage BITMAP "../Comical Icons/firstpage.bmp"
+lastpage BITMAP "../Comical Icons/lastpage.bmp"
+prev BITMAP "../Comical Icons/prev.bmp"
+next BITMAP "../Comical Icons/next.bmp"
+prevpage BITMAP "../Comical Icons/prevpage.bmp"
+nextpage BITMAP "../Comical Icons/nextpage.bmp"
+rot_ccw BITMAP "../Comical Icons/rot_ccw.bmp"
+rot_cw BITMAP "../Comical Icons/rot_cw.bmp"
+
+#include "wx/msw/wx.rc"

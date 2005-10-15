@@ -28,15 +28,6 @@
 #ifndef _ComicBook_h_
 #define _ComicBook_h_
 
-// For compilers that support precompilation, includes "wx.h".
-#include <wx/wxprec.h>
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
-#ifndef WX_PRECOMP
-// Include your minimal set of headers here, or wx.h
 #include <wx/bitmap.h>
 #include <wx/string.h>
 #include <wx/tokenzr.h>
@@ -48,7 +39,6 @@
 #include <wx/image.h>
 #include <wx/bitmap.h>
 #include <wx/timer.h>
-#endif
 
 #include <vector>
 #include <algorithm>

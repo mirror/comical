@@ -30,19 +30,8 @@
 
 #include "ComicBook.h"
 
-// For compilers that support precompilation, includes "wx.h".
-#include <wx/wxprec.h>
-
-#ifdef __BORLANDC__
-#pragma hdrstop
-#endif
-
-#ifndef WX_PRECOMP
-// Include your minimal set of headers here, or wx.h
-#include <wx/zipstrm.h>
-#endif
-
 #if wxCHECK_VERSION(2, 5, 0)
+#include <wx/zipstrm.h>
 #else
 #include "unzip.h"
 #endif

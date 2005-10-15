@@ -39,7 +39,7 @@ public:
 protected:
     virtual size_t OnSysRead(void *buffer, size_t bufsize);
     virtual off_t OnSysSeek(off_t seek, wxSeekMode mode);
-    virtual off_t OnSysTell() const {return m_Pos;}
+    virtual wxFileOffset OnSysTell() const {return m_Pos;}
 
 private:
     void ProcessFileError(int Error);
@@ -52,7 +52,7 @@ private:
     wxString m_ArcName;
 };
 
-int CallbackProc(wxUint32 msg, long UserData, long P1, long P2);
+int CALLBACK CallbackProc(wxUint32 msg, long UserData, long P1, long P2);
 
 #endif 
    // wxUSE_STREAMS

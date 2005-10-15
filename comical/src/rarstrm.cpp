@@ -85,7 +85,7 @@ wxRarInputStream::wxRarInputStream(const wxString& archive, const wxString& file
 
 	while ((RHCode=RARReadHeaderEx(RarFile,&HeaderData))==0) {
 #ifdef wxUSE_UNICODE
-		if (file.IsSameAs(HeaderData.FileNameW)) {
+		if (file.IsSameAs(wxString(HeaderData.FileNameW))) {
 #else // ANSI
 		if (file.IsSameAs(HeaderData.FileName)) {
 #endif
@@ -216,7 +216,7 @@ void wxRarInputStream::ProcessFileError(int Error)
 	}
 }
 
-int CallbackProc(wxUint32 msg, long UserData, long P1, long P2)
+int CALLBACK CallbackProc(wxUint32 msg, long UserData, long P1, long P2)
 {
 	char **buffer;
 	switch(msg) {
