@@ -1,0 +1,32 @@
+CC = cl
+LD = link
+RC = rc
+INCLUDE  = /I"C:\Program Files\UnrarDLL" /IC:\wxWidgets-2.6.2\include /IC:\wxWidgets-2.6.2\lib\vc_lib\mswu /I"C:\Program Files\Microsoft Visual C++ Toolkit 2003\include" /I"C:\Program Files\Microsoft Platform SDK\Include"
+CXXFLAGS = /nologo /TP /MD /O2 /GR /EHsc /W3 /DWIN32 /D__WXMSW__ /D_UNICODE /DwxUSE_UNICODE_MSLU=1 $(INCLUDE)
+LDFLAGS  = /NOLOGO /RELEASE /LIBPATH:"c:\Program Files\UnrarDLL" /LIBPATH:c:\wxWidgets-2.6.2\lib\vc_lib /LIBPATH:"C:\Program Files\Microsoft Visual C++ Toolkit 2003\lib" /LIBPATH:"C:\Program Files\Microsoft Platform SDK\Lib" /LIBPATH:"C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\lib"
+LIBS     = unrar.lib wxmsw26u_core.lib wxbase26u.lib wxtiff.lib wxjpeg.lib wxpng.lib wxzlib.lib
+PLATFORM_LIBS = kernel32.lib user32.lib gdi32.lib comdlg32.lib shell32.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib advapi32.lib oleacc.lib unicows.lib
+RESFLAGS = /d WIN32 /d __WXMSW__ /d _WINDOWS /d wxUSE_UNICODE_MSLU=1 $(INCLUDE) 
+
+.SUFFIXES : .exe .obj .cpp .res .rc
+
+.cpp.obj:
+	$(CXX) $(CXXFLAGS) /c /Fo$@ $**
+
+.rc.res:
+	$(RC) $(RESFLAGS) /fo$@ $**
+
+all: comical.exe
+
+COMICAL_OBJECTS = src\ComicBook.obj src\ComicBookRAR.obj src\rarstrm.obj src\ComicBookZIP.obj src\ComicalApp.obj src\ComicalCanvas.obj src\Resize.obj
+
+COMICAL_RESOURCES = src\Comical.res
+
+comical.exe: $(COMICAL_OBJECTS) $(COMICAL_RESOURCES)
+	$(LD) $(LDFLAGS) /OUT:$@ /SUBSYSTEM:WINDOWS @<<
+	$(COMICAL_OBJECTS) $(COMICAL_RESOURCES) $(LIBS) $(PLATFORM_LIBS)
+<<
+
+clean:
+	-if exist src\*.obj del src\*.obj
+	-if exist src\*.res del src\*.res
