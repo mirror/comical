@@ -332,6 +332,7 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,int HeaderSize
 #ifdef RARDLL
       Cmd->DllError=ERAR_BAD_DATA;
 #endif
+      ErrHandler.SetErrorCode(WARNING);
     }
     ExactMatch=false;
   }
@@ -486,7 +487,7 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,int HeaderSize
     else
       *DestFileNameW=0;
 
-    ExtrFile=!SkipSolid && !EmptyName/* && *ExtrName*/;
+    ExtrFile=!SkipSolid && !EmptyName && (Arc.NewLhd.Flags & LHD_SPLIT_BEFORE)==0/* && *ExtrName*/;
     if ((Cmd->FreshFiles || Cmd->UpdateFiles) && (Command=='E' || Command=='X'))
     {
       struct FindData FD;
@@ -707,20 +708,23 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,int HeaderSize
 
       CurFile.SetAllowDelete(!Cmd->KeepBroken);
 
-      if (!ExtractLink(DataIO,Arc,DestFileName,DataIO.UnpFileCRC,!TestMode && !SkipSolid) &&
-          (Arc.NewLhd.Flags & LHD_SPLIT_BEFORE)==0)
-        if (Arc.NewLhd.Method==0x30)
-          UnstoreFile(DataIO,Arc.NewLhd.FullUnpSize);
-        else
-        {
-          Unp->SetDestSize(Arc.NewLhd.FullUnpSize);
-#ifndef SFX_MODULE
-          if (Arc.NewLhd.UnpVer<=15)
-            Unp->DoUnpack(15,FileCount>1 && Arc.Solid);
+      bool LinkCreateMode=!Cmd->Test && !SkipSolid;
+      if (ExtractLink(DataIO,Arc,DestFileName,DataIO.UnpFileCRC,LinkCreateMode))
+        PrevExtracted=LinkCreateMode;
+      else
+        if ((Arc.NewLhd.Flags & LHD_SPLIT_BEFORE)==0)
+          if (Arc.NewLhd.Method==0x30)
+            UnstoreFile(DataIO,Arc.NewLhd.FullUnpSize);
           else
+          {
+            Unp->SetDestSize(Arc.NewLhd.FullUnpSize);
+#ifndef SFX_MODULE
+            if (Arc.NewLhd.UnpVer<=15)
+              Unp->DoUnpack(15,FileCount>1 && Arc.Solid);
+            else
 #endif
-            Unp->DoUnpack(Arc.NewLhd.UnpVer,Arc.NewLhd.Flags & LHD_SOLID);
-        }
+              Unp->DoUnpack(Arc.NewLhd.UnpVer,Arc.NewLhd.Flags & LHD_SOLID);
+          }
 
       if (Arc.IsOpened())
         Arc.SeekToNext();

@@ -31,7 +31,7 @@ OBJECTS=strlist.o strfn.o pathfn.o int64.o savepos.o global.o file.o filefn.o fi
 all:	unrar
 
 clean:
-	@rm -f *.o *.bak *~
+	@rm -f *.o *.bak *~ *.so *.a unrar default.sfx
 
 unrar:	WHAT=UNRAR
 unrar:	$(OBJECTS) $(UNRAR_OBJ)

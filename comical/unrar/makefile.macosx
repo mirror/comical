@@ -31,7 +31,7 @@ OBJECTS=strlist.o strfn.o pathfn.o int64.o savepos.o global.o file.o filefn.o fi
 all:	unrar
 
 clean:
-	@rm -f *.o *.bak *~ *.dylib
+	@rm -f *.o *.bak *~ *.dylib *.a unrar
 
 unrar:	WHAT=UNRAR
 unrar:	$(OBJECTS) $(UNRAR_OBJ)
@@ -48,8 +48,8 @@ sfx:	$(OBJECTS)
 shlib:	WHAT=RARDLL -DSILENT
 shlib:	$(OBJECTS) $(LIB_OBJ)
 	@rm -f libunrar.so
-	$(LINK) -shared -o libunrar.so $(LDFLAGS) $(OBJECTS) $(LIB_OBJ)
-	$(STRIP) libunrar.so
+	$(LINK) -shared -o libunrar.dylib $(LDFLAGS) $(OBJECTS) $(LIB_OBJ)
+	$(STRIP) libunrar.dylib
 
 lib:	WHAT=RARDLL -DSILENT
 lib:	$(OBJECTS) $(LIB_OBJ)
