@@ -201,3 +201,7 @@ src/pstream.h
 src/ComicalLog.h
 src/enums.h
 src/Exceptions.h
+src/Comical.rc
+unrar/makefile.macosx
+unrar/makefile.linux
+unrar/makefile.dmc
