@@ -33,30 +33,27 @@
 #include <cstdlib>
 #endif
 
-ComicBookZIP::ComicBookZIP(wxString file, wxUint32 cachelen) : ComicBook()
+ComicBookZIP::ComicBookZIP(wxString file, wxUint32 cachelen) : ComicBook(file, cachelen)
 {
 	wxString page;
-	filename = file;
-	cacheLen = cachelen;
-	Current = 0;
 
 #if wxCHECK_VERSION(2, 5, 0)
 	wxFFileInputStream *fs = new wxFFileInputStream(filename);
-	if (fs->Ok())
-	{
-		wxZipInputStream *zipFile = new wxZipInputStream(*fs);
-		wxZipEntry *entry;
-		while ((entry = zipFile->GetNextEntry()) != NULL)
-		{
-			page = entry->GetName();
-			if(	page.Right(5).Upper() == wxT(".JPEG") || page.Right(4).Upper() == wxT(".JPG") ||
-				page.Right(5).Upper() == wxT(".TIFF") || page.Right(4).Upper() == wxT(".TIF") ||
-				page.Right(4).Upper() == wxT(".GIF") ||
-				page.Right(4).Upper() == wxT(".PNG"))
-				Filenames.push_back(page);
-		}
-		delete zipFile;
+	if (!fs->Ok()) {
+		delete fs;
+		throw ArchiveException(filename, wxT("Could not open ") + filename);
 	}
+ 	wxZipInputStream *zipFile = new wxZipInputStream(*fs);
+	wxZipEntry *entry;
+	while ((entry = zipFile->GetNextEntry()) != NULL) {
+		page = entry->GetName();
+		if(	page.Right(5).Upper() == wxT(".JPEG") || page.Right(4).Upper() == wxT(".JPG") ||
+			page.Right(5).Upper() == wxT(".TIFF") || page.Right(4).Upper() == wxT(".TIF") ||
+			page.Right(4).Upper() == wxT(".GIF") ||
+			page.Right(4).Upper() == wxT(".PNG"))
+			Filenames.push_back(page);
+	}
+	delete zipFile;
 	delete fs;
 #else
 	static char namebuf[1024];

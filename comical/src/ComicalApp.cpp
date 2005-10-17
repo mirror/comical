@@ -28,7 +28,7 @@
 #include "ComicalApp.h"
 
 #if !defined(__WXMAC__) && !defined(__WXCOCOA__) && !defined(__WXMSW__) && !defined(__WXPM__)
-#include "../Comical Icons/comical.xpm"  // the icon!
+#include "../Comical Icons/comical.xpm"
 #endif
 
 #if !defined(__WXMSW__) && !defined(__WXPM__)
@@ -251,7 +251,7 @@ void ComicalFrame::OnClose(wxCloseEvent& event)
 	if (theBook)
 	{
 		theBook->Delete(); // delete the ComicBook thread
-		theBook->Wait();
+//		theBook->Wait();
 		delete theBook; // clear out the rest of the ComicBook
 		theBook = NULL;
 	}
@@ -294,7 +294,7 @@ void ComicalFrame::OpenFile(wxString filename)
 	
 		if (theBook) {
 			theBook->Delete(); // delete the ComicBook thread
-			theBook->Wait();
+//			theBook->Wait();
 			delete theBook; // clear out the rest of the ComicBook
 			theBook = NULL;
 		}

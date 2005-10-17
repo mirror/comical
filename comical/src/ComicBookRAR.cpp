@@ -27,7 +27,7 @@
 
 #include "ComicBookRAR.h"
 
-ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cachelen) : ComicBook()
+ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cachelen) : ComicBook(file, cachelen)
 {
 	HANDLE RarFile;
 	int RHCode,PFCode;
@@ -35,10 +35,6 @@ ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cachelen) : ComicBook()
 	struct RARHeaderDataEx HeaderData;
 	struct RAROpenArchiveDataEx OpenArchiveData;
 	wxString page;
-	
-	filename = file;
-	cacheLen = cachelen;
-	Current = 0;
 	
 	memset(&OpenArchiveData,0,sizeof(OpenArchiveData));
 #ifdef wxUSE_UNICODE

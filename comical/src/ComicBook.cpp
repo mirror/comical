@@ -30,6 +30,14 @@
 
 #include "ComicBook.h"
 
+ComicBook::ComicBook(wxString file, wxUint32 cacheLength) : wxThread(wxTHREAD_JOINABLE)
+{
+	pageCount = 0;
+	Current = 0;
+	filename = file;
+	cacheLen = cacheLength;
+}
+
 ComicBook::~ComicBook()
 {
 	delete[] originals;
