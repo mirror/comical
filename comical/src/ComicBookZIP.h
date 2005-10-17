@@ -36,6 +36,8 @@
 #include "unzip.h"
 #endif
 
+#include "Exceptions.h"
+
 class ComicBookZIP : public ComicBook {
 
 public:
@@ -44,6 +46,12 @@ public:
 
 protected:
 	wxInputStream * ExtractStream(wxUint32 pageindex);
+
+#if !wxCHECK_VERSION(2, 5, 0)
+private:
+	wxString OpenArchiveError(int Error);
+#endif
+
 };
 
 #endif

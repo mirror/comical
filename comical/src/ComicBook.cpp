@@ -169,28 +169,25 @@ void * ComicBook::Entry()
 			}
 		}
 
-		for (i = 0; i < cacheLen && i < pageCount; i++)
-		{
+		for (i = 0; i < cacheLen && i < pageCount; i++) {
 			if (TestDestroy())
 				break;
 			target = currentPage + i;
 			if (target > high)
 				target = currentPage - (target - high);
 			
-			if (!resamples[target].Ok())
-			{
-				if (!originals[target].Ok())
-				{
-					wxInputStream * is = ExtractStream(target);
-					pageBytes = is->GetSize();
-					if (is->IsOk() && is->GetSize() > 0)
-					{
-						originals[target].LoadFile(*is);
+			if (!resamples[target].Ok()) {
+				try {
+					if (!originals[target].Ok()) {
+						wxInputStream * is = ExtractStream(target);
+						pageBytes = is->GetSize();
+						if (is->IsOk() && is->GetSize() > 0)
+							originals[target].LoadFile(*is);
+						else
+							originals[target] = new wxImage(1,1);
 					}
-					else
-					{
-						originals[target] = new wxImage(1,1);
-					}
+				} catch (ArchiveException &ae) {
+					wxLogError(ae.Message);
 				}
 				ScaleImage(target);
 				if (!resamples[target].Ok())
@@ -199,21 +196,17 @@ void * ComicBook::Entry()
 			}
 		}
 
-		if (i < cacheLen && i < pageCount)
-		{
-			if (cacheLen < pageCount)
-			{
+		if (i < cacheLen && i < pageCount) {
+			if (cacheLen < pageCount) {
 				// Delete pages outside of the cache's range.
-				for (i = 0; wxInt32(i) < low; i++)
-				{
+				for (i = 0; wxInt32(i) < low; i++) {
 					if(resamples[i].Ok())
 						resamples[i].Destroy();
 					if(originals[i].Ok())
 						originals[i].Destroy();
 				}
 				
-				for (i = pageCount - 1; wxInt32(i) > high; i--)
-				{
+				for (i = pageCount - 1; wxInt32(i) > high; i--) {
 					if(resamples[i].Ok())
 						resamples[i].Destroy();
 					if(originals[i].Ok())
@@ -237,19 +230,15 @@ void ComicBook::ScaleImage(wxUint32 pagenumber)
   
 	wxImage &orig = originals[pagenumber];
 
-	if (Orientations[pagenumber] == NORTH || Orientations[pagenumber] == SOUTH)
-	{
+	if (Orientations[pagenumber] == NORTH || Orientations[pagenumber] == SOUTH) {
 		xImage = orig.GetWidth();
 		yImage = orig.GetHeight();
-	}
-	else // EAST || WEST
-	{
+	} else {// EAST || WEST
 		yImage = orig.GetWidth();
 		xImage = orig.GetHeight();
 	}
 	
-	switch(zoom)
-	{
+	switch(zoom) {
 
 	case THREEQ:
 		scalingFactor = 0.75f;
@@ -265,16 +254,13 @@ void ComicBook::ScaleImage(wxUint32 pagenumber)
 
 	case FIT:
 		rImage = float(xImage) / float(yImage);
-		if (rImage >= 1.0f || mode == ONEPAGE)
-		{
+		if (rImage >= 1.0f || mode == ONEPAGE) {
 			rCanvas = float(canvasWidth) / float(canvasHeight);
 			if (rCanvas > rImage)
 				scalingFactor = float(canvasHeight) / float(yImage);
 			else
 				scalingFactor = float(canvasWidth) / float(xImage);
-		}
-		else
-		{
+		} else {
 			rCanvas = (float(canvasWidth)/2.0f) / float(canvasHeight);
 			if (rCanvas > rImage)
 				scalingFactor = float(canvasHeight) / float(yImage);
@@ -293,8 +279,7 @@ void ComicBook::ScaleImage(wxUint32 pagenumber)
 			withoutScrollBarHeight = wxInt32(float(yImage) * scalingFactor);
 			if (withoutScrollBarHeight > canvasHeight)
 				scalingFactor = float(canvasWidth - scrollBarThickness) / float(xImage);
-		}
-		else {
+		} else {
 			scalingFactor = float(canvasWidth/2) / float(xImage);
 			withoutScrollBarHeight = wxInt32(float(yImage) * scalingFactor);
 			if (withoutScrollBarHeight > canvasHeight)
@@ -311,8 +296,7 @@ void ComicBook::ScaleImage(wxUint32 pagenumber)
 			withoutScrollBarWidth = wxInt32(float(xImage) * scalingFactor);
 			if (withoutScrollBarWidth > canvasWidth)
 				scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
-		}
-		else {
+		} else {
 			withoutScrollBarWidth = wxInt32(float(xImage) * scalingFactor);
 			if (withoutScrollBarWidth > (canvasWidth / 2))
 				scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
@@ -321,8 +305,7 @@ void ComicBook::ScaleImage(wxUint32 pagenumber)
 
 	case FULL: // no resize
 	default:
-		switch (Orientations[pagenumber])
-		{
+		switch (Orientations[pagenumber]) {
 		case NORTH:
 			resamples[pagenumber] = wxImage(orig);
 			break;
@@ -341,8 +324,7 @@ void ComicBook::ScaleImage(wxUint32 pagenumber)
 		return;
 	}
 
-	switch (Orientations[pagenumber])
-	{
+	switch (Orientations[pagenumber]) {
 	case NORTH:
 		resamples[pagenumber] = FreeImage_Rescale(orig, wxInt32(xImage * scalingFactor), wxInt32(yImage * scalingFactor), fiFilter);
 		break;

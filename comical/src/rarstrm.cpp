@@ -74,13 +74,11 @@ wxRarInputStream::wxRarInputStream(const wxString& archive, const wxString& file
 	OpenArchiveData.OpenMode = RAR_OM_EXTRACT;
 	RarFile=RAROpenArchiveEx(&OpenArchiveData);
 
-	if ((RHCode=OpenArchiveData.OpenResult)!=0) {
+	if ((RHCode = OpenArchiveData.OpenResult) != 0) {
 		m_lasterror = wxSTREAM_READ_ERROR;
-		wxLogError(wxT("Could not open ") + archive + wxT(" for reading."));
-		OpenArchiveError(RHCode);
-		return;
+		throw new ArchiveException(m_ArcName, OpenArchiveError(RHCode));
 	}
-    
+
 	HeaderData.CmtBuf=NULL;
 
 	while ((RHCode=RARReadHeaderEx(RarFile,&HeaderData))==0) {
@@ -98,7 +96,7 @@ wxRarInputStream::wxRarInputStream(const wxString& archive, const wxString& file
 	
 	if (m_Size == 0) { // archived file not found
 		m_lasterror = wxSTREAM_READ_ERROR;
-		wxLogError(file + wxT(" not found in archive ") + archive + wxT("."));
+		throw new ArchiveException(m_ArcName, file + wxT(" not found in ") + archive + wxT("."));
 	}
 
 	m_Buffer = new char[m_Size];
@@ -110,9 +108,9 @@ wxRarInputStream::wxRarInputStream(const wxString& archive, const wxString& file
 
 	if (PFCode!=0) {
 		m_lasterror = wxSTREAM_READ_ERROR;
-		ProcessFileError(PFCode);	
+		throw new ArchiveException(m_ArcName, ProcessFileError(PFCode, file));	
 	}
-	
+
 	if (RarFile)  
 		RARCloseArchive(RarFile);
 
@@ -162,57 +160,45 @@ off_t wxRarInputStream::OnSysSeek(off_t seek, wxSeekMode mode)
     return m_Pos;
 }
 
-void wxRarInputStream::OpenArchiveError(int Error)
+wxString wxRarInputStream::OpenArchiveError(int Error)
 {
+	wxString prefix = wxT("Could not open ") + m_ArcName;
 	switch(Error) {
 		case ERAR_NO_MEMORY:
-			wxLogError(wxT("ERAR_NO_MEMORY: Not enough memory to open m_ArcName."));
-			break;
+			return wxString(prefix + wxT(": out of memory"));
 		case ERAR_EOPEN:
-			wxLogError(wxT("ERAR_EOPEN: Cannot open ") + m_ArcName + wxT("."));
-			break;
+			return wxString(prefix);
 		case ERAR_BAD_ARCHIVE:
-			wxLogError(wxT("ERAR_BAD_ARCHIVE: ") + m_ArcName + wxT(" is not a RAR archive."));
-			break;
+			return wxString(prefix + wxT(": it is not a valid RAR archive"));
 		case ERAR_BAD_DATA:
-			wxLogError(wxT("ERAR_BAD_DATA: ") + m_ArcName + wxT(" archive header broken."));
-			break;
+			return wxString(prefix + wxT(": archive header broken"));
 		case ERAR_UNKNOWN:
-			wxLogError(wxT("ERAR_UNKNOWN: Unknown error."));
-			break;
+			return wxString(prefix + wxT(": unknown error"));
 	}
 }
 
-void wxRarInputStream::ProcessFileError(int Error)
+wxString wxRarInputStream::ProcessFileError(int Error, wxString compressedFile)
 {
+	wxString prefix = wxT("Error processing ") + compressedFile;
 	switch(Error) {
 		case ERAR_UNKNOWN_FORMAT:
-			wxLogError(wxT("ERAR_UNKNOWN_FORMAT: Unknown archive format."));
-			break;
+			return wxString(prefix + wxT(": unknown archive format"));
 		case ERAR_BAD_ARCHIVE:
-			wxLogError(wxT("ERAR_BAD_ARCHIVE: Bad volume."));
-			break;
+			return wxString(prefix + wxT(": invalid or corrupted volume"));
 		case ERAR_ECREATE:
-			wxLogError(wxT("ERAR_ECREATE: File create error."));
-			break;
+			return wxString(prefix + wxT(": could not create the file"));
 		case ERAR_EOPEN:
-			wxLogError(wxT("ERAR_EOPEN: Volume open error."));
-			break;
+			return wxString(prefix + wxT(": could not open the file"));
 		case ERAR_ECLOSE:
-			wxLogError(wxT("ERAR_ECLOSE: File close error."));
-			break;
+			return wxString(prefix + wxT(": could not close the file"));
 		case ERAR_EREAD:
-			wxLogError(wxT("ERAR_EREAD: Read error."));
-			break;
+			return wxString(prefix + wxT(": could not read the file"));
 		case ERAR_EWRITE:
-			wxLogError(wxT("ERAR_EWRITE: Write error."));
-			break;
+			return wxString(prefix + wxT(": could not write the file"));
 		case ERAR_BAD_DATA:
-			wxLogError(wxT("ERAR_BAD_DATA: CRC error."));
-			break;
+			return wxString(prefix + wxT(": CRC error"));
 		case ERAR_UNKNOWN:
-			wxLogError(wxT("ERAR_UNKNOWN: Unknown error."));
-			break;
+			return wxString(prefix + wxT(": Unknown error"));
 	}
 }
 

@@ -290,35 +290,35 @@ void ComicalFrame::OnOpen(wxCommandEvent& event)
 
 void ComicalFrame::OpenFile(wxString filename)
 {
+	if (!filename.empty()) {
 	
-	if (!filename.empty())
-	{
-	
-		if (theBook)
-		{
+		if (theBook) {
 			theBook->Delete(); // delete the ComicBook thread
 			theBook->Wait();
 			delete theBook; // clear out the rest of the ComicBook
 			theBook = NULL;
 		}
 
-		if (filename.Right(4).Upper() == wxT(".CBR") || filename.Right(4).Upper() == wxT(".RAR"))
-			theBook = new ComicBookRAR(filename, 10);
-		else if (filename.Right(4).Upper() == wxT(".CBZ") || filename.Right(4).Upper() == wxT(".ZIP"))
-			theBook = new ComicBookZIP(filename, 10);
+		try {
+			if (filename.Right(4).Upper() == wxT(".CBR") || filename.Right(4).Upper() == wxT(".RAR"))
+				theBook = new ComicBookRAR(filename, 10);
+			else if (filename.Right(4).Upper() == wxT(".CBZ") || filename.Right(4).Upper() == wxT(".ZIP"))
+				theBook = new ComicBookZIP(filename, 10);
 
-		if (theBook)
-		{
-			theCanvas->theBook = theBook;
-			theCanvas->SetParams();
+			if (theBook) {
+				theCanvas->theBook = theBook;
+				theCanvas->SetParams();
 
-			toolBarNav->Enable(true);
+				toolBarNav->Enable(true);
 	
-			theBook->Run(); // start the thread
+				theBook->Run(); // start the thread
 	
-			theCanvas->FirstPage();
-			SetTitle(wxT("Comical - " + filename));
-			config->Write(wxT("/Comical/CWD"), wxPathOnly(filename));
+				theCanvas->FirstPage();
+				SetTitle(wxT("Comical - " + filename));
+				config->Write(wxT("/Comical/CWD"), wxPathOnly(filename));
+			}
+		} catch (ArchiveException &ae) {
+			wxLogError(ae.Message);
 		}
 	}
 }

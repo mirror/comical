@@ -20,6 +20,7 @@
 #include <iostream>
 
 #include "dll.hpp"
+#include "Exceptions.h"
 
 //--------------------------------------------------------------------------------
 // wxRarInputStream
@@ -42,8 +43,8 @@ protected:
     virtual wxFileOffset OnSysTell() const {return m_Pos;}
 
 private:
-    void ProcessFileError(int Error);
-    void OpenArchiveError(int Error);
+    wxString ProcessFileError(int Error, wxString compressedFile);
+    wxString OpenArchiveError(int Error);
     
     size_t m_Size;
     off_t m_Pos;

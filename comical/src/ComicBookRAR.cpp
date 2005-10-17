@@ -51,10 +51,8 @@ ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cachelen) : ComicBook()
 	OpenArchiveData.OpenMode=RAR_OM_LIST;
 	RarFile=RAROpenArchiveEx(&OpenArchiveData);
 
-	if (OpenArchiveData.OpenResult!=0) {
-		OpenArchiveError(OpenArchiveData.OpenResult, filename);
-		return;  // Time to throw an exception?
-	}
+	if (OpenArchiveData.OpenResult != 0)
+		throw ArchiveException(filename, OpenArchiveError(OpenArchiveData.OpenResult));
 
 	HeaderData.CmtBuf=CmtBuf;
 	HeaderData.CmtBufSize=sizeof(CmtBuf);
@@ -71,10 +69,8 @@ ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cachelen) : ComicBook()
 		page.Right(4).Upper() == wxT(".PNG"))
 			Filenames.push_back(page);
 		
-		if ((PFCode=RARProcessFile(RarFile,RAR_SKIP,NULL,NULL))!=0) {
-			ProcessFileError(PFCode);
-			break;
-		}
+		if ((PFCode = RARProcessFile(RarFile,RAR_SKIP,NULL,NULL)) != 0)
+			throw ArchiveException(filename, ProcessFileError(PFCode, page));
 	}
 
 	if (RHCode==ERAR_BAD_DATA)
@@ -102,56 +98,48 @@ wxInputStream * ComicBookRAR::ExtractStream(wxUint32 pageindex)
 	return new wxRarInputStream(filename, Filenames[pageindex]);
 }
 
-void ComicBookRAR::OpenArchiveError(int Error, wxString ArcName)
+wxString ComicBookRAR::OpenArchiveError(int Error)
 {
+	wxString prefix = wxT("Could not open ") + filename;
 	switch(Error) {
 		case ERAR_NO_MEMORY:
-			wxLogError(wxT("libunrar: Not enough memory"));
-			break;
+			return wxString(prefix + wxT(": out of memory"));
 		case ERAR_EOPEN:
-			wxLogError(wxT("libunrar: Cannot open " + ArcName));
-			break;
+			return prefix;
 		case ERAR_BAD_ARCHIVE:
-			wxLogError(wxT("libunrar: ") + ArcName + wxT(" is not RAR archive"));
-			break;
+			return wxString(prefix + wxT(": it is not a valid RAR archive"));
 		case ERAR_BAD_DATA:
-			wxLogError(wxT("libunrar: ") + ArcName + wxT(" archive header broken"));
-			break;
+			return wxString(prefix + wxT(": archive header broken"));
 		case ERAR_UNKNOWN:
-			wxLogError(wxT("libunrar: Unknown error"));
-			break;
+			return wxString(prefix + wxT(": unknown error"));
+		default:
+			return prefix;
 	}
 }
 
-void ComicBookRAR::ProcessFileError(int Error)
+wxString ComicBookRAR::ProcessFileError(int Error, wxString compressedFile)
 {
+	wxString prefix = wxT("Error processing ") + compressedFile;
 	switch(Error) {
 		case ERAR_UNKNOWN_FORMAT:
-			wxLogError(wxT("libunrar: Unknown archive format"));
-			break;
+			return wxString(prefix + wxT(": unknown archive format"));
 		case ERAR_BAD_ARCHIVE:
-			wxLogError(wxT("libunrar: Bad volume"));
-			break;
+			return wxString(prefix + wxT(": invalid or corrupted volume"));
 		case ERAR_ECREATE:
-			wxLogError(wxT("libunrar: File create error"));
-			break;
+			return wxString(prefix + wxT(": could not create the file"));
 		case ERAR_EOPEN:
-			wxLogError(wxT("libunrar: Volume open error"));
-			break;
+			return wxString(prefix + wxT(": could not open the file"));
 		case ERAR_ECLOSE:
-			wxLogError(wxT("libunrar: File close error"));
-			break;
+			return wxString(prefix + wxT(": could not close the file"));
 		case ERAR_EREAD:
-			wxLogError(wxT("libunrar: Read error"));
-			break;
+			return wxString(prefix + wxT(": could not read the file"));
 		case ERAR_EWRITE:
-			wxLogError(wxT("libunrar: Write error"));
-			break;
+			return wxString(prefix + wxT(": could not write the file"));
 		case ERAR_BAD_DATA:
-			wxLogError(wxT("libunrar: CRC error"));
-			break;
+			return wxString(prefix + wxT(": CRC error"));
 		case ERAR_UNKNOWN:
-			wxLogError(wxT("libunrar: Unknown error"));
-			break;
+			return wxString(prefix + wxT(": Unknown error"));
+		default:
+			return prefix;
 	}
 }

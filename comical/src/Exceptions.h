@@ -35,4 +35,11 @@ class PageOutOfRangeException
 		wxUint32 PageNumber, PageCount;
 };
 
+class ArchiveException
+{
+	public:
+		ArchiveException(wxString filename, wxString message) { Filename = filename; Message = message; }
+		wxString Filename, Message;
+};
+
 #endif

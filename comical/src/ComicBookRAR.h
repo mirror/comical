@@ -31,6 +31,7 @@
 #include "ComicBook.h"
 #include "rarstrm.h"
 #include "dll.hpp"
+#include "Exceptions.h"
  
 class ComicBookRAR : public ComicBook {
 
@@ -42,8 +43,8 @@ protected:
 	wxInputStream * ExtractStream(wxUint32 pageindex);
 
 private:
-	void OpenArchiveError(int Error, wxString ArcName);
-	void ProcessFileError(int Error);
+	wxString OpenArchiveError(int Error);
+	wxString ProcessFileError(int Error, wxString compressedFile);
 };
 
 #endif

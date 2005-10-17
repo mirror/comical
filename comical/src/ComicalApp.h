@@ -46,6 +46,7 @@
 #include "ComicBook.h"
 #include "ComicBookRAR.h"
 #include "ComicBookZIP.h"
+#include "Exceptions.h"
 
 class ComicalApp : public wxApp {
 

@@ -62,6 +62,7 @@ ComicBookZIP::ComicBookZIP(wxString file, wxUint32 cachelen) : ComicBook()
 	static char namebuf[1024];
 	unzFile ZipFile;
 	unz_file_info *fileInfo;
+	int retcode;
 #ifdef wxUSE_UNICODE
 	ZipFile = unzOpen(filename.mb_str(wxConvUTF8));
 #else // ANSI
@@ -70,13 +71,13 @@ ComicBookZIP::ComicBookZIP(wxString file, wxUint32 cachelen) : ComicBook()
 	fileInfo = (unz_file_info*) malloc(sizeof(unz_file_info_s));
 
 	if (ZipFile) {
-		if (unzGoToFirstFile(ZipFile) != UNZ_OK) {
+		if ((retcode = unzGoToFirstFile(ZipFile)) != UNZ_OK) {
 			unzClose(ZipFile);
 			ZipFile = NULL;
-			return;
+			throw ArchiveException(filename, OpenArchiveError(retcode));
 		}
 	} else {
-		return;
+		throw ArchiveException(wxT("Could not open ") + filename);
 	}
 
 	do {
@@ -110,3 +111,27 @@ wxInputStream * ComicBookZIP::ExtractStream(wxUint32 pageindex)
 {
 	return new wxZipInputStream(filename, Filenames[pageindex]);
 }
+
+#if !wxCHECK_VERSION(2, 5, 0)
+wxString ComicBookZIP::OpenArchiveError(int Error)
+{
+	wxString prefix = wxT("Could not open ") + filename;
+	switch(Error) {
+		case UNZ_END_OF_LIST_OF_FILE:
+			return wxString(prefix + wxT(": out of memory"));
+		case UNZ_ERRNO:
+			return wxString(prefix);
+		case UNZ_EOF:
+			return wxString(prefix + wxT(": reached the end of the file"));
+		case UNZ_PARAMERROR:
+			return wxString(prefix + wxT(": invalid parameter"));
+		case UNZ_BADZIPFILE:
+			return wxString(prefix + wxT(": invalid or corrupted ZIP file"));
+		case UNZ_INTERNALERROR:
+			return wxString(prefix + wxT(": internal error"));
+		case UNZ_CRCERROR:
+			return wxString(prefix + wxT(": CRC error"));
+	}
+}
+#endif
+
