@@ -88,10 +88,6 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	labelLeft = NULL;
 	labelRight = NULL;
 	
-	//ComicalLog = new wxLogStderr();
-	//ComicalLog->SetVerbose(FALSE);
-	//wxLog::SetActiveTarget(ComicalLog);
-	
 	config = new wxConfig(wxT("Comical"));
 	wxConfigBase::Set(config); // Registers config globally	
 	
@@ -251,7 +247,6 @@ void ComicalFrame::OnClose(wxCloseEvent& event)
 	if (theBook)
 	{
 		theBook->Delete(); // delete the ComicBook thread
-//		theBook->Wait();
 		delete theBook; // clear out the rest of the ComicBook
 		theBook = NULL;
 	}
@@ -271,7 +266,7 @@ void ComicalFrame::OnQuit(wxCommandEvent& event)
 
 void ComicalFrame::OnAbout(wxCommandEvent& event)
 {
-	wxMessageDialog AboutDlg(this, wxT("Comical 0.5, (c) 2003-2005 James Athey.\nComical is licensed under the GPL, version 2,\nwith a linking exception; see README for details."), wxT("About Comical"), wxOK);
+	wxMessageDialog AboutDlg(this, wxT("Comical 0.5.1, (c) 2003-2005 James Athey.\nComical is licensed under the GPL, version 2,\nwith a linking exception; see README for details."), wxT("About Comical"), wxOK);
 	AboutDlg.ShowModal();
 }
 
@@ -294,7 +289,6 @@ void ComicalFrame::OpenFile(wxString filename)
 	
 		if (theBook) {
 			theBook->Delete(); // delete the ComicBook thread
-//			theBook->Wait();
 			delete theBook; // clear out the rest of the ComicBook
 			theBook = NULL;
 		}

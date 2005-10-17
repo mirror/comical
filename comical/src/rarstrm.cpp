@@ -65,9 +65,9 @@ wxRarInputStream::wxRarInputStream(const wxString& archive, const wxString& file
 	
 	memset(&OpenArchiveData,0,sizeof(OpenArchiveData));
 #ifdef wxUSE_UNICODE
-	OpenArchiveData.ArcNameW = (wchar_t *) archive.c_str();
+	OpenArchiveData.ArcNameW = archive.wc_str(wxConvLocal);
 #else
-	OpenArchiveData.ArcName = (char *) archive.c_str();
+	OpenArchiveData.ArcName = archive.c_str();
 #endif
 	OpenArchiveData.CmtBuf = CmtBuf;
 	OpenArchiveData.CmtBufSize = sizeof(CmtBuf);

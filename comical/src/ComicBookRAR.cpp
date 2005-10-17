@@ -38,9 +38,9 @@ ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cachelen) : ComicBook(file, c
 	
 	memset(&OpenArchiveData,0,sizeof(OpenArchiveData));
 #ifdef wxUSE_UNICODE
-	OpenArchiveData.ArcNameW = (wchar_t *) filename.c_str();
+	OpenArchiveData.ArcNameW = filename.wc_str(wxConvLocal);
 #else // ANSI
-	OpenArchiveData.ArcName = (char *) filename.c_str();
+	OpenArchiveData.ArcName = filename.c_str();
 #endif
 	OpenArchiveData.CmtBuf=CmtBuf;
 	OpenArchiveData.CmtBufSize=sizeof(CmtBuf);
