@@ -167,13 +167,15 @@ wxString wxRarInputStream::OpenArchiveError(int Error)
 		case ERAR_NO_MEMORY:
 			return wxString(prefix + wxT(": out of memory"));
 		case ERAR_EOPEN:
-			return wxString(prefix);
+			return prefix;
 		case ERAR_BAD_ARCHIVE:
 			return wxString(prefix + wxT(": it is not a valid RAR archive"));
 		case ERAR_BAD_DATA:
 			return wxString(prefix + wxT(": archive header broken"));
 		case ERAR_UNKNOWN:
 			return wxString(prefix + wxT(": unknown error"));
+		default:
+			return prefix;
 	}
 }
 
@@ -199,6 +201,8 @@ wxString wxRarInputStream::ProcessFileError(int Error, wxString compressedFile)
 			return wxString(prefix + wxT(": CRC error"));
 		case ERAR_UNKNOWN:
 			return wxString(prefix + wxT(": Unknown error"));
+		default:
+			return prefix;
 	}
 }
 
