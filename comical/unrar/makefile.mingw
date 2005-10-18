@@ -1,0 +1,53 @@
+#
+# Makefile for Mingw - unrar
+#
+
+CXX=g++
+CXXFLAGS = -O2 -MD -mthreads -Wno-deprecated 
+DEFINES = -D_MSC_VER -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE 
+STRIP=strip
+
+##########################
+
+COMPILE=$(CXX) $(CXXFLAGS) $(DEFINES)
+LINK=$(CXX)
+
+UNRAR_OBJ=rar.o list.o
+LIB_OBJ=dll.o smallfn.o
+
+OBJECTS=strlist.o strfn.o pathfn.o int64.o savepos.o global.o file.o filefn.o filcreat.o \
+	archive.o arcread.o unicode.o system.o isnt.o crypt.o crc.o rawread.o encname.o \
+	resource.o match.o timefn.o rdwrfn.o consio.o options.o ulinks.o errhnd.o rarvm.o \
+	rijndael.o getbits.o sha1.o extinfo.o extract.o volume.o find.o unpack.o \
+	recvol.o scantree.o rs.o cmddata.o filestr.o
+
+.cpp.o:
+	$(COMPILE) -D$(WHAT) -c $<
+
+all:	unrar.exe
+
+clean:
+	-if exist *.o del *.o
+	-if exist *.d del *.d
+	-if exist *.bak del *.bak
+	-if exist *~ del *~
+	-if exist unrar.dll del unrar.dll
+	-if exist libunrar.a del libunrar.a
+	-if exist unrar.exe del unrar.exe
+
+unrar.exe:	WHAT=UNRAR
+unrar.exe:	$(OBJECTS) $(UNRAR_OBJ)
+	-if exist unrar.exe del unrar.exe
+	$(LINK) -o unrar $(LDFLAGS) $(OBJECTS) $(UNRAR_OBJ) $(LIBS)	
+	$(STRIP) unrar
+
+shlib:	WHAT=RARDLL -DSILENT
+shlib:	$(OBJECTS) $(LIB_OBJ)
+	-if exist unrar.dll del unrar.dll
+	$(LINK) -shared -o libunrar.dll $(LDFLAGS) $(OBJECTS) $(LIB_OBJ)
+	$(STRIP) unrar.dll
+
+lib:	WHAT=RARDLL -DSILENT
+lib:	$(OBJECTS) $(LIB_OBJ)
+	-if exist libunrar.a del libunrar.a
+	ar rcs libunrar.a $(OBJECTS) $(LIB_OBJ)

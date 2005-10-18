@@ -28,5 +28,6 @@ unrar/libunrar.a:
 
 clean:
 	-if exist src\*.o del src\*.o
+	-if exist src\*.d del src\*.d
 	-if exist comical.exe del comical.exe
 	$(MAKE) clean -C unrar -f makefile.mingw
