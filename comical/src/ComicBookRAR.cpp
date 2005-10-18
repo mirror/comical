@@ -38,9 +38,9 @@ ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cachelen) : ComicBook(file, c
 	
 	memset(&OpenArchiveData,0,sizeof(OpenArchiveData));
 #ifdef wxUSE_UNICODE
-	OpenArchiveData.ArcNameW = filename.wc_str(wxConvLocal);
+	OpenArchiveData.ArcNameW = (wchar_t *) filename.wc_str(wxConvLocal);
 #else // ANSI
-	OpenArchiveData.ArcName = filename.c_str();
+	OpenArchiveData.ArcName = (char *) filename.c_str();
 #endif
 	OpenArchiveData.CmtBuf=CmtBuf;
 	OpenArchiveData.CmtBufSize=sizeof(CmtBuf);
@@ -53,7 +53,7 @@ ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cachelen) : ComicBook(file, c
 	HeaderData.CmtBuf=CmtBuf;
 	HeaderData.CmtBufSize=sizeof(CmtBuf);
 	
-	while ((RHCode=RARReadHeaderEx(RarFile,&HeaderData))==0) {
+	while ((RHCode = RARReadHeaderEx(RarFile, &HeaderData)) == 0) {
 #ifdef wxUSE_UNICODE
 		page = wxString(HeaderData.FileNameW);
 #else
@@ -65,13 +65,15 @@ ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cachelen) : ComicBook(file, c
 		page.Right(4).Upper() == wxT(".PNG"))
 			Filenames.push_back(page);
 		
-		if ((PFCode = RARProcessFile(RarFile,RAR_SKIP,NULL,NULL)) != 0)
+		if ((PFCode = RARProcessFile(RarFile, RAR_SKIP, NULL, NULL)) != 0)
 			throw ArchiveException(filename, ProcessFileError(PFCode, page));
 	}
 
-	if (RHCode==ERAR_BAD_DATA)
-		wxLogError(wxT("libunrar: \nFile header broken"));
+	if (RHCode == ERAR_BAD_DATA)
+		throw ArchiveException(filename, OpenArchiveError(RHCode));
 
+	RARCloseArchive(RarFile);
+	
 	vector<wxString>::iterator begin = Filenames.begin();
 	vector<wxString>::iterator end = Filenames.end();
 	sort(begin, end);  // I love the STL!
@@ -83,8 +85,6 @@ ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cachelen) : ComicBook(file, c
 	Orientations = new COMICAL_ROTATE[pageCount]; // NORTH == 0
 	for (wxUint32 i = 0; i < pageCount; i++)
 		Orientations[i] = NORTH;
-	
-	RARCloseArchive(RarFile);
 	
 	Create(); // create the wxThread
 }

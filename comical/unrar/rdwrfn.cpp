@@ -118,13 +118,13 @@ void ComprDataIO::UnpWrite(byte *Addr,uint Count)
       ErrHandler.Exit(USER_BREAK);
     if (Cmd->ProcessDataProc!=NULL)
     {
-#ifdef _WIN_32
-      _EBX=_ESP;
-#endif
+//#ifdef _WIN_32
+//      _EBX=_ESP;
+//#endif
       int RetCode=Cmd->ProcessDataProc(Addr,Count);
-#ifdef _WIN_32
-      _ESP=_EBX;
-#endif
+//#ifdef _WIN_32
+//      _ESP=_EBX;
+//#endif
       if (RetCode==0)
         ErrHandler.Exit(USER_BREAK);
     }

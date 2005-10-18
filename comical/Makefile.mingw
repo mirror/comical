@@ -1,9 +1,9 @@
 CC = g++
 LD = g++
 RC = windres
-INCLUDE	= -I"c:\Program Files\UnrarDLL" -IC:\wxWidgets-2.6.2\include -IC:\wxWidgets-2.6.2\lib\gcc_lib\mswu
+INCLUDE	= -Iunrar -IC:\wxWidgets-2.6.2\include -IC:\wxWidgets-2.6.2\lib\gcc_lib\mswud
 CFLAGS	= -O2 -MD -mthreads -Wall -pipe -DWIN32 -D__WXMSW__ -D_UNICODE $(INCLUDE)
-LDFLAGS	= -mwindows -mthreads -L"c:\Program Files\UnrarDLL" -Lc:\wxWidgets-2.6.2\lib\gcc_lib
+LDFLAGS	= -mwindows -mthreads -Lunrar -Lc:\wxWidgets-2.6.2\lib\gcc_lib
 LIBS	= -lunrar -lwxmsw26u_core -lwxbase26u -lwxtiff -lwxjpeg -lwxpng -lwxzlib
 PLATFORM_LIBS = -lkernel32 -luser32 -lgdi32 -lcomdlg32 -lshell32 -lcomctl32 -lole32 -loleaut32 -luuid -loleacc
 RESFLAGS = --use-temp-file --define __WXMSW__ --define _UNICODE --define wxUSE_UNICODE_MSLU=1 --include-dir c:\PROGRA~1\UnrarDLL --include-dir C:/wxWidgets-2.6.2/include --include-dir C:/wxWidgets-2.6.2/lib/gcc_lib/mswu
@@ -19,9 +19,14 @@ STRIP = strip
 
 COMICAL_OBJECTS = src/ComicBook.o src/ComicBookRAR.o src/ComicBookZIP.o src/ComicalApp.o src/ComicalCanvas.o src/Resize.o src/rarstrm.o src/Comical.o
 
-comical.exe: $(COMICAL_OBJECTS)
+Comical.exe: $(COMICAL_OBJECTS) unrar/libunrar.a
 	$(CC) -o $@ $(COMICAL_OBJECTS) $(LDFLAGS) $(LIBS) $(PLATFORM_LIBS)
 	$(STRIP) $@
 
+unrar/libunrar.a:
+	$(MAKE) lib -C unrar -f makefile.mingw
+
 clean:
 	-if exist src\*.o del src\*.o
+	-if exist comical.exe del comical.exe
+	$(MAKE) clean -C unrar -f makefile.mingw

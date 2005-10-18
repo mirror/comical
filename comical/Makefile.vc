@@ -16,13 +16,13 @@ RESFLAGS = /d WIN32 /d __WXMSW__ /d _WINDOWS /d wxUSE_UNICODE_MSLU=1 $(INCLUDE)
 .rc.res:
 	$(RC) $(RESFLAGS) /fo$@ $**
 
-all: comical.exe
+all: Comical.exe
 
 COMICAL_OBJECTS = src\ComicBook.obj src\ComicBookRAR.obj src\rarstrm.obj src\ComicBookZIP.obj src\ComicalApp.obj src\ComicalCanvas.obj src\Resize.obj
 
 COMICAL_RESOURCES = src\Comical.res
 
-comical.exe: $(COMICAL_OBJECTS) $(COMICAL_RESOURCES)
+Comical.exe: $(COMICAL_OBJECTS) $(COMICAL_RESOURCES)
 	$(LD) $(LDFLAGS) /OUT:$@ /SUBSYSTEM:WINDOWS @<<
 	$(COMICAL_OBJECTS) $(COMICAL_RESOURCES) $(LIBS) $(PLATFORM_LIBS)
 <<

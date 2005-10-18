@@ -86,9 +86,9 @@ bool ComicBook::SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COM
 
 wxBitmap * ComicBook::GetPage(wxUint32 pagenumber)
 {
+wxLog::FlushActive();
 	wxBusyCursor busy;
-	while (!resamples[pagenumber].Ok())
-	{
+	while (!resamples[pagenumber].Ok()) {
 		Sleep(50);
 	}
 	return new wxBitmap(resamples[pagenumber]);
@@ -97,8 +97,7 @@ wxBitmap * ComicBook::GetPage(wxUint32 pagenumber)
 wxBitmap * ComicBook::GetPageLeftHalf(wxUint32 pagenumber)
 {
 	wxBusyCursor busy;
-	while (!resamples[pagenumber].Ok())
-	{
+	while (!resamples[pagenumber].Ok()) {
 		Sleep(50);
 	}
 	wxInt32 rWidth = resamples[pagenumber].GetWidth();
@@ -109,8 +108,7 @@ wxBitmap * ComicBook::GetPageLeftHalf(wxUint32 pagenumber)
 wxBitmap * ComicBook::GetPageRightHalf(wxUint32 pagenumber)
 {
 	wxBusyCursor busy;
-	while (!resamples[pagenumber].Ok())
-	{
+	while (!resamples[pagenumber].Ok()) {
 		Sleep(50);
 	}
 	wxInt32 rWidth = resamples[pagenumber].GetWidth();
@@ -123,8 +121,7 @@ bool ComicBook::IsPageLandscape(wxUint32 pagenumber)
 	if (pagenumber > pageCount)
 		throw new PageOutOfRangeException(pagenumber, pageCount);
 	wxBusyCursor busy;
-	while (!resamples[pagenumber].Ok())
-	{
+	while (!resamples[pagenumber].Ok()) {
 		Sleep(50);
 	}
 	wxInt32 rWidth = resamples[pagenumber].GetWidth();
@@ -140,8 +137,7 @@ void * ComicBook::Entry()
 	wxUint32 i;
 	wxInt32 low, high, target, currentPage, pageBytes;
 
-	while (!TestDestroy())
-	{
+	while (!TestDestroy()) {
 		currentPage = wxInt32(Current); // in case this value changes midloop
 		
 		// The caching algorithm.  First calculates next highest
@@ -191,11 +187,18 @@ void * ComicBook::Entry()
 						pageBytes = is->GetSize();
 						if (is->IsOk() && is->GetSize() > 0)
 							originals[target].LoadFile(*is);
-						else
-							originals[target] = new wxImage(1,1);
+						else {
+							wxLogError(wxT("Failed to extract page %d."), target);
+							originals[target] = wxImage(1, 1);
+						}
+						if (!originals[target].Ok()) {
+							wxLogError(wxT("Failed to extract page %d."), target);
+							originals[target] = wxImage(1, 1);
+						}
 					}
 				} catch (ArchiveException &ae) {
 					wxLogError(ae.Message);
+					wxLog::FlushActive();
 				}
 				ScaleImage(target);
 				if (!resamples[target].Ok())

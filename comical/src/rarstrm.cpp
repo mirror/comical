@@ -53,7 +53,7 @@
 wxRarInputStream::wxRarInputStream(const wxString& archive, const wxString& file) : wxInputStream()
 {
 	HANDLE RarFile;
-	int RHCode,PFCode;
+	int RHCode, PFCode;
 	char CmtBuf[16384];
 	struct RARHeaderDataEx HeaderData;
 	struct RAROpenArchiveDataEx OpenArchiveData;
@@ -63,16 +63,16 @@ wxRarInputStream::wxRarInputStream(const wxString& archive, const wxString& file
 	m_Size = 0;
 	m_ArcName = archive;
 	
-	memset(&OpenArchiveData,0,sizeof(OpenArchiveData));
+	memset(&OpenArchiveData, 0, sizeof(OpenArchiveData));
 #ifdef wxUSE_UNICODE
-	OpenArchiveData.ArcNameW = archive.wc_str(wxConvLocal);
+	OpenArchiveData.ArcNameW = (wchar_t *) archive.wc_str(wxConvLocal);
 #else
-	OpenArchiveData.ArcName = archive.c_str();
+	OpenArchiveData.ArcName = (char *) archive.c_str();
 #endif
 	OpenArchiveData.CmtBuf = CmtBuf;
 	OpenArchiveData.CmtBufSize = sizeof(CmtBuf);
 	OpenArchiveData.OpenMode = RAR_OM_EXTRACT;
-	RarFile=RAROpenArchiveEx(&OpenArchiveData);
+	RarFile = RAROpenArchiveEx(&OpenArchiveData);
 
 	if ((RHCode = OpenArchiveData.OpenResult) != 0) {
 		m_lasterror = wxSTREAM_READ_ERROR;
@@ -81,7 +81,7 @@ wxRarInputStream::wxRarInputStream(const wxString& archive, const wxString& file
 
 	HeaderData.CmtBuf=NULL;
 
-	while ((RHCode=RARReadHeaderEx(RarFile,&HeaderData))==0) {
+	while ((RHCode = RARReadHeaderEx(RarFile, &HeaderData)) == 0) {
 #ifdef wxUSE_UNICODE
 		if (file.IsSameAs(wxString(HeaderData.FileNameW))) {
 #else // ANSI
@@ -89,9 +89,10 @@ wxRarInputStream::wxRarInputStream(const wxString& archive, const wxString& file
 #endif
 			m_Size = HeaderData.UnpSize;
 			break;	
+		} else {
+			if ((PFCode = RARProcessFile(RarFile, RAR_SKIP, NULL, NULL)) != 0)
+				throw ArchiveException(archive, ProcessFileError(PFCode, file));
 		}
-		else
-			RARProcessFile(RarFile,RAR_SKIP,NULL,NULL);
 	}
 	
 	if (m_Size == 0) { // archived file not found
@@ -106,14 +107,13 @@ wxRarInputStream::wxRarInputStream(const wxString& archive, const wxString& file
 
 	PFCode = RARProcessFile(RarFile, RAR_TEST, NULL, NULL);
 
-	if (PFCode!=0) {
+	if (PFCode != 0) {
 		m_lasterror = wxSTREAM_READ_ERROR;
 		throw new ArchiveException(m_ArcName, ProcessFileError(PFCode, file));	
 	}
 
 	if (RarFile)  
 		RARCloseArchive(RarFile);
-
 }
 
 wxRarInputStream::~wxRarInputStream()
@@ -127,9 +127,36 @@ bool wxRarInputStream::Eof() const
 	return m_Pos >= (off_t)m_Size;
 }
 
+wxInputStream& wxRarInputStream::Read(void *buffer, size_t bufsize)
+{
+	wxASSERT_MSG(m_Pos <= (off_t)m_Size, wxT("wxRarInputStream: invalid current position"));
+
+    m_lastcount = 0;
+
+	if (m_Pos >= (off_t)m_Size) {
+		m_lasterror = wxSTREAM_EOF;
+		return *this;
+	}
+    
+	if (m_Pos + bufsize > m_Size)
+		bufsize = m_Size - m_Pos;
+
+	memcpy(buffer, m_Buffer + m_Pos, bufsize);
+	
+	m_Pos += bufsize;
+
+	if (m_Pos >= (off_t)m_Size)
+		m_lasterror = wxSTREAM_EOF;
+
+	m_lastcount = bufsize;
+	
+	return *this;
+}
+
 size_t wxRarInputStream::OnSysRead(void *buffer, size_t bufsize)
 {
-	wxASSERT_MSG( m_Pos <= (off_t)m_Size, wxT("wxRarInputStream: invalid current position") );
+	wxASSERT_MSG(m_Pos <= (off_t)m_Size, wxT("wxRarInputStream: invalid current position"));
+
 	if (m_Pos >= (off_t)m_Size) {
 		m_lasterror = wxSTREAM_EOF;
 		return 0;
@@ -142,7 +169,18 @@ size_t wxRarInputStream::OnSysRead(void *buffer, size_t bufsize)
 	
 	m_Pos += bufsize;
 
+	if (m_Pos >= (off_t)m_Size)
+		m_lasterror = wxSTREAM_EOF;
+	
 	return bufsize;
+}
+
+wxFileOffset wxRarInputStream::SeekI(wxFileOffset pos, wxSeekMode mode)
+{
+    if (m_lasterror==wxSTREAM_EOF)
+        m_lasterror=wxSTREAM_NO_ERROR;
+
+    return OnSysSeek(pos, mode);
 }
 
 off_t wxRarInputStream::OnSysSeek(off_t seek, wxSeekMode mode)
@@ -158,6 +196,14 @@ off_t wxRarInputStream::OnSysSeek(off_t seek, wxSeekMode mode)
 
     m_Pos = nextpos;
     return m_Pos;
+}
+
+char wxRarInputStream::Peek()
+{
+	wxASSERT_MSG(m_Pos <= (off_t)m_Size, wxT("wxRarInputStream: invalid current position"));
+	if (m_Pos >= (off_t) m_Size)
+	   return 0;
+	return m_Buffer[m_Pos];
 }
 
 wxString wxRarInputStream::OpenArchiveError(int Error)

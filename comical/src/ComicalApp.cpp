@@ -46,7 +46,7 @@
 IMPLEMENT_APP(ComicalApp)
 
 bool ComicalApp::OnInit()
-{
+{	
 	wxImage::AddHandler(new wxJPEGHandler);
 	wxImage::AddHandler(new wxPNGHandler);
 	wxImage::AddHandler(new wxGIFHandler);
@@ -70,12 +70,11 @@ bool ComicalApp::OnInit()
 
 	if (argc == 1)
 		frame->OnOpen(*(new wxCommandEvent()));
-	else
-	{
-		if (wxFileExists(argv[1]))
-		{
-			frame->OpenFile(wxString(argv[1]));
-		}
+	else if (wxFileExists(argv[1]))
+		frame->OpenFile(wxString(argv[1]));
+	else {
+		wxLogError(wxT("The file \"") + wxString(argv[1]) + wxT("\" could not be found."));
+		wxLog::FlushActive();
 	}
 
 	return TRUE;
@@ -277,10 +276,7 @@ void ComicalFrame::OnOpen(wxCommandEvent& event)
 	wxString filename = wxFileSelector(wxT("Open a Comic Book"), cwd, wxT(""), wxT(""), wxT("Comic Books (*.cbr,*.cbz,*.rar,*.zip)|*.cbr;*.CBR;*.cbz;*.CBZ;*.rar;*.RAR;*.zip;*.ZIP"), wxOPEN | wxCHANGE_DIR | wxFILE_MUST_EXIST, this);
 
 	if (!filename.empty())
-	{
 		OpenFile(filename);
-	}
-
 }
 
 void ComicalFrame::OpenFile(wxString filename)
@@ -306,13 +302,14 @@ void ComicalFrame::OpenFile(wxString filename)
 				toolBarNav->Enable(true);
 	
 				theBook->Run(); // start the thread
-	
+
 				theCanvas->FirstPage();
 				SetTitle(wxT("Comical - " + filename));
 				config->Write(wxT("/Comical/CWD"), wxPathOnly(filename));
 			}
 		} catch (ArchiveException &ae) {
 			wxLogError(ae.Message);
+			wxLog::FlushActive();
 		}
 	}
 }
