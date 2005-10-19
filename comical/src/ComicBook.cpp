@@ -43,31 +43,27 @@ ComicBook::~ComicBook()
 	delete[] originals;
 	delete[] resamples;
 	delete[] Orientations;
+	delete[] imageLockers;
 }
 
 void ComicBook::RotatePage(wxUint32 pagenumber, COMICAL_ROTATE direction)
 {
-	if (Orientations[pagenumber] != direction)
-	{
-		if (IsRunning())
-			Pause(); // pause the thread
+	if (Orientations[pagenumber] != direction) {
+		wxMutexLocker lock(imageLockers[pagenumber]);
 		Orientations[pagenumber] = direction;
 		resamples[pagenumber].Destroy();
-		if (IsPaused())
-			Resume();
 	}
 }
 
 /* returns TRUE if paramaters were different, FALSE if parameters were the same and no changes were made */
 bool ComicBook::SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COMICAL_ZOOM newZoom, wxInt32 newWidth, wxInt32 newHeight, wxInt32 newScrollBarThickness)
 {
-	if(mode != newMode || fiFilter != newFilter || zoom != newZoom || canvasWidth != newWidth || canvasHeight != newHeight || scrollBarThickness != newScrollBarThickness)
-	{
-		if (IsRunning())
-			Pause(); // pause the thread
-		for (wxUint32 i = 0; i < pageCount; i++)
-		{
-			resamples[i].Destroy();
+	if(mode != newMode || fiFilter != newFilter || zoom != newZoom || canvasWidth != newWidth || canvasHeight != newHeight || scrollBarThickness != newScrollBarThickness) {
+		wxUint32 i;
+		for (i = 0; i < pageCount; i++) {
+			imageLockers[i].Lock();
+			if (resamples[i].Ok())
+				resamples[i].Destroy();
 		}
 		mode = newMode;
 		fiFilter = newFilter;
@@ -75,13 +71,12 @@ bool ComicBook::SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COM
 		canvasWidth = newWidth;
 		canvasHeight = newHeight;
 		scrollBarThickness = newScrollBarThickness;
-		if (IsPaused())
-			Resume();
+		for (i = 0; i < pageCount; i++)
+			imageLockers[i].Unlock();
 		return TRUE;
-	}
-	else {
+	} else
 		return FALSE;
-	}
+
 }
 
 wxBitmap * ComicBook::GetPage(wxUint32 pagenumber)
@@ -144,13 +139,10 @@ void * ComicBook::Entry()
 		// priority page, then checks to see if that page needs
 		// updating.  If no pages need updating, yield the timeslice.
 		
-		if (cacheLen >= pageCount)
-		{
+		if (cacheLen >= pageCount) {
 			low = 0;
 			high = pageCount - 1;
-		}
-		else
-		{
+		} else {
 			/* A moving window of size cacheLen.  2/3 of the pages in the
 			 * cache are after the Current page, the other 1/3 are before
 			 * it. */
@@ -161,13 +153,10 @@ void * ComicBook::Entry()
 			low = currentPage - low;
 
 			/* Keep the window within 0 and pageCount. */
-			if (high >= wxInt32(pageCount))
-			{
+			if (high >= wxInt32(pageCount)) {
 				low -= (high - pageCount) + 1;
 				high = pageCount - 1;
-			}
-			else if (low < 0)
-			{
+			} else if (low < 0) {
 				high += low * -1;
 				low = 0;
 			}
@@ -179,6 +168,8 @@ void * ComicBook::Entry()
 			target = currentPage + i;
 			if (target > high)
 				target = currentPage - (target - high);
+			
+			imageLockers[target].Lock();
 			
 			if (!resamples[target].Ok()) {
 				try {
@@ -203,23 +194,38 @@ void * ComicBook::Entry()
 				ScaleImage(target);
 				if (!resamples[target].Ok())
 					wxLogError(wxT("Failed to scale page %d."), target);
+				imageLockers[target].Unlock();
 				break;
 			}
+
+			imageLockers[target].Unlock();
 		}
 
 		if (i < cacheLen && i < pageCount) {
 			if (cacheLen < pageCount) {
 				// Delete pages outside of the cache's range.
 				for (i = 0; wxInt32(i) < low; i++) {
+					
+					imageLockers[i].Lock();
+					
 					if(resamples[i].Ok())
 						resamples[i].Destroy();
+					
+					imageLockers[i].Unlock();
+					
 					if(originals[i].Ok())
 						originals[i].Destroy();
 				}
 				
 				for (i = pageCount - 1; wxInt32(i) > high; i--) {
+
+					imageLockers[i].Lock();
+
 					if(resamples[i].Ok())
 						resamples[i].Destroy();
+					
+					imageLockers[i].Unlock();
+					
 					if(originals[i].Ok())
 						originals[i].Destroy();
 				}

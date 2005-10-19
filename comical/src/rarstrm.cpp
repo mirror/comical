@@ -185,7 +185,7 @@ wxFileOffset wxRarInputStream::SeekI(wxFileOffset pos, wxSeekMode mode)
 
 off_t wxRarInputStream::OnSysSeek(off_t seek, wxSeekMode mode)
 {
-    off_t nextpos;
+   off_t nextpos;
 
     switch (mode) {
         case wxFromCurrent : nextpos = seek + m_Pos; break;

@@ -82,6 +82,7 @@ ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cachelen) : ComicBook(file, c
 	
 	originals = new wxImage[pageCount];
 	resamples = new wxImage[pageCount];
+	imageLockers = new wxMutex[pageCount];
 	Orientations = new COMICAL_ROTATE[pageCount]; // NORTH == 0
 	for (wxUint32 i = 0; i < pageCount; i++)
 		Orientations[i] = NORTH;

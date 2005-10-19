@@ -560,9 +560,9 @@ void ComicalCanvas::NextPageSlide()
 	createBitmaps();
 }
 
-void ComicalCanvas::Zoom(COMICAL_ZOOM value)
+void ComicalCanvas::Zoom(COMICAL_ZOOM newZoom)
 {
-	zoom = value;
+	zoom = newZoom;
 	if (zoom == FITH)
 		EnableScrolling(false, true); // Horizontal fit, no horizontal scrolling
 	else if (zoom == FITV)
@@ -576,20 +576,34 @@ void ComicalCanvas::Zoom(COMICAL_ZOOM value)
 	}
 }
 
-void ComicalCanvas::Filter(FREE_IMAGE_FILTER value)
+void ComicalCanvas::Filter(FREE_IMAGE_FILTER newFilter)
 {
-	filter = value;
+	filter = newFilter;
 	if (theBook) {
 		SetParams();
 	}
 }
 
-void ComicalCanvas::Mode(COMICAL_MODE value)
+void ComicalCanvas::Mode(COMICAL_MODE newMode)
 {
-	mode = value;
 	if (theBook) {
-		SetParams();
-	}
+		if (mode == ONEPAGE && newMode == TWOPAGE) {
+			mode = newMode;
+			if (theBook->Current == 0) {
+		 		SetParams();
+				FirstPage();
+				return;
+			} else { // theBook->Current >= 1
+				leftNum = theBook->Current - 1;
+				rightNum = theBook->Current;
+		 		SetParams();
+			}
+		} else if (mode == TWOPAGE && newMode == ONEPAGE) {
+			mode = newMode;
+			SetParams();
+		} // else nothing has changed !
+	} else
+		mode = newMode;
 }
 
 void ComicalCanvas::SetParams()

@@ -64,7 +64,7 @@ public:
 	virtual void * Entry();
 
 	void RotatePage(wxUint32 pagenumber, COMICAL_ROTATE direction);
-	wxUint32 GetPageCount() { return pageCount;}
+	wxUint32 GetPageCount() { return pageCount; }
 	bool SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COMICAL_ZOOM newZoom, wxInt32 newWidth, wxInt32 newHeight, wxInt32 newScrollBarThickness);
 	void SetCacheLen(wxUint32 newCacheLen);
 	wxBitmap *GetPage(wxUint32 pagenumber);
@@ -89,6 +89,7 @@ protected:
 	wxString filename;
 	wxImage *originals;
 	wxImage *resamples;
+	wxMutex *imageLockers;
 	
 	wxUint32 cacheLen;
 	
