@@ -31,19 +31,13 @@ OBJECTS=strlist.o strfn.o pathfn.o int64.o savepos.o global.o file.o filefn.o fi
 all:	unrar
 
 clean:
-	@rm -f *.o *.bak *~ *.so *.a unrar default.sfx
+	@rm -f *.o *.bak *~ *.so *.a unrar
 
 unrar:	WHAT=UNRAR
 unrar:	$(OBJECTS) $(UNRAR_OBJ)
 	@rm -f unrar
 	$(LINK) -o unrar $(LDFLAGS) $(OBJECTS) $(UNRAR_OBJ) $(LIBS)	
 	$(STRIP) unrar
-
-sfx:	WHAT=SFX_MODULE
-sfx:	$(OBJECTS)
-	@rm -f default.sfx
-	$(LINK) -o default.sfx $(LDFLAGS) $(OBJECTS)
-	$(STRIP) default.sfx
 
 shlib:	WHAT=RARDLL -DSILENT
 shlib:	$(OBJECTS) $(LIB_OBJ)
