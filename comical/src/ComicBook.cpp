@@ -244,7 +244,9 @@ void ComicBook::ScaleImage(wxUint32 pagenumber)
 	wxInt32 xImage, yImage;
 	float rCanvas, rImage;  // width/height ratios
 	float scalingFactor;
-  
+	float neighborRatio, neighborFactor;
+	wxSize neighborSize;
+
 	wxImage &orig = originals[pagenumber];
 
 	if (Orientations[pagenumber] == NORTH || Orientations[pagenumber] == SOUTH) {
@@ -301,22 +303,83 @@ void ComicBook::ScaleImage(wxUint32 pagenumber)
 			withoutScrollBarHeight = wxInt32(float(yImage) * scalingFactor);
 			if (withoutScrollBarHeight > canvasHeight)
 				scalingFactor = float((canvasWidth - scrollBarThickness)/2) / float(xImage);
+			else {
+				// Even though this page doesn't need a scrollbar, if either or
+				// both neighbor pages need one, then shrink to match.
+				if (pagenumber > 0) {
+					neighborSize = wxSize(originals[pagenumber - 1].GetWidth(), originals[pagenumber - 1].GetHeight());
+					neighborRatio = float(neighborSize.x) / float(neighborSize.y);
+					if (neighborRatio >= 1.0f)
+						neighborFactor = float(canvasWidth) / float(neighborSize.x);
+					else
+						neighborFactor = float(canvasWidth/2) / float(neighborSize.x);
+					withoutScrollBarHeight = wxInt32(float(neighborSize.y) * neighborFactor);
+					if (withoutScrollBarHeight > canvasHeight) {
+						scalingFactor = float((canvasWidth - scrollBarThickness)/2) / float(xImage);
+						break; // no need to check the other neighbor, we're already shrinking
+					}
+				}
+				if (pagenumber < pageCount - 1) {
+					neighborSize = wxSize(originals[pagenumber + 1].GetWidth(), originals[pagenumber + 1].GetHeight());
+					neighborRatio = float(neighborSize.x) / float(neighborSize.y);
+					if (neighborRatio >= 1.0f)
+						neighborFactor = float(canvasWidth) / float(neighborSize.x);
+					else
+						neighborFactor = float(canvasWidth/2) / float(neighborSize.x);
+					withoutScrollBarHeight = wxInt32(float(neighborSize.y) * neighborFactor);
+					if (withoutScrollBarHeight > canvasHeight) {
+						scalingFactor = float((canvasWidth - scrollBarThickness)/2) / float(xImage);
+					}
+				}
+			}
 		}
 		break;
 
 	case FITV: // fit to height
 		rImage = float(xImage) / float(yImage);
 		scalingFactor = float(canvasHeight) / float(yImage);
-		wxInt32 withoutScrollBarWidth;
+		wxInt32 withoutScrollBarWidth = wxInt32(float(xImage) * scalingFactor);
 		// The page will have to be made shorter if it will not fit on the canvas without horizontal scrolling
 		if (rImage >= 1.0f || mode == ONEPAGE) {
-			withoutScrollBarWidth = wxInt32(float(xImage) * scalingFactor);
 			if (withoutScrollBarWidth > canvasWidth)
 				scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
 		} else {
-			withoutScrollBarWidth = wxInt32(float(xImage) * scalingFactor);
 			if (withoutScrollBarWidth > (canvasWidth / 2))
 				scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
+			else {
+				// Even though this page doesn't need a scrollbar, if either or
+				// both neighbor pages need one, then shrink to match.
+				if (pagenumber > 0) {
+					neighborSize = wxSize(originals[pagenumber - 1].GetWidth(), originals[pagenumber - 1].GetHeight());
+					neighborRatio = float(neighborSize.x) / float(neighborSize.y);
+					neighborFactor = float(canvasHeight) / float(neighborSize.y);
+					withoutScrollBarWidth = wxInt32(float(neighborSize.x) * neighborFactor);
+					if (neighborRatio >= 1.0f) {
+						if (withoutScrollBarWidth > canvasWidth) {
+							scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
+							break; // no need to check the other neighbor, we're already shrinking
+						}
+					} else {
+						if (withoutScrollBarWidth > (canvasWidth / 2)) {
+							scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
+							break; // no need to check the other neighbor, we're already shrinking
+						}
+					}
+				}
+				if (pagenumber < pageCount - 1) {
+					neighborSize = wxSize(originals[pagenumber + 1].GetWidth(), originals[pagenumber + 1].GetHeight());
+					neighborRatio = float(neighborSize.x) / float(neighborSize.y);
+					neighborFactor = float(canvasHeight) / float(neighborSize.y);
+					withoutScrollBarWidth = wxInt32(float(neighborSize.x) * neighborFactor);
+					if (neighborRatio >= 1.0f) {
+						if (withoutScrollBarWidth > canvasWidth)
+							scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
+					} else {
+						if (withoutScrollBarWidth > (canvasWidth / 2))
+							scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
+					}
+				}
+			}
 		}
 		break;
 

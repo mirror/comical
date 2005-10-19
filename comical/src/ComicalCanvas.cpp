@@ -174,24 +174,26 @@ void ComicalCanvas::createBitmaps()
 	if (xScroll <= xWindow && yScroll <= yWindow) { // no scrollbars neccessary
 		xScroll = xWindow;
 		yScroll = yWindow;
-	}
-	else {
+		SetVirtualSize(xScroll, yScroll);
+		SetScrollbars(1, 1, xScroll, yScroll, 0, 0, TRUE);
+		Scroll((xScroll / 2) - (xWindow / 2), 0); // center horizontally
+	} else {
 		if (xScroll < (xWindow - scrollBarThickness))
 			xScroll = xWindow - scrollBarThickness;
 		if (yScroll < (yWindow - scrollBarThickness))
 			yScroll = yWindow - scrollBarThickness;
+		SetVirtualSize(xScroll, yScroll);
+		wxInt32 xStep = 1, yStep = 1;
+		// if the pages will fit, make sure the scroll bars don't show up by making
+		// the scroll step == 1 pixel.  Otherwise, make the scroll step 10 so that
+		// one can navigate quickly using the arrow keys.
+		if (xScroll > xWindow - scrollBarThickness)
+			xStep = 10;
+		if (yScroll > yWindow - scrollBarThickness)
+			yStep = 10;
+		SetScrollbars(xStep, yStep, xScroll / xStep, yScroll / yStep, 0, 0, TRUE);
+		Scroll((xScroll / (2 * xStep)) - (xWindow / (2 * xStep)), 0); // center horizontally
 	}
-	SetVirtualSize(xScroll, yScroll);
-	wxInt32 xStep = 1, yStep = 1;
-	// if the pages will fit, make sure the scroll bars don't show up by making
-	// the scroll step == 1 pixel.  Otherwise, make the scroll step 10 so that
-	// one can navigate quickly using the arrow keys.
-	if (xScroll > xWindow - scrollBarThickness)
-		xStep = 10;
-	if (yScroll > yWindow - scrollBarThickness)
-		yStep = 10;
-	SetScrollbars(xStep, yStep, xScroll / xStep, yScroll / yStep, 0, 0, TRUE);
-	Scroll((xScroll / (2 * xStep)) - (xWindow / (2 * xStep)), 0); // center horizontally
 	Refresh();
 }
 
