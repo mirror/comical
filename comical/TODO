@@ -1,5 +1,5 @@
 Japan-mode (right-to-left)
-Replace fiddly OnSize event management with wxSizer calls?
+Replace fiddly OnSize event management with wxSizer calls for toolbar?
 Don't reset vertical scroll position on page slide?
 Detect type of file being opened instead of relying on the file extension
 Test cases:

@@ -1,8 +1,11 @@
-0.5.1 -
+0.6 -
 Unicode support
 Windows version
 (Prev|Next)PageTurn() bug fixes
 No longer calling GoToPage() when the page numbers haven't changed
+Intelligently determine whether an image will require scrollbars, and resize
+ accordingly
+Display correct pages when going from ONEPAGE mode to TWOPAGE mode
 
 0.5 -
 bzip2 support has been dropped until someone actually needs it
