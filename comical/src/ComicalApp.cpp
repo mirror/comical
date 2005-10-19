@@ -154,10 +154,8 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	menuFilter->AppendRadioItem(ID_Lanczos, wxT("Lanczos 3"), wxT("Use the Box filter."));
 	menuView->Append(ID_S, wxT("&Image Filter"), menuFilter);
 
-#ifndef __WXMAC__
 	menuView->AppendSeparator();
 	menuView->Append(ID_Full, wxT("Full &Screen\tAlt-Return"), wxT("Display Full Screen."));
-#endif
 
 	menuHelp = new wxMenu;
 	menuHelp->Append(wxID_ABOUT, wxT("&About...\tF1"), wxT("Display About Dialog."));
@@ -226,9 +224,7 @@ BEGIN_EVENT_TABLE(ComicalFrame, wxFrame)
 	EVT_MENU(ID_PrevSlide,	ComicalFrame::OnPrevSlide)
 	EVT_MENU(ID_NextSlide,	ComicalFrame::OnNextSlide)
 	EVT_MENU(ID_GoTo,	ComicalFrame::OnGoTo)
-#ifndef __WXMAC__
 	EVT_MENU(ID_Full,	ComicalFrame::OnFull)
-#endif
 	EVT_MENU(ID_Double,	ComicalFrame::OnDouble)
 	EVT_MENU(ID_Single,	ComicalFrame::OnSingle)
 	EVT_MENU_RANGE(ID_Unzoomed, ID_FitH, ComicalFrame::OnZoom)
