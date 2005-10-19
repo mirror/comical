@@ -1,8 +1,8 @@
 ------------------------------------------------
-Comical - The Comic Book Archive reader for *nix
+Comical - The Comic Book Archive reader
 ------------------------------------------------
 
-Finally - native CBR and CBZ support on your favorite Unix!  Read your favorite
+Finally - a cross-platform, open-source CBR and CBZ reader!  Read your favorite
 scanned comic books and graphic novels with Comical's absurdly easy GUI and
 in-your-face double page display!
 
@@ -11,20 +11,14 @@ Single-Page or Double-Page display modes.
 Several zoom modes - 100%, 75%, 50%, 25%, Fit, Fit-to-Width, and Fit-to-Height.
 Crisp image scaling with algorithms adapted from FreeImage 3.
 Autodetects double pages scanned together and displays it accordingly.
+Page rotation.
 Full-Screen mode (not on MacOS X).
 Displays JPG, GIF, PNG, and TIFF images.
 Supports RAR(.cbr) and ZIP(.cbz) comic book archives
 
-Rationale:
-I wrote Comical because I felt somehow dirty using CDisplay through Wine,
-and I really wanted to share the fun of CBRs with a Mac-using friend of mine.
-The demand for both a Linux and a Mac OS X version of CDisplay on the Mutant
-Liberation Front Forums also spurred me on.
-
 Requirements:
-It should be possible to build Comical on any platform which supports
-wxWidgets >=2.4 with zlib support and a recent ISO/C98 compliant C++ compiler,
-like gcc 3.x.
+wxWidgets 2.4.2 or later; 2.6.2 or later recommended
+gcc 3.3 or later
 
 Thanks:
 
@@ -41,8 +35,14 @@ TIFF support provided by:
 Copyright (c) 1988-1997 Sam Leffler
 Copyright (c) 1991-1997 Silicon Graphics, Inc.
 
+Unrar decompression provided by RARLabs.  You cannot use the unrar source to
+re-create the RAR compression algorithm, which is proprietary.  Distribution
+of modified Unrar source in separate form or as part of other software is
+permitted, provided that it is clearly stated in the documentation and source
+comments that the code may not be used to develop a RAR compatible archiver.
+
 -------------------------------------------------------------------------------
-Copyright (c) 2004-2005 James Athey
+Copyright (c) 2003-2005 James Athey
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
