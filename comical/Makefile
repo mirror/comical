@@ -21,4 +21,5 @@ unrar/libunrar.a:
 
 clean:
 	rm -f $(ALL.O)
+	rm -f comical
 	$(MAKE) clean -C unrar -f makefile.linux
