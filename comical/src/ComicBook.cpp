@@ -338,12 +338,14 @@ void ComicBook::ScaleImage(wxUint32 pagenumber)
 	case FITV: // fit to height
 		rImage = float(xImage) / float(yImage);
 		scalingFactor = float(canvasHeight) / float(yImage);
-		wxInt32 withoutScrollBarWidth = wxInt32(float(xImage) * scalingFactor);
+		wxInt32 withoutScrollBarWidth;
 		// The page will have to be made shorter if it will not fit on the canvas without horizontal scrolling
 		if (rImage >= 1.0f || mode == ONEPAGE) {
+			withoutScrollBarWidth = wxInt32(float(xImage) * scalingFactor);
 			if (withoutScrollBarWidth > canvasWidth)
 				scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
 		} else {
+			withoutScrollBarWidth = wxInt32(float(xImage) * scalingFactor);
 			if (withoutScrollBarWidth > (canvasWidth / 2))
 				scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
 			else {
