@@ -303,6 +303,7 @@ void ComicalFrame::OpenFile(wxString filename)
 				theBook->Run(); // start the thread
 
 				theCanvas->FirstPage();
+				theCanvas->Scroll(-1, 0); // scroll to the top for the first page
 				SetTitle(wxT("Comical - " + filename));
 				config->Write(wxT("/Comical/CWD"), wxPathOnly(filename));
 			}
