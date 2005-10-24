@@ -38,7 +38,11 @@ ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 	
 	memset(&OpenArchiveData,0,sizeof(OpenArchiveData));
 #ifdef wxUSE_UNICODE
-	OpenArchiveData.ArcNameW = (wchar_t *) filename.wc_str(wxConvLocal);
+#ifdef __WXOSX__
+	OpenArchiveData.ArcName = filename.fn_str().data();
+#else
+	OpenArchiveData.ArcNameW = (wchar_t *) filename.fn_str();
+#endif
 #else // ANSI
 	OpenArchiveData.ArcName = (char *) filename.c_str();
 #endif
