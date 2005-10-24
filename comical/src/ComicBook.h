@@ -39,6 +39,7 @@
 #include <wx/image.h>
 #include <wx/bitmap.h>
 #include <wx/timer.h>
+#include <wx/config.h>
 
 #include <vector>
 #include <algorithm>
@@ -57,7 +58,7 @@ class ComicBook : public wxThread {
 public:
 
 	// Constructors / Destructors
-	ComicBook(wxString file, wxUint32 cacheLength);
+	ComicBook(wxString file);
 	virtual ~ComicBook();
   
 	// wxThread required functions
@@ -66,7 +67,8 @@ public:
 	void RotatePage(wxUint32 pagenumber, COMICAL_ROTATE direction);
 	wxUint32 GetPageCount() { return pageCount; }
 	bool SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COMICAL_ZOOM newZoom, wxInt32 newWidth, wxInt32 newHeight, wxInt32 newScrollBarThickness);
-	void SetCacheLen(wxUint32 newCacheLen);
+	wxUint32 GetCacheLen() { return cacheLen; }
+	void SetCacheLen(wxUint32 newCacheLen) { cacheLen = newCacheLen; }
 	wxBitmap *GetPage(wxUint32 pagenumber);
 	wxBitmap *GetPageLeftHalf(wxUint32 pagenumber);
 	wxBitmap *GetPageRightHalf(wxUint32 pagenumber);

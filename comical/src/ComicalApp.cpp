@@ -105,6 +105,8 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	menuGo->Append(ID_First, wxT("&First Page"), wxT("Display the first page."));
 	menuGo->Append(ID_Last, wxT("&Last Page"), wxT("Display the last page."));
 	menuGo->Append(ID_GoTo, wxT("&Go to page..."), wxT("Jump to another page number."));
+	menuGo->AppendSeparator();
+	menuGo->Append(ID_Buffer, wxT("&Page Buffer Length..."), wxT("Set the number of pages Comical prefetches."));
 
 	menuView = new wxMenu;
 
@@ -224,6 +226,7 @@ BEGIN_EVENT_TABLE(ComicalFrame, wxFrame)
 	EVT_MENU(ID_PrevSlide,	ComicalFrame::OnPrevSlide)
 	EVT_MENU(ID_NextSlide,	ComicalFrame::OnNextSlide)
 	EVT_MENU(ID_GoTo,	ComicalFrame::OnGoTo)
+	EVT_MENU(ID_Buffer,	ComicalFrame::OnBuffer)
 	EVT_MENU(ID_Full,	ComicalFrame::OnFull)
 	EVT_MENU(ID_Double,	ComicalFrame::OnDouble)
 	EVT_MENU(ID_Single,	ComicalFrame::OnSingle)
@@ -239,12 +242,12 @@ END_EVENT_TABLE()
 
 void ComicalFrame::OnClose(wxCloseEvent& event)
 {
-	if (theBook)
-	{
+	if (theBook) {
 		theBook->Delete(); // delete the ComicBook thread
 		delete theBook; // clear out the rest of the ComicBook
 		theBook = NULL;
 	}
+
 	wxRect frameDim = GetRect();
 	config->Write(wxT("/Comical/FrameWidth"), frameDim.width);
 	config->Write(wxT("/Comical/FrameHeight"), frameDim.height);
@@ -287,9 +290,9 @@ void ComicalFrame::OpenFile(wxString filename)
 
 		try {
 			if (filename.Right(4).Upper() == wxT(".CBR") || filename.Right(4).Upper() == wxT(".RAR"))
-				theBook = new ComicBookRAR(filename, 10);
+				theBook = new ComicBookRAR(filename);
 			else if (filename.Right(4).Upper() == wxT(".CBZ") || filename.Right(4).Upper() == wxT(".ZIP"))
-				theBook = new ComicBookZIP(filename, 10);
+				theBook = new ComicBookZIP(filename);
 
 			if (theBook) {
 				theCanvas->theBook = theBook;
@@ -344,8 +347,7 @@ void ComicalFrame::OnGoTo(wxCommandEvent& event)
 {
 	wxString message ;
 	long pagenumber;
-	if (theBook != NULL)
-	{
+	if (theBook != NULL) {
 		message = wxT("Enter a page number from 1 to ");
 		message += wxString::Format(wxT("%d"), theBook->GetPageCount());
 		pagenumber = wxGetNumberFromUser(message, wxT("Page"), wxT("Go To Page"), theBook->Current + 1, 1, theBook->GetPageCount(), this);
@@ -353,6 +355,18 @@ void ComicalFrame::OnGoTo(wxCommandEvent& event)
 			theCanvas->GoToPage(pagenumber - 1);
 	}
 
+}
+
+void ComicalFrame::OnBuffer(wxCommandEvent& event)
+{
+	wxString message;
+	long buffer;
+	if (theBook != NULL) {
+		message = wxT("Set the number of pages you would like Comical to prefetch.");
+		buffer = wxGetNumberFromUser(message, wxT("Buffer Length"), wxT("Set Buffer Length"), theBook->GetCacheLen(), 3, 20, this);
+		if (buffer != -1)
+			theBook->SetCacheLen(buffer);
+	}
 }
 
 void ComicalFrame::OnFull(wxCommandEvent& event)

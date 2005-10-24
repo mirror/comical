@@ -70,8 +70,7 @@ ComicalCanvas::~ComicalCanvas()
 
 void ComicalCanvas::clearBitmap(wxBitmap *&bitmap)
 {
-	if (bitmap && bitmap->Ok())
-	{
+	if (bitmap) {
 		delete bitmap;
 		bitmap = NULL;
 	}
@@ -79,6 +78,8 @@ void ComicalCanvas::clearBitmap(wxBitmap *&bitmap)
 
 void ComicalCanvas::clearBitmaps()
 {
+	// Get the current scroll positions before we clear the bitmaps
+	GetViewStart(&xScrollPos, &yScrollPos);
 	clearBitmap(leftPage);
 	clearBitmap(centerPage);
 	clearBitmap(rightPage);
@@ -145,7 +146,6 @@ void ComicalCanvas::createBitmaps()
 		if (leftPage && (leftOk = leftPage->Ok()))
 		{
 			xScroll = (leftPage->GetWidth() > xScroll) ? leftPage->GetWidth() : xScroll;
-			//xScroll += leftPage->GetWidth();
 			yScroll = (leftPage->GetHeight() > yScroll) ? leftPage->GetHeight() : yScroll;
 
 			cParent->menuView->FindItem(ID_RotateLeft)->Enable(true);
@@ -192,7 +192,7 @@ void ComicalCanvas::createBitmaps()
 		if (yScroll > yWindow - scrollBarThickness)
 			yStep = 10;
 		SetScrollbars(xStep, yStep, xScroll / xStep, yScroll / yStep, 0, 0, TRUE);
-		Scroll((xScroll / (2 * xStep)) - (xWindow / (2 * xStep)), 0); // center horizontally
+		Scroll((xScroll / (2 * xStep)) - (xWindow / (2 * xStep)), yScrollPos); // center horizontally
 	}
 	Refresh();
 }

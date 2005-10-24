@@ -98,6 +98,7 @@ class ComicalFrame : public wxFrame {
     void OnRotate(wxCommandEvent& event);
     void OnRotateLeft(wxCommandEvent& event);
     void OnSize(wxSizeEvent &event);
+    void OnBuffer(wxCommandEvent& event);
 
     wxConfig *config;
     wxLog *ComicalLog;
@@ -143,6 +144,7 @@ ID_NextTurn,
 ID_PrevSlide,
 ID_NextSlide,
 ID_GoTo,
+ID_Buffer,
 //Rotation
 ID_CW,
 ID_CCW,

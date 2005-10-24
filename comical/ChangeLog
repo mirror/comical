@@ -6,6 +6,7 @@ No longer calling GoToPage() when the page numbers haven't changed
 Intelligently determine whether an image will require scrollbars, and resize
  accordingly
 Display correct pages when going from ONEPAGE mode to TWOPAGE mode
+User can now set cache length
 
 0.5 -
 bzip2 support has been dropped until someone actually needs it

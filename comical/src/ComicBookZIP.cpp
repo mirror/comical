@@ -33,7 +33,7 @@
 #include <cstdlib>
 #endif
 
-ComicBookZIP::ComicBookZIP(wxString file, wxUint32 cachelen) : ComicBook(file, cachelen)
+ComicBookZIP::ComicBookZIP(wxString file) : ComicBook(file)
 {
 	wxString page;
 

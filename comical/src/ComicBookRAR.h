@@ -36,8 +36,8 @@
 class ComicBookRAR : public ComicBook {
 
 public:
-	ComicBookRAR(wxString file, wxUint32 cachelen);
-	virtual ~ComicBookRAR() {};
+	ComicBookRAR(wxString file);
+	~ComicBookRAR() {};
 
 protected:
 	wxInputStream * ExtractStream(wxUint32 pageindex);

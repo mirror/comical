@@ -27,7 +27,7 @@
 
 #include "ComicBookRAR.h"
 
-ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cachelen) : ComicBook(file, cachelen)
+ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 {
 	HANDLE RarFile;
 	int RHCode,PFCode;

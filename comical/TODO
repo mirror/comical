@@ -1,6 +1,6 @@
+MEMORY LEAKAGE - CBRs leak more memory than CBZs
 Japan-mode (right-to-left)
 Replace fiddly OnSize event management with wxSizer calls for toolbar?
-Don't reset vertical scroll position on page slide?
 Detect type of file being opened instead of relying on the file extension
 Test cases:
 	0 pages
@@ -10,5 +10,4 @@ Long Term:
 Box Zoom/Magnifying Glass
 Draw pages as they are filtered, instead of waiting for them to finish
 User-configurable keybindings
-Page turning animation
 

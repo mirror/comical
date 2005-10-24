@@ -30,16 +30,26 @@
 
 #include "ComicBook.h"
 
-ComicBook::ComicBook(wxString file, wxUint32 cacheLength) : wxThread(wxTHREAD_JOINABLE)
+ComicBook::ComicBook(wxString file) : wxThread(wxTHREAD_JOINABLE)
 {
 	pageCount = 0;
 	Current = 0;
 	filename = file;
-	cacheLen = cacheLength;
+	wxConfigBase *config = wxConfigBase::Get();
+	// Each of the long values is followed by the letter L not the number one
+	cacheLen = (wxUint32) config->Read(wxT("/Comical/CacheLength"), 10l); // Fit-to-Width is default
 }
 
 ComicBook::~ComicBook()
 {
+	wxConfigBase *config = wxConfigBase::Get();
+	config->Write(wxT("/Comical/CacheLength"), (int) cacheLen);
+	for(wxUint32 i = 0; i < pageCount; i++) {
+		if (originals[i].Ok())
+			originals[i].Destroy();
+		if (resamples[i].Ok())
+			resamples[i].Destroy();
+	}
 	delete[] originals;
 	delete[] resamples;
 	delete[] Orientations;

@@ -83,7 +83,7 @@ class ComicalCanvas : public wxScrolledWindow
     wxUint32 leftNum, rightNum;
     PAGETYPE leftPart, rightPart;
 
-	wxInt32 scrollBarThickness;
+	wxInt32 scrollBarThickness, xScrollPos, yScrollPos;
 
     COMICAL_ZOOM zoom;
     COMICAL_MODE mode;
