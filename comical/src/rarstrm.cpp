@@ -68,7 +68,7 @@ wxRarInputStream::wxRarInputStream(const wxString& archive, const wxString& file
 #ifdef __WXOSX__
 	OpenArchiveData.ArcName = archive.fn_str().data();	
 #else
-	OpenArchiveData.ArcNameW = (wchar_t *) archive.fn_str();
+	OpenArchiveData.ArcNameW = (wchar_t *) archive.wc_str(wxConvLocal);
 #endif
 #else
 	OpenArchiveData.ArcName = (char *) archive.c_str();

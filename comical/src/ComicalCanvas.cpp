@@ -191,8 +191,7 @@ void ComicalCanvas::createBitmaps()
 			xStep = 10;
 		if (yScroll > yWindow - scrollBarThickness)
 			yStep = 10;
-		SetScrollbars(xStep, yStep, xScroll / xStep, yScroll / yStep, 0, 0, TRUE);
-		Scroll((xScroll / (2 * xStep)) - (xWindow / (2 * xStep)), yScrollPos); // center horizontally
+		SetScrollbars(xStep, yStep, xScroll / xStep, yScroll / yStep, (xScroll / (2 * xStep)) - (xWindow / (2 * xStep)), yScrollPos, TRUE);
 	}
 	Refresh();
 }
