@@ -1,12 +1,12 @@
 CC = g++
 LD = g++
 RC = windres
-INCLUDE	= -Iunrar -IC:\wxWidgets-2.6.2\include -IC:\wxWidgets-2.6.2\lib\gcc_lib\mswud
+INCLUDE	= -Iunrar -IC:\wxWidgets-2.6.2\include -IC:\wxWidgets-2.6.2\lib\gcc_lib\mswu
 CFLAGS	= -O2 -MD -mthreads -Wall -pipe -DWIN32 -D__WXMSW__ -D_UNICODE $(INCLUDE)
 LDFLAGS	= -mwindows -mthreads -Lunrar -Lc:\wxWidgets-2.6.2\lib\gcc_lib
 LIBS	= -lunrar -lwxmsw26u_core -lwxbase26u -lwxtiff -lwxjpeg -lwxpng -lwxzlib
 PLATFORM_LIBS = -lkernel32 -luser32 -lgdi32 -lcomdlg32 -lshell32 -lcomctl32 -lole32 -loleaut32 -luuid -loleacc
-RESFLAGS = --use-temp-file --define __WXMSW__ --define _UNICODE --define wxUSE_UNICODE_MSLU=1 --include-dir c:\PROGRA~1\UnrarDLL --include-dir C:/wxWidgets-2.6.2/include --include-dir C:/wxWidgets-2.6.2/lib/gcc_lib/mswu
+RESFLAGS = --use-temp-file --define __WXMSW__ --define _UNICODE --include-dir c:\PROGRA~1\UnrarDLL --include-dir C:/wxWidgets-2.6.2/include --include-dir C:/wxWidgets-2.6.2/lib/gcc_lib/mswu
 STRIP = strip
 
 .SUFFIXES: .o .cpp .rc
