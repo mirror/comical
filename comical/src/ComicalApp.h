@@ -69,6 +69,7 @@ class ComicalFrame : public wxFrame {
 
     void OpenFile(wxString);
     void OnOpen(wxCommandEvent& event);
+    void OnFull(wxCommandEvent& event);
 
     wxToolBar *toolBarNav;
     wxMenuBar *menuBar;
@@ -92,7 +93,6 @@ class ComicalFrame : public wxFrame {
     void OnGoTo(wxCommandEvent& event);
     void OnZoom(wxCommandEvent& event);
     void OnFilter(wxCommandEvent& event);
-    void OnFull(wxCommandEvent& event);
     void OnSingle(wxCommandEvent& event);
     void OnDouble(wxCommandEvent& event);
     void OnRotate(wxCommandEvent& event);

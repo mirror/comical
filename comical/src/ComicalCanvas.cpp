@@ -57,6 +57,18 @@ BEGIN_EVENT_TABLE(ComicalCanvas, wxScrolledWindow)
 	EVT_PAINT(ComicalCanvas::OnPaint)
 	EVT_KEY_DOWN(ComicalCanvas::OnKeyDown)
 	EVT_SIZE(ComicalCanvas::OnSize)
+	EVT_CONTEXT_MENU(ComicalCanvas::OnRightClick)
+	EVT_MENU(ID_ContextFirst, ComicalCanvas::OnFirst)
+	EVT_MENU(ID_ContextLast, ComicalCanvas::OnLast)
+	EVT_MENU(ID_ContextPrevTurn, ComicalCanvas::OnPrevTurn)
+	EVT_MENU(ID_ContextNextTurn, ComicalCanvas::OnNextTurn)
+	EVT_MENU(ID_ContextPrevSlide, ComicalCanvas::OnPrevSlide)
+	EVT_MENU(ID_ContextNextSlide, ComicalCanvas::OnNextSlide)
+	EVT_MENU(ID_ContextLeftCW, ComicalCanvas::OnRotateLeftCW)
+	EVT_MENU(ID_ContextLeftCCW, ComicalCanvas::OnRotateLeftCCW)
+	EVT_MENU(ID_ContextCW, ComicalCanvas::OnRotateCW)
+	EVT_MENU(ID_ContextCCW, ComicalCanvas::OnRotateCCW)
+	EVT_MENU(ID_ContextFull, ComicalCanvas::OnFull)
 END_EVENT_TABLE()
 
 ComicalCanvas::~ComicalCanvas()
@@ -784,4 +796,48 @@ void ComicalCanvas::setPage(wxInt32 pagenumber)
 	if (theBook) {
 		theBook->Current = pagenumber;
 	}
+}
+
+void ComicalCanvas::OnRightClick(wxContextMenuEvent &event)
+{
+	if (contextMenu)
+		delete contextMenu;
+	contextMenu = new wxMenu();
+	contextMenu->Append(ID_ContextPrevSlide, wxT("Previous Page"), wxT("Display the previous page."));
+	contextMenu->Append(ID_ContextNextSlide, wxT("Next Page"), wxT("Display the next page."));
+	contextMenu->AppendSeparator();
+	contextMenu->Append(ID_ContextPrevTurn, wxT("&Previous Page Turn"), wxT("Display the previous two pages."));
+	contextMenu->Append(ID_ContextNextTurn, wxT("&Next Page Turn"), wxT("Display the next two pages."));
+	contextMenu->AppendSeparator();
+	contextMenu->Append(ID_ContextFirst, wxT("&First Page"), wxT("Display the first page."));
+	contextMenu->Append(ID_ContextLast, wxT("&Last Page"), wxT("Display the last page."));
+	contextMenu->AppendSeparator();
+	
+	contextRotate = new wxMenu();
+		
+	int viewX, viewY;
+	GetViewStart(&viewX, &viewY);
+	wxSize size = GetVirtualSize();
+	wxPoint eventPos = event.GetPosition();
+	
+	if (mode == TWOPAGE && (eventPos.x + viewX) < (size.x / 2)) {
+		contextRotate->Append(ID_ContextLeftCCW, wxT("Rotate Counter-Clockwise"), wxT("Rotate 90 degrees counter-clockwise."));
+		contextRotate->Append(ID_ContextLeftCW, wxT("Rotate Clockwise"), wxT("Rotate 90 degrees clockwise."));
+	} else {
+		contextRotate->Append(ID_ContextCCW, wxT("Rotate Counter-Clockwise"), wxT("Rotate 90 degrees counter-clockwise."));
+		contextRotate->Append(ID_ContextCW, wxT("Rotate Clockwise"), wxT("Rotate 90 degrees clockwise."));
+	}
+	contextMenu->Append(ID_ContextRotate, wxT("Rotate"), contextRotate);
+	contextMenu->AppendSeparator();
+	contextMenu->Append(ID_ContextFull, wxT("Full Screen"));
+	
+	wxPoint pos = GetPosition();
+	
+	PopupMenu(contextMenu, wxPoint(eventPos.x - pos.x, eventPos.y - pos.y));
+}
+
+void ComicalCanvas::OnFull(wxCommandEvent &event)
+{
+	ComicalFrame *parent = (ComicalFrame *) GetParent();
+	parent->OnFull(event);
 }

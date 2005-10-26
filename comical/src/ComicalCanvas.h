@@ -36,6 +36,8 @@
 #include <wx/stream.h>
 #include <wx/log.h>
 #include <wx/config.h>
+#include <wx/event.h>
+#include <wx/menu.h>
 
 #include "ComicBook.h"
 
@@ -69,19 +71,32 @@ class ComicalCanvas : public wxScrolledWindow
     ComicBook *theBook;
 
   private:
-    void clearBitmap(wxBitmap *&bitmap);
-    void clearBitmaps();
-    void createBitmaps();
-    void setPage(wxInt32 pagenumber);
-    void resetView();
+	void clearBitmap(wxBitmap *&bitmap);
+	void clearBitmaps();
+	void createBitmaps();
+	void setPage(wxInt32 pagenumber);
+	void resetView();
 
-    void OnPaint(wxPaintEvent &event);
-    void OnKeyDown(wxKeyEvent &event);
-    void OnSize(wxSizeEvent &event);
+	void OnPaint(wxPaintEvent &event);
+	void OnKeyDown(wxKeyEvent &event);
+	void OnSize(wxSizeEvent &event);
+	void OnRightClick(wxContextMenuEvent &event);
+	void OnFirst(wxCommandEvent& event) { FirstPage(); }
+	void OnLast(wxCommandEvent& event) { LastPage(); }
+	void OnPrevSlide(wxCommandEvent& event) { PrevPageSlide(); }
+	void OnNextSlide(wxCommandEvent& event) { NextPageSlide(); }
+	void OnPrevTurn(wxCommandEvent& event) { PrevPageTurn(); }
+	void OnNextTurn(wxCommandEvent& event) { NextPageTurn(); }
+	void OnRotateLeftCW(wxCommandEvent& event) { RotateLeft(TRUE); }
+	void OnRotateLeftCCW(wxCommandEvent& event) { RotateLeft(FALSE); }
+	void OnRotateCW(wxCommandEvent& event) { Rotate(TRUE); }
+	void OnRotateCCW(wxCommandEvent& event) { Rotate(FALSE); }
+	void OnFull(wxCommandEvent& event);
 
     wxBitmap *leftPage, *rightPage, *centerPage;
     wxUint32 leftNum, rightNum;
     PAGETYPE leftPart, rightPart;
+	wxMenu *contextMenu, *contextRotate;
 
 	wxInt32 scrollBarThickness, xScrollPos, yScrollPos;
 
@@ -93,7 +108,25 @@ class ComicalCanvas : public wxScrolledWindow
 
     DECLARE_DYNAMIC_CLASS(ComicalCanvas)
     DECLARE_EVENT_TABLE()
+};
 
+enum
+{
+//Navigation
+ID_ContextFirst,
+ID_ContextLast,
+ID_ContextPrevTurn,
+ID_ContextNextTurn,
+ID_ContextPrevSlide,
+ID_ContextNextSlide,
+//Rotation
+ID_ContextRotate,
+ID_ContextLeftCW,
+ID_ContextLeftCCW,
+ID_ContextCW,
+ID_ContextCCW,
+//View
+ID_ContextFull
 };
 
 #endif
