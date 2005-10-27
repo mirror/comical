@@ -58,6 +58,7 @@ BEGIN_EVENT_TABLE(ComicalCanvas, wxScrolledWindow)
 	EVT_KEY_DOWN(ComicalCanvas::OnKeyDown)
 	EVT_SIZE(ComicalCanvas::OnSize)
 	EVT_CONTEXT_MENU(ComicalCanvas::OnRightClick)
+	EVT_MENU(ID_ContextOpen, ComicalCanvas::OnOpen)
 	EVT_MENU(ID_ContextFirst, ComicalCanvas::OnFirst)
 	EVT_MENU(ID_ContextLast, ComicalCanvas::OnLast)
 	EVT_MENU(ID_ContextPrevTurn, ComicalCanvas::OnPrevTurn)
@@ -803,6 +804,8 @@ void ComicalCanvas::OnRightClick(wxContextMenuEvent &event)
 	if (contextMenu)
 		delete contextMenu;
 	contextMenu = new wxMenu();
+	contextMenu->Append(ID_ContextOpen, wxT("Open..."), wxT("Open a comic book."));
+	contextMenu->AppendSeparator();
 	contextMenu->Append(ID_ContextPrevSlide, wxT("Previous Page"), wxT("Display the previous page."));
 	contextMenu->Append(ID_ContextNextSlide, wxT("Next Page"), wxT("Display the next page."));
 	contextMenu->AppendSeparator();
@@ -815,12 +818,16 @@ void ComicalCanvas::OnRightClick(wxContextMenuEvent &event)
 	
 	contextRotate = new wxMenu();
 		
-	int viewX, viewY;
+	int viewX, viewY, unitX, unitY;
 	GetViewStart(&viewX, &viewY);
+	GetScrollPixelsPerUnit(&unitX, &unitY);
 	wxSize size = GetVirtualSize();
 	wxPoint eventPos = event.GetPosition();
+	ScreenToClient(&(eventPos.x), &(eventPos.y));
 	
-	if (mode == TWOPAGE && (eventPos.x + viewX) < (size.x / 2)) {
+	if (mode == TWOPAGE &&
+			leftNum != rightNum &&
+			(eventPos.x + (viewX * unitX)) < (size.x / 2)) {
 		contextRotate->Append(ID_ContextLeftCCW, wxT("Rotate Counter-Clockwise"), wxT("Rotate 90 degrees counter-clockwise."));
 		contextRotate->Append(ID_ContextLeftCW, wxT("Rotate Clockwise"), wxT("Rotate 90 degrees clockwise."));
 	} else {
@@ -831,13 +838,17 @@ void ComicalCanvas::OnRightClick(wxContextMenuEvent &event)
 	contextMenu->AppendSeparator();
 	contextMenu->Append(ID_ContextFull, wxT("Full Screen"));
 	
-	wxPoint pos = GetPosition();
-	
-	PopupMenu(contextMenu, wxPoint(eventPos.x - pos.x, eventPos.y - pos.y));
+	PopupMenu(contextMenu, eventPos);
+}
+
+void ComicalCanvas::OnOpen(wxCommandEvent &event)
+{
+	ComicalFrame *cParent = (ComicalFrame*) parent;
+	cParent->OnOpen(event);
 }
 
 void ComicalCanvas::OnFull(wxCommandEvent &event)
 {
-	ComicalFrame *parent = (ComicalFrame *) GetParent();
-	parent->OnFull(event);
+	ComicalFrame *cParent = (ComicalFrame*) parent;
+	cParent->OnFull(event);
 }

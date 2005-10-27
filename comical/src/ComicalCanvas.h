@@ -81,6 +81,7 @@ class ComicalCanvas : public wxScrolledWindow
 	void OnKeyDown(wxKeyEvent &event);
 	void OnSize(wxSizeEvent &event);
 	void OnRightClick(wxContextMenuEvent &event);
+	void OnOpen(wxCommandEvent& event);
 	void OnFirst(wxCommandEvent& event) { FirstPage(); }
 	void OnLast(wxCommandEvent& event) { LastPage(); }
 	void OnPrevSlide(wxCommandEvent& event) { PrevPageSlide(); }
@@ -112,6 +113,7 @@ class ComicalCanvas : public wxScrolledWindow
 
 enum
 {
+ID_ContextOpen,
 //Navigation
 ID_ContextFirst,
 ID_ContextLast,

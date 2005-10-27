@@ -58,8 +58,8 @@ public:
 
 DECLARE_APP(ComicalApp)
 
-class ComicalFrame : public wxFrame {
-
+class ComicalFrame : public wxFrame
+{
   public:
 
     ComicalFrame(const wxString& title,
@@ -107,7 +107,6 @@ class ComicalFrame : public wxFrame {
     ComicBook *theBook;
 
     DECLARE_EVENT_TABLE()
-
 };
 
 enum
