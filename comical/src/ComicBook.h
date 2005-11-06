@@ -50,7 +50,7 @@
 using namespace std;
 
 enum COMICAL_MODE {ONEPAGE, TWOPAGE};
-enum COMICAL_ZOOM {FIT, FITV, FITH, FULL, THREEQ, HALF, ONEQ};
+enum COMICAL_ZOOM {FIT, FITHEIGHT, FITWIDTH, FULL, THREEQ, HALF, ONEQ};
 enum COMICAL_ROTATE {NORTH = 0, EAST, SOUTH, WEST};
 
 class ComicBook : public wxThread {
@@ -86,6 +86,12 @@ protected:
 	virtual wxInputStream * ExtractStream(wxUint32 pageindex) = 0;
 	
 	void ScaleImage(wxUint32 pagenumber);
+	// Returns true if the page can fit well in the current zoom mode, i.e., if
+	// squeezing the page into the frame doesn't leave more than
+	// scrollBarThickness pixels of black space on any side.  Returns the
+	// scalingFactor to make the page fit without scrollbars in the parameter.
+	bool FitWithoutScrollbars(wxUint32 pagenumber, float *scalingFactor);
+	bool FitWithoutScrollbars(wxUint32 pagenumber);
 	
 	wxUint32 pageCount;
 	wxString filename;

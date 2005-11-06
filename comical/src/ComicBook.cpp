@@ -137,6 +137,85 @@ bool ComicBook::IsPageLandscape(wxUint32 pagenumber)
 		return false;
 }
 
+bool ComicBook::FitWithoutScrollbars(wxUint32 pagenumber, float *scalingFactor)
+{
+	wxSize size;
+	wxInt32 usableWidth, usableWidthScrollbar, usableHeightScrollbar, withoutScrollBarHeight, withoutScrollBarWidth;
+
+	if (pagenumber > pageCount)
+		throw new PageOutOfRangeException(pagenumber, pageCount);
+
+	if (Orientations[pagenumber] == NORTH || Orientations[pagenumber] == SOUTH)		
+		size = wxSize(originals[pagenumber].GetWidth(), originals[pagenumber].GetHeight());
+	else
+		size = wxSize(originals[pagenumber].GetHeight(), originals[pagenumber].GetWidth());
+
+	float ratio = float (size.x) / float(size.y);
+
+	switch(zoom) {
+	case FITWIDTH:
+		if (ratio >= 1.0f || mode == ONEPAGE) {
+			usableWidth = canvasWidth;
+			usableWidthScrollbar = canvasWidth - scrollBarThickness;
+		} else {
+			usableWidth = canvasWidth / 2;
+			usableWidthScrollbar = (canvasWidth - scrollBarThickness) / 2;
+		}
+		*scalingFactor = float(usableWidth) / float(size.x);
+		withoutScrollBarHeight = wxInt32(float(size.y) * *scalingFactor);
+		if (withoutScrollBarHeight > canvasHeight) {
+			// it's possible the page will fit without scrollbars at some
+			// width in between canvasWidth - scrollBarThickness and
+			// canvasWidth.
+			// scaling factor if height is maximized
+			*scalingFactor = float(canvasHeight) / float(size.y);
+			// which will fit best?
+			if ((*scalingFactor * size.x) > usableWidthScrollbar)
+				return true;
+			else
+				return false;
+		} else
+			return true;
+	case FITHEIGHT:
+		if (ratio >= 1.0f || mode == ONEPAGE) {
+			usableWidth = canvasWidth;
+		} else {
+			usableWidth = canvasWidth / 2;
+		}
+		*scalingFactor = float(canvasHeight) / float(size.y);
+		withoutScrollBarWidth = wxInt32(float(size.x) * *scalingFactor);
+		if (withoutScrollBarWidth > usableWidth) {
+			// it's possible the page will fit without scrollbars at some
+			// width in between canvasHeight - scrollBarThickness and
+			// canvasHeight.
+			// scaling factor if width is maximized
+			*scalingFactor = float(usableWidth) / float(size.x);
+			// which will fit best?
+			usableHeightScrollbar = canvasHeight - scrollBarThickness;
+			if ((*scalingFactor * size.y) > usableHeightScrollbar)
+				return true;
+			else
+				return false;
+		} else
+			return true;
+	case FIT:
+		return true;
+	case ONEQ:
+	case HALF:
+	case THREEQ:
+	case FULL:
+		// this function should not be called in these cases
+		break;
+	}
+	return false;
+}
+
+bool ComicBook::FitWithoutScrollbars(wxUint32 pagenumber)
+{
+	float throwaway = 0.0f;
+	return FitWithoutScrollbars(pagenumber, &throwaway);
+}
+
 void * ComicBook::Entry()
 {
 	wxUint32 i;
@@ -254,8 +333,6 @@ void ComicBook::ScaleImage(wxUint32 pagenumber)
 	wxInt32 xImage, yImage;
 	float rCanvas, rImage;  // width/height ratios
 	float scalingFactor;
-	float neighborRatio, neighborFactor;
-	wxSize neighborSize;
 
 	wxImage &orig = originals[pagenumber];
 
@@ -296,105 +373,53 @@ void ComicBook::ScaleImage(wxUint32 pagenumber)
 			else
 				scalingFactor = (float(canvasWidth)/2.0f) / float(xImage);
 		}
-
 		break;
 
-	case FITH: // fit to width
-		rImage = float(xImage) / float(yImage);
-		// The page will have to be made narrower if it will not fit on the canvas without vertical scrolling
-		wxInt32 withoutScrollBarHeight;
-		if (rImage >= 1.0f || mode == ONEPAGE) {
-			scalingFactor = float(canvasWidth) / float(xImage);
-			withoutScrollBarHeight = wxInt32(float(yImage) * scalingFactor);
-			if (withoutScrollBarHeight > canvasHeight)
+	case FITWIDTH:
+		if (FitWithoutScrollbars(pagenumber, &scalingFactor)) {
+			if (mode == TWOPAGE) {
+				// check neighbor pages to see if they fit too
+				if (pagenumber > 0) {
+					if (!FitWithoutScrollbars(pagenumber - 1))
+						goto fith_nofit;
+				}
+				if (pagenumber < pageCount - 1) {
+					if (!FitWithoutScrollbars(pagenumber + 1))
+						goto fith_nofit;
+				}
+			}
+		} else {
+			fith_nofit:
+			rImage = float(xImage) / float(yImage);
+			// fit with scrollbars
+			if (rImage >= 1.0f || mode == ONEPAGE) {
 				scalingFactor = float(canvasWidth - scrollBarThickness) / float(xImage);
-		} else {
-			scalingFactor = float(canvasWidth/2) / float(xImage);
-			withoutScrollBarHeight = wxInt32(float(yImage) * scalingFactor);
-			if (withoutScrollBarHeight > canvasHeight)
-				scalingFactor = float((canvasWidth - scrollBarThickness)/2) / float(xImage);
-			else {
-				// Even though this page doesn't need a scrollbar, if either or
-				// both neighbor pages need one, then shrink to match.
-				if (pagenumber > 0) {
-					neighborSize = wxSize(originals[pagenumber - 1].GetWidth(), originals[pagenumber - 1].GetHeight());
-					neighborRatio = float(neighborSize.x) / float(neighborSize.y);
-					if (neighborRatio >= 1.0f)
-						neighborFactor = float(canvasWidth) / float(neighborSize.x);
-					else
-						neighborFactor = float(canvasWidth/2) / float(neighborSize.x);
-					withoutScrollBarHeight = wxInt32(float(neighborSize.y) * neighborFactor);
-					if (withoutScrollBarHeight > canvasHeight) {
-						scalingFactor = float((canvasWidth - scrollBarThickness)/2) / float(xImage);
-						break; // no need to check the other neighbor, we're already shrinking
-					}
-				}
-				if (pagenumber < pageCount - 1) {
-					neighborSize = wxSize(originals[pagenumber + 1].GetWidth(), originals[pagenumber + 1].GetHeight());
-					neighborRatio = float(neighborSize.x) / float(neighborSize.y);
-					if (neighborRatio >= 1.0f)
-						neighborFactor = float(canvasWidth) / float(neighborSize.x);
-					else
-						neighborFactor = float(canvasWidth/2) / float(neighborSize.x);
-					withoutScrollBarHeight = wxInt32(float(neighborSize.y) * neighborFactor);
-					if (withoutScrollBarHeight > canvasHeight) {
-						scalingFactor = float((canvasWidth - scrollBarThickness)/2) / float(xImage);
-					}
-				}
+			} else {
+				scalingFactor = float ((canvasWidth - scrollBarThickness) / 2) / float(xImage);
 			}
 		}
 		break;
 
-	case FITV: // fit to height
-		rImage = float(xImage) / float(yImage);
-		scalingFactor = float(canvasHeight) / float(yImage);
-		wxInt32 withoutScrollBarWidth;
-		// The page will have to be made shorter if it will not fit on the canvas without horizontal scrolling
-		if (rImage >= 1.0f || mode == ONEPAGE) {
-			withoutScrollBarWidth = wxInt32(float(xImage) * scalingFactor);
-			if (withoutScrollBarWidth > canvasWidth)
-				scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
-		} else {
-			withoutScrollBarWidth = wxInt32(float(xImage) * scalingFactor);
-			if (withoutScrollBarWidth > (canvasWidth / 2))
-				scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
-			else {
-				// Even though this page doesn't need a scrollbar, if either or
-				// both neighbor pages need one, then shrink to match.
+	case FITHEIGHT: // fit to height
+		if (FitWithoutScrollbars(pagenumber, &scalingFactor)) {
+			if (mode == TWOPAGE) {
+				// check neighbor pages to see if they fit too
 				if (pagenumber > 0) {
-					neighborSize = wxSize(originals[pagenumber - 1].GetWidth(), originals[pagenumber - 1].GetHeight());
-					neighborRatio = float(neighborSize.x) / float(neighborSize.y);
-					neighborFactor = float(canvasHeight) / float(neighborSize.y);
-					withoutScrollBarWidth = wxInt32(float(neighborSize.x) * neighborFactor);
-					if (neighborRatio >= 1.0f) {
-						if (withoutScrollBarWidth > canvasWidth) {
-							scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
-							break; // no need to check the other neighbor, we're already shrinking
-						}
-					} else {
-						if (withoutScrollBarWidth > (canvasWidth / 2)) {
-							scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
-							break; // no need to check the other neighbor, we're already shrinking
-						}
-					}
+					if (!FitWithoutScrollbars(pagenumber - 1))
+						goto fitv_nofit;
 				}
 				if (pagenumber < pageCount - 1) {
-					neighborSize = wxSize(originals[pagenumber + 1].GetWidth(), originals[pagenumber + 1].GetHeight());
-					neighborRatio = float(neighborSize.x) / float(neighborSize.y);
-					neighborFactor = float(canvasHeight) / float(neighborSize.y);
-					withoutScrollBarWidth = wxInt32(float(neighborSize.x) * neighborFactor);
-					if (neighborRatio >= 1.0f) {
-						if (withoutScrollBarWidth > canvasWidth)
-							scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
-					} else {
-						if (withoutScrollBarWidth > (canvasWidth / 2))
-							scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
-					}
+					if (!FitWithoutScrollbars(pagenumber + 1))
+						goto fitv_nofit;
 				}
 			}
+		} else {
+			fitv_nofit:
+			// fit with scrollbars
+			scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
 		}
 		break;
-
+		
 	case FULL: // no resize
 	default:
 		switch (Orientations[pagenumber]) {

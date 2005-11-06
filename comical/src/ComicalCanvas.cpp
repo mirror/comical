@@ -185,11 +185,8 @@ void ComicalCanvas::createBitmaps()
 	GetSize(&xWindow, &yWindow);
 
 	if (xScroll <= xWindow && yScroll <= yWindow) { // no scrollbars neccessary
-		xScroll = xWindow;
-		yScroll = yWindow;
-		SetVirtualSize(xScroll, yScroll);
-		SetScrollbars(1, 1, xScroll, yScroll, 0, 0, TRUE);
-		Scroll((xScroll / 2) - (xWindow / 2), 0); // center horizontally
+		SetVirtualSize(xWindow, yWindow);
+		SetScrollbars(0, 0, xWindow, yWindow, 0, 0, TRUE);
 	} else {
 		if (xScroll < (xWindow - scrollBarThickness))
 			xScroll = xWindow - scrollBarThickness;
@@ -577,9 +574,9 @@ void ComicalCanvas::NextPageSlide()
 void ComicalCanvas::Zoom(COMICAL_ZOOM newZoom)
 {
 	zoom = newZoom;
-	if (zoom == FITH)
+	if (zoom == FITWIDTH)
 		EnableScrolling(false, true); // Horizontal fit, no horizontal scrolling
-	else if (zoom == FITV)
+	else if (zoom == FITHEIGHT)
 		EnableScrolling(true, false); // Vertical fit, no vertical scrolling
 	else if (zoom == FIT)
 		EnableScrolling(false, false); // Fit, no scrolling

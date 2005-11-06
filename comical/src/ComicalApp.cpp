@@ -395,10 +395,10 @@ void ComicalFrame::OnZoom(wxCommandEvent& event)
 		theCanvas->Zoom(FIT);
 		break;
 	case ID_FitV:
-		theCanvas->Zoom(FITV);
+		theCanvas->Zoom(FITWIDTHEIGHT);
 		break;
 	case ID_FitH:
-		theCanvas->Zoom(FITH);
+		theCanvas->Zoom(FITWIDTH);
 		break;
 	default:
 		wxLogError(wxT("Zoom mode %d is undefined."), event.GetId()); // we shouldn't be here... honest!
