@@ -264,7 +264,7 @@ void ComicalFrame::OnQuit(wxCommandEvent& event)
 
 void ComicalFrame::OnAbout(wxCommandEvent& event)
 {
-	wxMessageDialog AboutDlg(this, wxT("Comical 0.6, (c) 2003-2005 James Athey.\nComical is licensed under the GPL, version 2,\nwith a linking exception; see README for details."), wxT("About Comical"), wxOK);
+	wxMessageDialog AboutDlg(this, wxT("Comical 0.6.1, (c) 2003-2005 James Athey.\nComical is licensed under the GPL, version 2,\nwith a linking exception; see README for details."), wxT("About Comical"), wxOK);
 	AboutDlg.ShowModal();
 }
 

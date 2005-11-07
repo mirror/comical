@@ -45,6 +45,8 @@ ComicalCanvas::ComicalCanvas(wxWindow *prnt, const wxPoint &pos, const wxSize &s
 	filter = (FREE_IMAGE_FILTER) config->Read(wxT("/Comical/Filter"), 4l); // Catmull-Rom is default
 	leftPage = rightPage = centerPage = NULL;
 	theBook = NULL;
+	contextMenu = NULL;
+	contextRotate = NULL;
 	
 	// Get the thickness of scrollbars.  Knowing this, we can precalculate
 	// whether the current page(s) will need scrollbars.
