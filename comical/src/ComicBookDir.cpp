@@ -29,20 +29,18 @@
 
 ComicBookDir::ComicBookDir(wxString dir) : ComicBook(dir)
 {
-	// This is probably not the most efficient way to look, but it's fast enough
-	// and I'm lazy...
-	wxDir::GetAllFiles(dir, Filenames, wxT("*.jpg"), wxDIR_FILES | wxDIR_DIRS);
-	wxDir::GetAllFiles(dir, Filenames, wxT("*.JPG"), wxDIR_FILES | wxDIR_DIRS);
-	wxDir::GetAllFiles(dir, Filenames, wxT("*.jpeg"), wxDIR_FILES | wxDIR_DIRS);
-	wxDir::GetAllFiles(dir, Filenames, wxT("*.JPEG"), wxDIR_FILES | wxDIR_DIRS);
-	wxDir::GetAllFiles(dir, Filenames, wxT("*.tif"), wxDIR_FILES | wxDIR_DIRS);
-	wxDir::GetAllFiles(dir, Filenames, wxT("*.TIF"), wxDIR_FILES | wxDIR_DIRS);
-	wxDir::GetAllFiles(dir, Filenames, wxT("*.tiff"), wxDIR_FILES | wxDIR_DIRS);
-	wxDir::GetAllFiles(dir, Filenames, wxT("*.TIFF"), wxDIR_FILES | wxDIR_DIRS);
-	wxDir::GetAllFiles(dir, Filenames, wxT("*.gif"), wxDIR_FILES | wxDIR_DIRS);
-	wxDir::GetAllFiles(dir, Filenames, wxT("*.GIF"), wxDIR_FILES | wxDIR_DIRS);
-	wxDir::GetAllFiles(dir, Filenames, wxT("*.png"), wxDIR_FILES | wxDIR_DIRS);
-	wxDir::GetAllFiles(dir, Filenames, wxT("*.PNG"), wxDIR_FILES | wxDIR_DIRS);
+	wxArrayString *allFiles = new wxArrayString();
+	size_t count = wxDir::GetAllFiles(dir, allFiles, wxEmptyString, wxDIR_FILES | wxDIR_DIRS);
+	wxString page;
+	
+	for (wxUint32 i = 0; i < count; i++) {
+		page = allFiles->Item(i);
+		if(page.Right(5).Upper() == wxT(".JPEG") || page.Right(4).Upper() == wxT(".JPG") ||
+				page.Right(5).Upper() == wxT(".TIFF") || page.Right(4).Upper() == wxT(".TIF") ||
+				page.Right(4).Upper() == wxT(".GIF") ||
+				page.Right(4).Upper() == wxT(".PNG"))
+			Filenames->Add(page);
+	}
 	
 	Filenames->Sort();
 	Filenames->Shrink();
