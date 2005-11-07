@@ -1,5 +1,9 @@
-0.6.1 -
+0.7 -
+Fit to Width and Fit to Height now better uses available space
+Scrollbars should not show up unless needed anymore
 Right-click menu
+Revert to scrolling to the top on page change
+Can open directories of images
 
 0.6 -
 Unicode support

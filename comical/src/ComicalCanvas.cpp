@@ -61,6 +61,7 @@ BEGIN_EVENT_TABLE(ComicalCanvas, wxScrolledWindow)
 	EVT_SIZE(ComicalCanvas::OnSize)
 	EVT_CONTEXT_MENU(ComicalCanvas::OnRightClick)
 	EVT_MENU(ID_ContextOpen, ComicalCanvas::OnOpen)
+	EVT_MENU(ID_ContextOpenDir, ComicalCanvas::OnOpenDir)
 	EVT_MENU(ID_ContextFirst, ComicalCanvas::OnFirst)
 	EVT_MENU(ID_ContextLast, ComicalCanvas::OnLast)
 	EVT_MENU(ID_ContextPrevTurn, ComicalCanvas::OnPrevTurn)
@@ -94,7 +95,6 @@ void ComicalCanvas::clearBitmap(wxBitmap *&bitmap)
 void ComicalCanvas::clearBitmaps()
 {
 	// Get the current scroll positions before we clear the bitmaps
-	GetViewStart(&xScrollPos, &yScrollPos);
 	clearBitmap(leftPage);
 	clearBitmap(centerPage);
 	clearBitmap(rightPage);
@@ -119,10 +119,9 @@ void ComicalCanvas::createBitmaps()
 				yScroll = rightPage->GetHeight();
 			}
 			if (leftPage && leftPage->Ok()) {
-				xScroll = (leftPage->GetWidth() > xScroll) ? leftPage->GetWidth() : xScroll;
+				xScroll += leftPage->GetWidth();
 				yScroll = (leftPage->GetHeight() > yScroll) ? leftPage->GetHeight() : yScroll;
 			}
-			xScroll *= 2;
 		}
 		cParent->menuView->FindItem(ID_RotateLeft)->Enable(false);
 		cParent->menuView->FindItem(ID_RotateRight)->Enable(false);
@@ -160,7 +159,7 @@ void ComicalCanvas::createBitmaps()
 	
 		if (leftPage && (leftOk = leftPage->Ok()))
 		{
-			xScroll = (leftPage->GetWidth() > xScroll) ? leftPage->GetWidth() : xScroll;
+			xScroll += leftPage->GetWidth();
 			yScroll = (leftPage->GetHeight() > yScroll) ? leftPage->GetHeight() : yScroll;
 
 			cParent->menuView->FindItem(ID_RotateLeft)->Enable(true);
@@ -178,8 +177,6 @@ void ComicalCanvas::createBitmaps()
 
 			cParent->labelLeft->SetLabel(wxT(""));
 		}
-
-		xScroll *= 2;
 	}
 
 	cParent->toolBarNav->Realize();
@@ -195,15 +192,28 @@ void ComicalCanvas::createBitmaps()
 		if (yScroll < (yWindow - scrollBarThickness))
 			yScroll = yWindow - scrollBarThickness;
 		SetVirtualSize(xScroll, yScroll);
-		wxInt32 xStep = 1, yStep = 1;
 		// if the pages will fit, make sure the scroll bars don't show up by making
-		// the scroll step == 1 pixel.  Otherwise, make the scroll step 10 so that
+		// the scroll step == 0.  Otherwise, make the scroll step 10 so that
 		// one can navigate quickly using the arrow keys.
-		if (xScroll > xWindow - scrollBarThickness)
+		
+		wxInt32 xStep, yStep, xVirtSize, yVirtSize, xScrollPos;
+		if (xScroll > xWindow - scrollBarThickness) {
 			xStep = 10;
-		if (yScroll > yWindow - scrollBarThickness)
+			xVirtSize = xScroll / xStep;
+			xScrollPos = (xScroll / 20) - (xWindow / 20);
+		} else {
+			xStep = 0;
+			xVirtSize = xScroll;
+			xScrollPos = 0;
+		}
+		if (yScroll > yWindow - scrollBarThickness) {
 			yStep = 10;
-		SetScrollbars(xStep, yStep, xScroll / xStep, yScroll / yStep, (xScroll / (2 * xStep)) - (xWindow / (2 * xStep)), yScrollPos, TRUE);
+			yVirtSize = yScroll / yStep;
+		} else {
+			yStep = 0;
+			yVirtSize = yScroll;
+		}
+		SetScrollbars(xStep, yStep, xVirtSize, yVirtSize, xScrollPos, 0, TRUE);
 	}
 	Refresh();
 }
@@ -804,6 +814,7 @@ void ComicalCanvas::OnRightClick(wxContextMenuEvent &event)
 		delete contextMenu;
 	contextMenu = new wxMenu();
 	contextMenu->Append(ID_ContextOpen, wxT("Open..."), wxT("Open a comic book."));
+	contextMenu->Append(ID_ContextOpenDir, wxT("Open Directory..."), wxT("Open a directory of images."));
 	contextMenu->AppendSeparator();
 	contextMenu->Append(ID_ContextPrevSlide, wxT("Previous Page"), wxT("Display the previous page."));
 	contextMenu->Append(ID_ContextNextSlide, wxT("Next Page"), wxT("Display the next page."));
@@ -844,6 +855,12 @@ void ComicalCanvas::OnOpen(wxCommandEvent &event)
 {
 	ComicalFrame *cParent = (ComicalFrame*) parent;
 	cParent->OnOpen(event);
+}
+
+void ComicalCanvas::OnOpenDir(wxCommandEvent &event)
+{
+	ComicalFrame *cParent = (ComicalFrame*) parent;
+	cParent->OnOpenDir(event);
 }
 
 void ComicalCanvas::OnFull(wxCommandEvent &event)

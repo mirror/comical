@@ -72,8 +72,10 @@ bool ComicalApp::OnInit()
 		frame->OnOpen(*(new wxCommandEvent()));
 	else if (wxFileExists(argv[1]))
 		frame->OpenFile(wxString(argv[1]));
+	else if (wxDirExists(argv[1]))
+		frame->OpenDir(wxString(argv[1]));
 	else {
-		wxLogError(wxT("The file \"") + wxString(argv[1]) + wxT("\" could not be found."));
+		wxLogError(wxT("The file or directory \"") + wxString(argv[1]) + wxT("\" could not be found."));
 		wxLog::FlushActive();
 	}
 
@@ -92,6 +94,7 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	
 	menuFile = new wxMenu;
 	menuFile->Append(wxID_OPEN, wxT("&Open\tAlt-O"), wxT("Open a Comic Book."));
+	menuFile->Append(ID_OpenDir, wxT("Open &Directory"), wxT("Open a directory of images."));
 	menuFile->AppendSeparator();
 	menuFile->Append(wxID_EXIT, wxT("E&xit\tAlt-X"), wxT("Quit Comical."));
 
@@ -219,6 +222,7 @@ BEGIN_EVENT_TABLE(ComicalFrame, wxFrame)
 	EVT_MENU(wxID_EXIT,	ComicalFrame::OnQuit)
 	EVT_MENU(wxID_ABOUT,	ComicalFrame::OnAbout)
 	EVT_MENU(wxID_OPEN,	ComicalFrame::OnOpen)
+	EVT_MENU(ID_OpenDir,	ComicalFrame::OnOpenDir)
 	EVT_MENU(ID_First,	ComicalFrame::OnFirst)
 	EVT_MENU(ID_Last,	ComicalFrame::OnLast)
 	EVT_MENU(ID_PrevTurn,	ComicalFrame::OnPrevTurn)
@@ -264,7 +268,7 @@ void ComicalFrame::OnQuit(wxCommandEvent& event)
 
 void ComicalFrame::OnAbout(wxCommandEvent& event)
 {
-	wxMessageDialog AboutDlg(this, wxT("Comical 0.6.1, (c) 2003-2005 James Athey.\nComical is licensed under the GPL, version 2,\nwith a linking exception; see README for details."), wxT("About Comical"), wxOK);
+	wxMessageDialog AboutDlg(this, wxT("Comical 0.7, (c) 2003-2005 James Athey.\nComical is licensed under the GPL, version 2,\nwith a linking exception; see README for details."), wxT("About Comical"), wxOK);
 	AboutDlg.ShowModal();
 }
 
@@ -276,6 +280,16 @@ void ComicalFrame::OnOpen(wxCommandEvent& event)
 
 	if (!filename.empty())
 		OpenFile(filename);
+}
+
+void ComicalFrame::OnOpenDir(wxCommandEvent& event)
+{
+	wxString cwd;
+	config->Read(wxT("/Comical/CWD"), &cwd);
+	wxString dir = wxDirSelector(wxT("Open a Directory"), cwd, 0, wxDefaultPosition, this);
+
+	if (!dir.empty())
+		OpenDir(dir);
 }
 
 void ComicalFrame::OpenFile(wxString filename)
@@ -306,6 +320,39 @@ void ComicalFrame::OpenFile(wxString filename)
 				theCanvas->Scroll(-1, 0); // scroll to the top for the first page
 				SetTitle(wxT("Comical - " + filename));
 				config->Write(wxT("/Comical/CWD"), wxPathOnly(filename));
+			}
+		} catch (ArchiveException &ae) {
+			wxLogError(ae.Message);
+			wxLog::FlushActive();
+		}
+	}
+}
+
+void ComicalFrame::OpenDir(wxString directory)
+{
+	if (!directory.empty()) {
+	
+		if (theBook) {
+			theBook->Delete(); // delete the ComicBook thread
+			delete theBook; // clear out the rest of the ComicBook
+			theBook = NULL;
+		}
+
+		try {
+			theBook = new ComicBookDir(directory);
+
+			if (theBook) {
+				theCanvas->theBook = theBook;
+				theCanvas->SetParams();
+
+				toolBarNav->Enable(true);
+	
+				theBook->Run(); // start the thread
+
+				theCanvas->FirstPage();
+				theCanvas->Scroll(-1, 0); // scroll to the top for the first page
+				SetTitle(wxT("Comical - " + directory));
+				config->Write(wxT("/Comical/CWD"), directory);
 			}
 		} catch (ArchiveException &ae) {
 			wxLogError(ae.Message);
@@ -395,7 +442,7 @@ void ComicalFrame::OnZoom(wxCommandEvent& event)
 		theCanvas->Zoom(FIT);
 		break;
 	case ID_FitV:
-		theCanvas->Zoom(FITWIDTHEIGHT);
+		theCanvas->Zoom(FITHEIGHT);
 		break;
 	case ID_FitH:
 		theCanvas->Zoom(FITWIDTH);

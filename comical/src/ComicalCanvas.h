@@ -82,6 +82,7 @@ class ComicalCanvas : public wxScrolledWindow
 	void OnSize(wxSizeEvent &event);
 	void OnRightClick(wxContextMenuEvent &event);
 	void OnOpen(wxCommandEvent& event);
+	void OnOpenDir(wxCommandEvent& event);
 	void OnFirst(wxCommandEvent& event) { FirstPage(); }
 	void OnLast(wxCommandEvent& event) { LastPage(); }
 	void OnPrevSlide(wxCommandEvent& event) { PrevPageSlide(); }
@@ -99,7 +100,7 @@ class ComicalCanvas : public wxScrolledWindow
     PAGETYPE leftPart, rightPart;
 	wxMenu *contextMenu, *contextRotate;
 
-	wxInt32 scrollBarThickness, xScrollPos, yScrollPos;
+	wxInt32 scrollBarThickness;
 
     COMICAL_ZOOM zoom;
     COMICAL_MODE mode;
@@ -114,6 +115,7 @@ class ComicalCanvas : public wxScrolledWindow
 enum
 {
 ID_ContextOpen,
+ID_ContextOpenDir,
 //Navigation
 ID_ContextFirst,
 ID_ContextLast,

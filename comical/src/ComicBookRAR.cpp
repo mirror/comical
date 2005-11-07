@@ -67,7 +67,7 @@ ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 		page.Right(5).Upper() == wxT(".TIFF") || page.Right(4).Upper() == wxT(".TIF") ||
 		page.Right(4).Upper() == wxT(".GIF") ||
 		page.Right(4).Upper() == wxT(".PNG"))
-			Filenames.push_back(page);
+			Filenames->Add(page);
 		
 		if ((PFCode = RARProcessFile(RarFile, RAR_SKIP, NULL, NULL)) != 0)
 			throw ArchiveException(filename, ProcessFileError(PFCode, page));
@@ -78,11 +78,10 @@ ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 
 	RARCloseArchive(RarFile);
 	
-	vector<wxString>::iterator begin = Filenames.begin();
-	vector<wxString>::iterator end = Filenames.end();
-	sort(begin, end);  // I love the STL!
-
-	pageCount = Filenames.size();
+	Filenames->Sort();
+	Filenames->Shrink();
+	
+	pageCount = Filenames->GetCount();
 	
 	originals = new wxImage[pageCount];
 	resamples = new wxImage[pageCount];
@@ -96,7 +95,7 @@ ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 
 wxInputStream * ComicBookRAR::ExtractStream(wxUint32 pageindex)
 {
-	return new wxRarInputStream(filename, Filenames[pageindex]);
+	return new wxRarInputStream(filename, Filenames->Item(pageindex));
 }
 
 wxString ComicBookRAR::OpenArchiveError(int Error)

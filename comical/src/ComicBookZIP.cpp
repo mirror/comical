@@ -51,7 +51,7 @@ ComicBookZIP::ComicBookZIP(wxString file) : ComicBook(file)
 			page.Right(5).Upper() == wxT(".TIFF") || page.Right(4).Upper() == wxT(".TIF") ||
 			page.Right(4).Upper() == wxT(".GIF") ||
 			page.Right(4).Upper() == wxT(".PNG"))
-			Filenames.push_back(page);
+			Filenames->Add(page);
 	}
 	delete zipFile;
 	delete fs;
@@ -84,16 +84,15 @@ ComicBookZIP::ComicBookZIP(wxString file) : ComicBook(file)
 		page.Right(5).Upper() == wxT(".TIFF") || page.Right(4).Upper() == wxT(".TIF") ||
 		page.Right(4).Upper() == wxT(".GIF") ||
 		page.Right(4).Upper() == wxT(".PNG"))
-			Filenames.push_back(page);
+			Filenames->Add(page);
 	} while (unzGoToNextFile(ZipFile) == UNZ_OK);
 
 	unzClose(ZipFile);	
-#endif	
-	vector<wxString>::iterator begin = Filenames.begin();
-	vector<wxString>::iterator end = Filenames.end();
-	sort(begin, end);  // I love the STL!
+#endif
+	Filenames->Sort();
+	Filenames->Shrink();
 
-	pageCount = Filenames.size();
+	pageCount = Filenames->GetCount();
 	
 	originals = new wxImage[pageCount];
 	resamples = new wxImage[pageCount];
@@ -107,7 +106,7 @@ ComicBookZIP::ComicBookZIP(wxString file) : ComicBook(file)
 
 wxInputStream * ComicBookZIP::ExtractStream(wxUint32 pageindex)
 {
-	return new wxZipInputStream(filename, Filenames[pageindex]);
+	return new wxZipInputStream(filename, Filenames->Item(pageindex));
 }
 
 #if !wxCHECK_VERSION(2, 5, 0)

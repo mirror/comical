@@ -205,3 +205,5 @@ src/Comical.rc
 unrar/makefile.macosx
 unrar/makefile.linux
 unrar/makefile.dmc
+src/ComicBookDir.h
+src/ComicBookDir.cpp

@@ -32,6 +32,7 @@
 #include <wx/app.h>
 #include <wx/frame.h>
 #include <wx/filedlg.h>
+#include <wx/dirdlg.h>
 #include <wx/menu.h>
 #include <wx/textctrl.h>
 #include <wx/msgdlg.h>
@@ -46,6 +47,7 @@
 #include "ComicBook.h"
 #include "ComicBookRAR.h"
 #include "ComicBookZIP.h"
+#include "ComicBookDir.h"
 #include "Exceptions.h"
 
 class ComicalApp : public wxApp {
@@ -68,7 +70,9 @@ class ComicalFrame : public wxFrame
               long style = wxDEFAULT_FRAME_STYLE);
 
     void OpenFile(wxString);
+    void OpenDir(wxString);
     void OnOpen(wxCommandEvent& event);
+    void OnOpenDir(wxCommandEvent& event);
     void OnFull(wxCommandEvent& event);
 
     wxToolBar *toolBarNav;
@@ -113,6 +117,7 @@ enum
 {
 ID_S,
 ID_M,
+ID_OpenDir,
 ID_Rotate,
 ID_RotateLeft,
 ID_RotateRight,

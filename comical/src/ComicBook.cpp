@@ -38,6 +38,7 @@ ComicBook::ComicBook(wxString file) : wxThread(wxTHREAD_JOINABLE)
 	wxConfigBase *config = wxConfigBase::Get();
 	// Each of the long values is followed by the letter L not the number one
 	cacheLen = (wxUint32) config->Read(wxT("/Comical/CacheLength"), 10l); // Fit-to-Width is default
+	Filenames = new wxArrayString();
 }
 
 ComicBook::~ComicBook()
@@ -54,6 +55,7 @@ ComicBook::~ComicBook()
 	delete[] resamples;
 	delete[] Orientations;
 	delete[] imageLockers;
+	delete Filenames;
 }
 
 void ComicBook::RotatePage(wxUint32 pagenumber, COMICAL_ROTATE direction)
@@ -118,7 +120,9 @@ wxBitmap * ComicBook::GetPageRightHalf(wxUint32 pagenumber)
 	}
 	wxInt32 rWidth = resamples[pagenumber].GetWidth();
 	wxInt32 rHeight = resamples[pagenumber].GetHeight();
-	return new wxBitmap(resamples[pagenumber].GetSubImage(wxRect(rWidth / 2, 0, (rWidth / 2) + (rWidth % 2), rHeight)));
+	wxInt32 offset = rWidth / 2;
+	wxInt32 remainder = rWidth % 2;
+	return new wxBitmap(resamples[pagenumber].GetSubImage(wxRect(offset, 0, offset + remainder, rHeight)));
 }
 
 bool ComicBook::IsPageLandscape(wxUint32 pagenumber)

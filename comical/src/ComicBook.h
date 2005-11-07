@@ -40,9 +40,7 @@
 #include <wx/bitmap.h>
 #include <wx/timer.h>
 #include <wx/config.h>
-
-#include <vector>
-#include <algorithm>
+#include <wx/arrstr.h>
 
 #include "Exceptions.h"
 #include "Resize.h"
@@ -73,7 +71,7 @@ public:
 	wxBitmap *GetPageLeftHalf(wxUint32 pagenumber);
 	wxBitmap *GetPageRightHalf(wxUint32 pagenumber);
 	bool IsPageLandscape(wxUint32 pagenumber);
-	vector<wxString> Filenames;
+	wxArrayString *Filenames;
 
 	/* Used to prefetch nearby pages and discard distant pages. 
 	 * when mode = TWOPAGE, Current is the pagenumber of the page on the right.
