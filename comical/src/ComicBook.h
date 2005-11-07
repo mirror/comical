@@ -45,8 +45,6 @@
 #include "Exceptions.h"
 #include "Resize.h"
 
-using namespace std;
-
 enum COMICAL_MODE {ONEPAGE, TWOPAGE};
 enum COMICAL_ZOOM {FIT, FITHEIGHT, FITWIDTH, FULL, THREEQ, HALF, ONEQ};
 enum COMICAL_ROTATE {NORTH = 0, EAST, SOUTH, WEST};
