@@ -123,6 +123,8 @@
 		};
 		20286C2AFDCF999611CA2CEA = {
 			children = (
+				D487109809203E8800F112CF,
+				D487109909203E8800F112CF,
 				D4582FF508AAD149007DD6F9,
 				D45592B607E69E73001881E8,
 				D45592B707E69E73001881E8,
@@ -271,6 +273,7 @@
 				D45592C007E69E73001881E8,
 				D45592C107E69E73001881E8,
 				D4582FF608AAD149007DD6F9,
+				D487109B09203E8800F112CF,
 			);
 			isa = PBXHeadersBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -295,6 +298,7 @@
 				D45592B207E69E59001881E8,
 				D45592BD07E69E73001881E8,
 				D45592BF07E69E73001881E8,
+				D487109A09203E8800F112CF,
 			);
 			isa = PBXSourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -639,6 +643,36 @@
 		};
 		D473E31407E90F8C00318A30 = {
 			fileRef = D473E31307E90F8C00318A30;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D487109809203E8800F112CF = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.cpp.cpp;
+			name = ComicBookDir.cpp;
+			path = src/ComicBookDir.cpp;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D487109909203E8800F112CF = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = ComicBookDir.h;
+			path = src/ComicBookDir.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D487109A09203E8800F112CF = {
+			fileRef = D487109809203E8800F112CF;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D487109B09203E8800F112CF = {
+			fileRef = D487109909203E8800F112CF;
 			isa = PBXBuildFile;
 			settings = {
 			};
