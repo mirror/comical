@@ -279,6 +279,7 @@ void * ComicBook::Entry()
 							wxLogError(wxT("Failed to extract page %d."), target);
 							originals[target] = wxImage(1, 1);
 						}
+						delete is;
 					}
 				} catch (ArchiveException &ae) {
 					wxLogError(ae.Message);
