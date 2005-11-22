@@ -193,6 +193,9 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	toolBarNav->AddTool(ID_First, wxT("First Page"), wxBITMAP(firstpage), wxT("First Page"));
 	toolBarNav->AddTool(ID_PrevTurn, wxT("Previous Page Turn"), wxBITMAP(prevpage), wxT("Previous Page Turn"));
 	toolBarNav->AddTool(ID_PrevSlide, wxT("Previous Page"), wxBITMAP(prev), wxT("Previous Page"));
+	toolBarNav->AddSeparator();
+	toolBarNav->AddTool(ID_ZoomBox, wxT("Zoom"), wxBITMAP(comical), wxT("Zoom"), wxITEM_CHECK);
+	toolBarNav->AddSeparator();
 	toolBarNav->AddTool(ID_NextSlide, wxT("Next Page"), wxBITMAP(next), wxT("Next Page"));
 	toolBarNav->AddTool(ID_NextTurn, wxT("Next Page Turn"), wxBITMAP(nextpage), wxT("Next Page Turn"));
 	toolBarNav->AddTool(ID_Last, wxT("Last Page"), wxBITMAP(lastpage), wxT("Last Page"));
@@ -234,6 +237,7 @@ BEGIN_EVENT_TABLE(ComicalFrame, wxFrame)
 	EVT_MENU(ID_Full,	ComicalFrame::OnFull)
 	EVT_MENU(ID_Double,	ComicalFrame::OnDouble)
 	EVT_MENU(ID_Single,	ComicalFrame::OnSingle)
+	EVT_MENU(ID_ZoomBox, ComicalFrame::OnZoomBox)
 	EVT_MENU_RANGE(ID_Unzoomed, ID_FitH, ComicalFrame::OnZoom)
 	EVT_MENU_RANGE(ID_Box, ID_Lanczos, ComicalFrame::OnFilter)
 	EVT_MENU_RANGE(ID_CW, ID_CCW, ComicalFrame::OnRotate)
@@ -570,4 +574,10 @@ void ComicalFrame::OnSize(wxSizeEvent &event)
 		wxSize clientSize = GetClientSize();
 		theCanvas->SetSize(clientSize);
 	}
+}
+
+void ComicalFrame::OnZoomBox(wxCommandEvent &event)
+{
+	if (theCanvas != NULL) {
+		theCanvas->SetZoomEnable(event.IsChecked());
 }

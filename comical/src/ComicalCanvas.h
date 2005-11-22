@@ -38,6 +38,8 @@
 #include <wx/config.h>
 #include <wx/event.h>
 #include <wx/menu.h>
+#include <wx/pen.h>
+#include <wx/utils.h>
 
 #include "ComicBook.h"
 
@@ -65,7 +67,8 @@ class ComicalCanvas : public wxScrolledWindow
     void RotateLeft(bool);
     void Rotate(COMICAL_ROTATE);
     void RotateLeft(COMICAL_ROTATE);
-
+	void SetZoomEnable(bool);
+	
     void SetParams();
 
     ComicBook *theBook;
@@ -80,6 +83,8 @@ class ComicalCanvas : public wxScrolledWindow
 	void OnPaint(wxPaintEvent &event);
 	void OnKeyDown(wxKeyEvent &event);
 	void OnSize(wxSizeEvent &event);
+	void OnLeftDown(wxMouseEvent &event);
+	void OnLeftUp(wxMouseEvent &event);
 	void OnRightClick(wxContextMenuEvent &event);
 	void OnOpen(wxCommandEvent& event);
 	void OnOpenDir(wxCommandEvent& event);
@@ -102,6 +107,8 @@ class ComicalCanvas : public wxScrolledWindow
 
 	wxInt32 scrollBarThickness;
 
+	wxPoint boxZoomOrigin;
+	bool zoomEnabled, zoomOn;
     COMICAL_ZOOM zoom;
     COMICAL_MODE mode;
     FREE_IMAGE_FILTER filter;

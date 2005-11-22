@@ -47,6 +47,8 @@ ComicalCanvas::ComicalCanvas(wxWindow *prnt, const wxPoint &pos, const wxSize &s
 	theBook = NULL;
 	contextMenu = NULL;
 	contextRotate = NULL;
+	zoomOn = false;
+	zoomEnabled = false;
 	
 	// Get the thickness of scrollbars.  Knowing this, we can precalculate
 	// whether the current page(s) will need scrollbars.
@@ -59,6 +61,8 @@ BEGIN_EVENT_TABLE(ComicalCanvas, wxScrolledWindow)
 	EVT_PAINT(ComicalCanvas::OnPaint)
 	EVT_KEY_DOWN(ComicalCanvas::OnKeyDown)
 	EVT_SIZE(ComicalCanvas::OnSize)
+	EVT_LEFT_DOWN(ComicalCanvas::OnLeftDown)
+	EVT_LEFT_UP(ComicalCanvas::OnLeftUp)
 	EVT_CONTEXT_MENU(ComicalCanvas::OnRightClick)
 	EVT_MENU(ID_ContextOpen, ComicalCanvas::OnOpen)
 	EVT_MENU(ID_ContextOpenDir, ComicalCanvas::OnOpenDir)
@@ -746,6 +750,32 @@ void ComicalCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 		if (rightPage && rightPage->Ok())
 			dc.DrawBitmap(*rightPage, xCanvas/2, 0, false);
 	}
+	
+	if (zoomOn) {
+		wxPoint currMousePos = wxGetMousePosition();
+		wxInt32 minX, maxX, minY, maxY, sizeX, sizeY;
+		if (currMousePos.x < zoomOrigin.x) {
+			minX = currMousePos.x;
+			maxX = zoomOrigin.x;
+		} else {
+			minX = zoomOrigin.x;
+			maxX = currMousePos.x;
+		}
+		if (currMousePos.y < zoomOrigin.y) {
+			minY = currMousePos.y;
+			maxY = zoomOrigin.y;
+		} else {
+			minY = zoomOrigin.y;
+			maxY = currMousePos.y;
+		}
+		sizeX = maxX - minX;
+		sizeY = maxY - minY;
+		wxPen pen = dc.GetPen();
+		pen.SetColour(255,255,255);
+		pen.SetStyle(wxLONG_DASH);
+		
+		dc.DrawRectangle(minX, minY, sizeX, sizeY);
+	}
 
 	SetFocus(); // This is so we can grab keydown events
 
@@ -851,6 +881,11 @@ void ComicalCanvas::OnRightClick(wxContextMenuEvent &event)
 	PopupMenu(contextMenu, eventPos);
 }
 
+void ComicalCanvas::SetZoomEnable(bool enabled)
+{
+	zoomEnable = enabled;
+}
+
 void ComicalCanvas::OnOpen(wxCommandEvent &event)
 {
 	ComicalFrame *cParent = (ComicalFrame*) parent;
@@ -867,4 +902,41 @@ void ComicalCanvas::OnFull(wxCommandEvent &event)
 {
 	ComicalFrame *cParent = (ComicalFrame*) parent;
 	cParent->OnFull(event);
+}
+
+void ComicalCanvas::OnLeftDown(wxMouseEvent &event)
+{
+	if(!zoomEnable || !theBook)
+		return;
+	
+	zoomOrigin = event.GetPosition();
+	zoomOn = true;
+}
+
+void ComicalCanvas::OnLeftUp(wxMouseEvent &event)
+{
+	if (!zoomEnable || !theBook)
+		return;
+		
+	zoomOn = false;
+	
+	wxPoint currMousePos = wxGetMousePosition();
+	wxInt32 minX, maxX, minY, maxY, sizeX, sizeY;
+	if (currMousePos.x < zoomOrigin.x) {
+		minX = currMousePos.x;
+		maxX = zoomOrigin.x;
+	} else {
+		minX = zoomOrigin.x;
+		maxX = currMousePos.x;
+	}
+	if (currMousePos.y < zoomOrigin.y) {
+		minY = currMousePos.y;
+		maxY = zoomOrigin.y;
+	} else {
+		minY = zoomOrigin.y;
+		maxY = currMousePos.y;
+	}
+	sizeX = maxX - minX;
+	sizeY = maxY - minY;
+
 }
