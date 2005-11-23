@@ -43,6 +43,7 @@
 #include <wx/toolbar.h>
 #include <wx/stattext.h>
 
+#include "ComicalBrowser.h"
 #include "ComicalCanvas.h"
 #include "ComicBook.h"
 #include "ComicBookRAR.h"
@@ -109,6 +110,7 @@ class ComicalFrame : public wxFrame
 
     ComicalCanvas *theCanvas;
     ComicBook *theBook;
+    ComicalBrowser *theBrowser;
 
     DECLARE_EVENT_TABLE()
 };

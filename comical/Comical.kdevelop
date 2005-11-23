@@ -113,7 +113,9 @@
     </useglobaltypes>
   </kdevfilecreate>
   <kdevcppsupport>
-    <references/>
+    <references>
+      <pcs>wxWidgets</pcs>
+    </references>
     <codecompletion>
       <includeGlobalFunctions>true</includeGlobalFunctions>
       <includeTypes>true</includeTypes>

@@ -53,6 +53,7 @@ ComicBook::~ComicBook()
 	}
 	delete[] originals;
 	delete[] resamples;
+	delete[] thumbnails;
 	delete[] Orientations;
 	delete[] imageLockers;
 	delete Filenames;
@@ -64,6 +65,7 @@ void ComicBook::RotatePage(wxUint32 pagenumber, COMICAL_ROTATE direction)
 		wxMutexLocker lock(imageLockers[pagenumber]);
 		Orientations[pagenumber] = direction;
 		resamples[pagenumber].Destroy();
+		thumbnails[pagenumber].Destroy();
 	}
 }
 
@@ -123,6 +125,14 @@ wxBitmap * ComicBook::GetPageRightHalf(wxUint32 pagenumber)
 	wxInt32 offset = rWidth / 2;
 	wxInt32 remainder = rWidth % 2;
 	return new wxBitmap(resamples[pagenumber].GetSubImage(wxRect(offset, 0, offset + remainder, rHeight)));
+}
+
+wxBitmap * ComicBook::GetThumbnail(wxUint32 pagenumber)
+{
+	if (!thumbnails[pagenumber].Ok())
+		return new wxBitmap(100, 60, 24);
+	else
+		return new wxBitmap(thumbnails[pagenumber]);
 }
 
 bool ComicBook::IsPageLandscape(wxUint32 pagenumber)
@@ -267,10 +277,10 @@ void * ComicBook::Entry()
 			if (!resamples[target].Ok()) {
 				try {
 					if (!originals[target].Ok()) {
-						wxInputStream * is = ExtractStream(target);
-						pageBytes = is->GetSize();
-						if (is->IsOk() && is->GetSize() > 0)
-							originals[target].LoadFile(*is);
+						wxInputStream * stream = ExtractStream(target);
+						pageBytes = stream->GetSize();
+						if (stream->IsOk() && stream->GetSize() > 0)
+							originals[target].LoadFile(*stream);
 						else {
 							wxLogError(wxT("Failed to extract page %d."), target);
 							originals[target] = wxImage(1, 1);
@@ -279,15 +289,20 @@ void * ComicBook::Entry()
 							wxLogError(wxT("Failed to extract page %d."), target);
 							originals[target] = wxImage(1, 1);
 						}
-						delete is;
+						delete stream;
 					}
 				} catch (ArchiveException &ae) {
 					wxLogError(ae.Message);
 					wxLog::FlushActive();
 				}
 				ScaleImage(target);
-				if (!resamples[target].Ok())
-					wxLogError(wxT("Failed to scale page %d."), target);
+				
+				if (!thumbnails[target].Ok())
+					ScaleThumbnail(target);
+					
+				if (!resamples[target].Ok() || !thumbnails[target].Ok())
+					wxLogError(wxT("Could not scale page %d."), target);
+
 				imageLockers[target].Unlock();
 				break;
 			}
@@ -304,7 +319,7 @@ void * ComicBook::Entry()
 					
 					if(resamples[i].Ok())
 						resamples[i].Destroy();
-					
+						
 					imageLockers[i].Unlock();
 					
 					if(originals[i].Ok())
@@ -463,4 +478,46 @@ void ComicBook::ScaleImage(wxUint32 pagenumber)
 		break;
 	}
 
+}
+
+void ComicBook::ScaleThumbnail(wxUint32 pagenumber)
+{
+	wxImage &orig = originals[pagenumber];
+	wxInt32 xImage, yImage, xScaled, yScaled;
+	float scalingFactor;
+	
+	if (Orientations[pagenumber] == NORTH || Orientations[pagenumber] == SOUTH) {
+		xImage = orig.GetWidth();
+		yImage = orig.GetHeight();
+	} else {// EAST || WEST
+		yImage = orig.GetWidth();
+		xImage = orig.GetHeight();
+	}
+	
+	if(float(yImage) / float(xImage) > 0.6f) {
+		yScaled = 60;
+		scalingFactor = float(yImage) / 60.0f;
+		xScaled = wxInt32(float(xImage) * scalingFactor);
+	} else {
+		xScaled = 100;
+		scalingFactor = float(xImage) / 100.0f;
+		yScaled = wxInt32(float(yImage) * scalingFactor);
+	}
+	
+	switch (Orientations[pagenumber]) {
+	case NORTH:
+		thumbnails[pagenumber] = FreeImage_Rescale(orig, xScaled, yScaled, fiFilter);
+		break;
+	case EAST:
+		thumbnails[pagenumber] = FreeImage_Rescale(orig, yScaled, xScaled, fiFilter).Rotate90(true);
+		break;
+	case SOUTH:
+		thumbnails[pagenumber] = FreeImage_Rescale(orig, xScaled, yScaled, fiFilter).Rotate90().Rotate90();
+		break;
+	case WEST:
+		thumbnails[pagenumber] = FreeImage_Rescale(orig, yScaled, xScaled, fiFilter).Rotate90(false);
+		break;
+	default:
+		break;
+	}
 }

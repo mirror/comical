@@ -207,3 +207,5 @@ unrar/makefile.linux
 unrar/makefile.dmc
 src/ComicBookDir.h
 src/ComicBookDir.cpp
+src/ComicalBrowser.h
+src/ComicalBrowser.cpp

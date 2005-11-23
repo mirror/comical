@@ -10,7 +10,7 @@ STRIP = strip
 .cpp.o:
 	$(CC) $(CFLAGS) -c -o $*.o $<
 
-ALL.O = src/ComicBook.o src/ComicBookRAR.o src/ComicBookZIP.o src/ComicBookDir.o src/ComicalApp.o src/ComicalCanvas.o src/Resize.o src/rarstrm.o
+ALL.O = src/ComicBook.o src/ComicBookRAR.o src/ComicBookZIP.o src/ComicBookDir.o src/ComicalApp.o src/ComicalCanvas.o src/ComicalBrowser.o src/Resize.o src/rarstrm.o
 
 comical: $(ALL.O) unrar/libunrar.a
 	$(CC) -o $@ $(ALL.O) $(LDFLAGS)

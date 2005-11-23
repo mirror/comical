@@ -68,6 +68,7 @@ public:
 	wxBitmap *GetPage(wxUint32 pagenumber);
 	wxBitmap *GetPageLeftHalf(wxUint32 pagenumber);
 	wxBitmap *GetPageRightHalf(wxUint32 pagenumber);
+	wxBitmap *GetThumbnail(wxUint32 pagenumber);
 	bool IsPageLandscape(wxUint32 pagenumber);
 	wxArrayString *Filenames;
 
@@ -82,6 +83,7 @@ protected:
 	virtual wxInputStream * ExtractStream(wxUint32 pageindex) = 0;
 	
 	void ScaleImage(wxUint32 pagenumber);
+	void ScaleThumbnail(wxUint32 pagenumber);
 	// Returns true if the page can fit well in the current zoom mode, i.e., if
 	// squeezing the page into the frame doesn't leave more than
 	// scrollBarThickness pixels of black space on any side.  Returns the
@@ -93,6 +95,7 @@ protected:
 	wxString filename;
 	wxImage *originals;
 	wxImage *resamples;
+	wxImage *thumbnails;
 	wxMutex *imageLockers;
 	
 	wxUint32 cacheLen;

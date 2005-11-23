@@ -1,3 +1,9 @@
+0.8 -
+Memory leak fixed
+Only pages are shown in full-screen mode
+Google Local style scrolling: just drag to move the page!
+Thumbnail browser
+
 0.7 -
 Fit to Width and Fit to Height now better uses available space
 Scrollbars should not show up unless needed anymore

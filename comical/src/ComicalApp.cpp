@@ -183,9 +183,10 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	menuMode->FindItemByPosition(Mode)->Check(true);
 	menuFilter->FindItemByPosition(Filter)->Check(true);
 	
-	theCanvas = new ComicalCanvas(this, wxPoint(0,0), this->GetClientSize());
-
-	toolBarNav = new wxToolBar(this, -1, wxPoint(0, this->GetClientSize().y + 10), wxDefaultSize, wxNO_BORDER | wxTB_HORIZONTAL | wxTB_FLAT);
+	theBrowser = new ComicalBrowser(this, wxPoint(0,0), wxSize(110, GetClientSize().y));
+	
+	theCanvas = new ComicalCanvas(this, wxPoint(110,0), this->GetClientSize());
+	toolBarNav = new wxToolBar(this, -1, wxPoint(110, this->GetClientSize().y + 10), wxDefaultSize, wxNO_BORDER | wxTB_HORIZONTAL | wxTB_FLAT);
 	toolBarNav->SetToolBitmapSize(wxSize(16, 16));
 	toolBarNav->AddTool(ID_CCWL, wxT("Rotate Counter-Clockwise (left page)"), wxBITMAP(rot_ccw), wxT("Rotate Counter-Clockwise (left page)"));
 	toolBarNav->AddTool(ID_CWL, wxT("Rotate Clockwise (left page)"), wxBITMAP(rot_cw), wxT("Rotate Clockwise (left page)"));
@@ -315,6 +316,10 @@ void ComicalFrame::OpenFile(wxString filename)
 			if (theBook) {
 				theCanvas->theBook = theBook;
 				theCanvas->SetParams();
+				
+				theBrowser->theBook = theBook;
+				theBrowser->theCanvas = theCanvas;
+				theBrowser->SetItemCount(theBook->GetPageCount());
 
 				toolBarNav->Enable(true);
 	
@@ -423,6 +428,10 @@ void ComicalFrame::OnBuffer(wxCommandEvent& event)
 
 void ComicalFrame::OnFull(wxCommandEvent& event)
 {
+	if (toolBarNav)
+		toolBarNav->Show(IsFullScreen()); // IsFullScreen will be the opposite in a moment...
+	if (theBrowser)
+		theBrowser->Show(IsFullScreen());
 	ShowFullScreen(!(IsFullScreen()), wxFULLSCREEN_ALL);
 }
 
@@ -560,17 +569,16 @@ void ComicalFrame::OnDouble(wxCommandEvent& event)
 wxSize ComicalFrame::GetClientSize()
 {
 	wxSize clientSize = this->wxFrame::GetClientSize();
-	wxInt32 y = clientSize.y;
-	if (toolBarNav != NULL)
-		y -= toolBarNav->GetSize().y;
-	clientSize.SetHeight(y);
+	if (theBrowser != NULL && theBrowser->IsShown())
+		clientSize.x -= theBrowser->GetSize().x;
+	if (toolBarNav != NULL && toolBarNav->IsShown())
+		clientSize.y -= toolBarNav->GetSize().y;
 	return clientSize;
 }
 
 void ComicalFrame::OnSize(wxSizeEvent &event)
 {
-	if (theCanvas != NULL)
-	{
+	if (theCanvas != NULL) {
 		wxSize clientSize = GetClientSize();
 		theCanvas->SetSize(clientSize);
 	}

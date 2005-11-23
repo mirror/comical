@@ -1,10 +1,9 @@
 Box Zoom/Magnifying Glass
-Google Maps-style scrolling
 Thumbnail pane
-Hide bottom toolbar in fullscreen mode
+Password-protected archives
 Japan-mode (right-to-left)
+const-correctness?
 
 Long Term:
 Draw pages as they are filtered, instead of waiting for them to finish
 User-configurable keybindings
-
