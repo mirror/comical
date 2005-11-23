@@ -103,9 +103,9 @@ class ComicalFrame : public wxFrame
     void OnRotateLeft(wxCommandEvent& event);
     void OnSize(wxSizeEvent &event);
     void OnBuffer(wxCommandEvent& event);
+	void OnZoomBox(wxCommandEvent& event);
 
     wxConfig *config;
-    wxLog *ComicalLog;
 
     ComicalCanvas *theCanvas;
     ComicBook *theBook;
@@ -122,6 +122,7 @@ ID_Rotate,
 ID_RotateLeft,
 ID_RotateRight,
 ID_Full,
+ID_ZoomBox,
 //Zooms
 ID_Unzoomed,
 ID_3Q,

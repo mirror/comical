@@ -63,6 +63,7 @@ BEGIN_EVENT_TABLE(ComicalCanvas, wxScrolledWindow)
 	EVT_SIZE(ComicalCanvas::OnSize)
 	EVT_LEFT_DOWN(ComicalCanvas::OnLeftDown)
 	EVT_LEFT_UP(ComicalCanvas::OnLeftUp)
+	EVT_MOTION(ComicalCanvas::OnMouseMove)
 	EVT_CONTEXT_MENU(ComicalCanvas::OnRightClick)
 	EVT_MENU(ID_ContextOpen, ComicalCanvas::OnOpen)
 	EVT_MENU(ID_ContextOpenDir, ComicalCanvas::OnOpenDir)
@@ -200,24 +201,20 @@ void ComicalCanvas::createBitmaps()
 		// the scroll step == 0.  Otherwise, make the scroll step 10 so that
 		// one can navigate quickly using the arrow keys.
 		
-		wxInt32 xStep, yStep, xVirtSize, yVirtSize, xScrollPos;
+		wxInt32 xStep, yStep, xScrollPos;
 		if (xScroll > xWindow - scrollBarThickness) {
-			xStep = 10;
-			xVirtSize = xScroll / xStep;
-			xScrollPos = (xScroll / 20) - (xWindow / 20);
+			xStep = 1;
+			xScrollPos = (xScroll / 2) - (xWindow / 2);
 		} else {
 			xStep = 0;
-			xVirtSize = xScroll;
 			xScrollPos = 0;
 		}
 		if (yScroll > yWindow - scrollBarThickness) {
-			yStep = 10;
-			yVirtSize = yScroll / yStep;
+			yStep = 1;
 		} else {
 			yStep = 0;
-			yVirtSize = yScroll;
 		}
-		SetScrollbars(xStep, yStep, xVirtSize, yVirtSize, xScrollPos, 0, TRUE);
+		SetScrollbars(xStep, yStep, xScroll, yScroll, xScrollPos, 0, TRUE);
 	}
 	Refresh();
 }
@@ -753,19 +750,20 @@ void ComicalCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 	
 	if (zoomOn) {
 		wxPoint currMousePos = wxGetMousePosition();
+		ScreenToClient(&(currMousePos.x), &(currMousePos.y));
 		wxInt32 minX, maxX, minY, maxY, sizeX, sizeY;
-		if (currMousePos.x < zoomOrigin.x) {
+		if (currMousePos.x < pointerOrigin.x) {
 			minX = currMousePos.x;
-			maxX = zoomOrigin.x;
+			maxX = pointerOrigin.x;
 		} else {
-			minX = zoomOrigin.x;
+			minX = pointerOrigin.x;
 			maxX = currMousePos.x;
 		}
-		if (currMousePos.y < zoomOrigin.y) {
+		if (currMousePos.y < pointerOrigin.y) {
 			minY = currMousePos.y;
-			maxY = zoomOrigin.y;
+			maxY = pointerOrigin.y;
 		} else {
-			minY = zoomOrigin.y;
+			minY = pointerOrigin.y;
 			maxY = currMousePos.y;
 		}
 		sizeX = maxX - minX;
@@ -773,6 +771,9 @@ void ComicalCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 		wxPen pen = dc.GetPen();
 		pen.SetColour(255,255,255);
 		pen.SetStyle(wxLONG_DASH);
+		dc.SetPen(pen);
+		
+		dc.SetBrush(*wxTRANSPARENT_BRUSH);
 		
 		dc.DrawRectangle(minX, minY, sizeX, sizeY);
 	}
@@ -783,6 +784,9 @@ void ComicalCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 
 void ComicalCanvas::OnKeyDown(wxKeyEvent& event)
 {
+	int viewX, viewY;
+	GetViewStart(&viewX, &viewY);
+	
 	switch(event.GetKeyCode()) {
 
 	case WXK_PRIOR:
@@ -807,6 +811,22 @@ void ComicalCanvas::OnKeyDown(wxKeyEvent& event)
 
 	case WXK_END:
 		LastPage();
+		break;
+
+	case WXK_LEFT:
+		Scroll(viewX - 10, -1);
+		break;
+
+	case WXK_RIGHT:
+		Scroll(viewX + 10, -1);
+		break;
+
+	case WXK_DOWN:
+		Scroll(-1, viewY + 10);
+		break;
+
+	case WXK_UP:
+		Scroll(-1, viewY - 10);
 		break;
 
 	default:
@@ -883,7 +903,7 @@ void ComicalCanvas::OnRightClick(wxContextMenuEvent &event)
 
 void ComicalCanvas::SetZoomEnable(bool enabled)
 {
-	zoomEnable = enabled;
+	zoomEnabled = enabled;
 }
 
 void ComicalCanvas::OnOpen(wxCommandEvent &event)
@@ -906,37 +926,59 @@ void ComicalCanvas::OnFull(wxCommandEvent &event)
 
 void ComicalCanvas::OnLeftDown(wxMouseEvent &event)
 {
-	if(!zoomEnable || !theBook)
+	SetFocus();
+	
+	if(!theBook)
 		return;
 	
-	zoomOrigin = event.GetPosition();
-	zoomOn = true;
+	pointerOrigin = event.GetPosition();
+	
+	if (zoomEnabled) {
+		zoomOn = true;
+	}
 }
 
 void ComicalCanvas::OnLeftUp(wxMouseEvent &event)
 {
-	if (!zoomEnable || !theBook)
+	if (!theBook)
 		return;
-		
-	zoomOn = false;
-	
-	wxPoint currMousePos = wxGetMousePosition();
-	wxInt32 minX, maxX, minY, maxY, sizeX, sizeY;
-	if (currMousePos.x < zoomOrigin.x) {
-		minX = currMousePos.x;
-		maxX = zoomOrigin.x;
-	} else {
-		minX = zoomOrigin.x;
-		maxX = currMousePos.x;
-	}
-	if (currMousePos.y < zoomOrigin.y) {
-		minY = currMousePos.y;
-		maxY = zoomOrigin.y;
-	} else {
-		minY = zoomOrigin.y;
-		maxY = currMousePos.y;
-	}
-	sizeX = maxX - minX;
-	sizeY = maxY - minY;
 
+	if (zoomEnabled) {
+		zoomOn = false;
+	
+		wxPoint currMousePos = wxGetMousePosition();
+		wxInt32 minX, maxX, minY, maxY, sizeX, sizeY;
+		if (currMousePos.x < pointerOrigin.x) {
+			minX = currMousePos.x;
+			maxX = pointerOrigin.x;
+		} else {
+			minX = pointerOrigin.x;
+			maxX = currMousePos.x;
+		}
+		if (currMousePos.y < pointerOrigin.y) {
+			minY = currMousePos.y;
+			maxY = pointerOrigin.y;
+		} else {
+			minY = pointerOrigin.y;
+			maxY = currMousePos.y;
+		}
+		sizeX = maxX - minX;
+		sizeY = maxY - minY;
+		Refresh();
+	}
+}
+
+void ComicalCanvas::OnMouseMove(wxMouseEvent &event)
+{
+	if (zoomOn) {
+		Refresh();
+	} else if (event.Dragging()) {
+		wxPoint currMousePos = event.GetPosition();
+		wxInt32 diffX, diffY, viewX, viewY;
+		diffX = currMousePos.x - pointerOrigin.x;
+		diffY = currMousePos.y - pointerOrigin.y;
+		GetViewStart(&viewX, &viewY);
+		Scroll(viewX - diffX, viewY - diffY);
+		pointerOrigin = currMousePos;
+	}
 }

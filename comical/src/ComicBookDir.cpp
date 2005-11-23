@@ -42,6 +42,8 @@ ComicBookDir::ComicBookDir(wxString dir) : ComicBook(dir)
 			Filenames->Add(page);
 	}
 	
+	delete allFiles;
+	
 	Filenames->Sort();
 	Filenames->Shrink();
 	pageCount = Filenames->GetCount();

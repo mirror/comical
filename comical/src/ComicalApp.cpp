@@ -194,7 +194,7 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	toolBarNav->AddTool(ID_PrevTurn, wxT("Previous Page Turn"), wxBITMAP(prevpage), wxT("Previous Page Turn"));
 	toolBarNav->AddTool(ID_PrevSlide, wxT("Previous Page"), wxBITMAP(prev), wxT("Previous Page"));
 	toolBarNav->AddSeparator();
-	toolBarNav->AddTool(ID_ZoomBox, wxT("Zoom"), wxBITMAP(comical), wxT("Zoom"), wxITEM_CHECK);
+	toolBarNav->AddTool(ID_ZoomBox, wxT("Zoom"), wxBITMAP(rot_cw), wxT("Zoom"), wxITEM_CHECK);
 	toolBarNav->AddSeparator();
 	toolBarNav->AddTool(ID_NextSlide, wxT("Next Page"), wxBITMAP(next), wxT("Next Page"));
 	toolBarNav->AddTool(ID_NextTurn, wxT("Next Page Turn"), wxBITMAP(nextpage), wxT("Next Page Turn"));
@@ -578,6 +578,6 @@ void ComicalFrame::OnSize(wxSizeEvent &event)
 
 void ComicalFrame::OnZoomBox(wxCommandEvent &event)
 {
-	if (theCanvas != NULL) {
+	if (theCanvas != NULL)
 		theCanvas->SetZoomEnable(event.IsChecked());
 }

@@ -1,13 +1,10 @@
-MEMORY LEAKAGE - CBRs leak more memory than CBZs
+Box Zoom/Magnifying Glass
+Google Maps-style scrolling
+Thumbnail pane
+Hide bottom toolbar in fullscreen mode
 Japan-mode (right-to-left)
-Replace fiddly OnSize event management with wxSizer calls for toolbar?
-Detect type of file being opened instead of relying on the file extension
-Test cases:
-	0 pages
-	1 page
 
 Long Term:
-Box Zoom/Magnifying Glass
 Draw pages as they are filtered, instead of waiting for them to finish
 User-configurable keybindings
 
