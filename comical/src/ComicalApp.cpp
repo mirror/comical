@@ -85,6 +85,7 @@ bool ComicalApp::OnInit()
 ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSize& size, long style) : wxFrame(NULL, -1, title, pos, size, style)
 {
 	theBook = NULL;
+	theBrowser = NULL;
 	toolBarNav = NULL;
 	labelLeft = NULL;
 	labelRight = NULL;

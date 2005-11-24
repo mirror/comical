@@ -130,9 +130,9 @@ wxBitmap * ComicBook::GetPageRightHalf(wxUint32 pagenumber)
 wxBitmap * ComicBook::GetThumbnail(wxUint32 pagenumber)
 {
 	if (!thumbnails[pagenumber].Ok())
-		return new wxBitmap(100, 60, 24);
-	else
 		return new wxBitmap(thumbnails[pagenumber]);
+	else
+		return NULL;
 }
 
 bool ComicBook::IsPageLandscape(wxUint32 pagenumber)

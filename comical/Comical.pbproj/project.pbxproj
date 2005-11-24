@@ -123,6 +123,8 @@
 		};
 		20286C2AFDCF999611CA2CEA = {
 			children = (
+				D4725A4D093562660094768B,
+				D4725A4E093562660094768B,
 				D487109809203E8800F112CF,
 				D487109909203E8800F112CF,
 				D4582FF508AAD149007DD6F9,
@@ -186,11 +188,10 @@
 				04313892FE3035C9C02AAC07,
 			);
 			buildSettings = {
-				DEBUGGING_SYMBOLS = NO;
 				FRAMEWORK_SEARCH_PATHS = "";
 				HEADER_SEARCH_PATHS = "/usr/local/lib/wx/include/mac-ansi-release-static-2.6 /usr/local/include/wx-2.6 unrar";
 				LIBRARY_SEARCH_PATHS = unrar;
-				OPTIMIZATION_CFLAGS = "-O2";
+				OPTIMIZATION_CFLAGS = "-O0";
 				OTHER_CFLAGS = "\U0001-D__WXMAC__ -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -mcpu=750 -DBIG_ENDIAN -D_LARGEFILE_SOURCE -D_BSD_COMPAT -D_UNIX -DNO_GCC_PRAGMA";
 				OTHER_REZFLAGS = "\U0001";
 				PREBINDING = NO;
@@ -274,6 +275,7 @@
 				D45592C107E69E73001881E8,
 				D4582FF608AAD149007DD6F9,
 				D487109B09203E8800F112CF,
+				D4725A50093562660094768B,
 			);
 			isa = PBXHeadersBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -299,6 +301,7 @@
 				D45592BD07E69E73001881E8,
 				D45592BF07E69E73001881E8,
 				D487109A09203E8800F112CF,
+				D4725A4F093562660094768B,
 			);
 			isa = PBXSourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -559,6 +562,36 @@
 		};
 		D45830A508AAD3A6007DD6F9 = {
 			fileRef = D45830A208AAD3A6007DD6F9;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D4725A4D093562660094768B = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.cpp.cpp;
+			name = ComicalBrowser.cpp;
+			path = src/ComicalBrowser.cpp;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D4725A4E093562660094768B = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = ComicalBrowser.h;
+			path = src/ComicalBrowser.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D4725A4F093562660094768B = {
+			fileRef = D4725A4D093562660094768B;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D4725A50093562660094768B = {
+			fileRef = D4725A4E093562660094768B;
 			isa = PBXBuildFile;
 			settings = {
 			};

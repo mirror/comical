@@ -38,6 +38,7 @@ ComicalBrowser::ComicalBrowser(wxWindow *prnt, const wxPoint &pos, const wxSize 
 	SetBackgroundColour(* wxWHITE);
 	theBook = NULL;
 	theCanvas = NULL;
+	SetMargins(5, 3);
 }
 
 BEGIN_EVENT_TABLE(ComicalBrowser, wxVListBox)
@@ -54,12 +55,16 @@ void ComicalBrowser::OnDrawItem(wxDC& dc, const wxRect& rect, size_t n) const
 	wxBitmap *thumbnail;
 	
 	dc.SetBrush(*wxTRANSPARENT_BRUSH);
-	if (theBook)
+	if (theBook) {
 		thumbnail = theBook->GetThumbnail(n);
-	else
-		thumbnail = new wxBitmap(100, 60, 24);
-	dc.DrawRectangle(((rect.GetWidth() - thumbnail->GetWidth()) / 2) - 1, 0, thumbnail->GetWidth() + 2, thumbnail->GetHeight() + 2); 
-	dc.DrawBitmap(*thumbnail, (rect.GetWidth() - thumbnail->GetWidth()) / 2, 1, false);
+		if (thumbnail) {
+			dc.DrawRectangle(((rect.GetWidth() - thumbnail->GetWidth()) / 2) - 1, rect.y, thumbnail->GetWidth() + 2, thumbnail->GetHeight() + 2); 
+			dc.DrawBitmap(*thumbnail, (rect.GetWidth() - thumbnail->GetWidth()) / 2, rect.y + 1, false);
+			delete thumbnail;
+		}
+		else
+			dc.DrawRectangle(0, rect.y, 102, 62);
+	}
 }
 
 void ComicalBrowser::OnItemSelected(wxCommandEvent &event)
