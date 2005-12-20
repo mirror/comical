@@ -45,20 +45,22 @@ class ComicalBrowser : public wxVListBox
 {
 
   public:
-    ComicalBrowser() {}
     ComicalBrowser(wxWindow *parent, const wxPoint &pos, const wxSize &size);
     ~ComicalBrowser() {}
 
-    ComicBook *theBook;
-    ComicalCanvas *theCanvas;
-
+	void SetComicBook(ComicBook *book);
+	void SetComicalCanvas(ComicalCanvas *canvas);
+	
   private:
 	
 	virtual void OnDrawItem(wxDC& dc, const wxRect& rect, size_t n) const;
 	virtual wxCoord OnMeasureItem(size_t n) const;
-	void OnKeyDown(wxKeyEvent &event);
 	void OnItemSelected(wxCommandEvent &event);
+	void OnCurrentPageChanged(wxCommandEvent &event);
+	void OnThumbnailReady(wxCommandEvent &event);
 	
+    ComicBook *theBook;
+    ComicalCanvas *theCanvas;
     wxWindow *parent;
 
     DECLARE_EVENT_TABLE()

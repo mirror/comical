@@ -26,7 +26,6 @@
  ***************************************************************************/
 
 #include "ComicalBrowser.h"
-#include "ComicalCanvas.h"
 
 #if wxCHECK_VERSION(2, 5, 1)
 ComicalBrowser::ComicalBrowser(wxWindow *prnt, const wxPoint &pos, const wxSize &size) : wxVListBox(prnt, -1, pos, size, wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE | wxLB_SINGLE)
@@ -47,28 +46,61 @@ END_EVENT_TABLE()
 
 wxCoord ComicalBrowser::OnMeasureItem(size_t n) const
 {
-	return wxCoord(62);
+	return wxCoord(60);
 }
 
 void ComicalBrowser::OnDrawItem(wxDC& dc, const wxRect& rect, size_t n) const
 {
-	wxBitmap *thumbnail;
-	
-	dc.SetBrush(*wxTRANSPARENT_BRUSH);
 	if (theBook) {
-		thumbnail = theBook->GetThumbnail(n);
+		wxBitmap *thumbnail = theBook->GetThumbnail(n);
 		if (thumbnail) {
-			dc.DrawRectangle(((rect.GetWidth() - thumbnail->GetWidth()) / 2) - 1, rect.y, thumbnail->GetWidth() + 2, thumbnail->GetHeight() + 2); 
-			dc.DrawBitmap(*thumbnail, (rect.GetWidth() - thumbnail->GetWidth()) / 2, rect.y + 1, false);
+			wxLogError(wxString::Format(wxT("Thumbnail: %d x %d, clipped rect: %d x %d"), thumbnail->GetWidth(), thumbnail->GetHeight(), rect.width, rect.height));
+			wxUint32 xPos = (rect.width / 2) - (thumbnail->GetWidth() / 2) + rect.x;
+			if (xPos < 0)
+				xPos = 0;
+			dc.DrawBitmap(*thumbnail, xPos, rect.y, false);
 			delete thumbnail;
 		}
-		else
-			dc.DrawRectangle(0, rect.y, 102, 62);
 	}
 }
 
 void ComicalBrowser::OnItemSelected(wxCommandEvent &event)
 {
-	if (event.IsSelection() && theCanvas)
-		theCanvas->GoToPage(event.GetSelection());
+	wxLogError(wxT("OnItemSelected"));
+	if (event.IsSelection() && theCanvas) {
+		wxLogError(wxString::Format(wxT("OnItemSelected(%d)"), event.GetInt()));
+		theCanvas->GoToPage(event.GetInt());
+	}
+}
+
+void ComicalBrowser::OnThumbnailReady(wxCommandEvent &event)
+{
+	Refresh();
+}
+
+void ComicalBrowser::OnCurrentPageChanged(wxCommandEvent &event)
+{
+	SetSelection(event.GetInt());
+}
+
+void ComicalBrowser::SetComicBook(ComicBook *book)
+{
+	if (theBook) {
+		theBook->Disconnect(ID_PageThumbnailed, EVT_PAGE_THUMBNAILED, wxCommandEventHandler(ComicalBrowser::OnThumbnailReady), NULL, this);
+	}
+	theBook = book;
+	if (theBook) {
+		theBook->Connect(ID_PageThumbnailed, EVT_PAGE_THUMBNAILED, wxCommandEventHandler(ComicalBrowser::OnThumbnailReady), NULL, this);
+	}
+}
+
+void ComicalBrowser::SetComicalCanvas(ComicalCanvas *canvas)
+{
+	if (theCanvas) {
+		theCanvas->Disconnect(ID_CurrentPageChanged, EVT_CURRENT_PAGE_CHANGED, wxCommandEventHandler(ComicalBrowser::OnCurrentPageChanged), NULL, this);
+	}
+	theCanvas = canvas;
+	if (theCanvas) {
+		theCanvas->Connect(ID_CurrentPageChanged, EVT_CURRENT_PAGE_CHANGED, wxCommandEventHandler(ComicalBrowser::OnCurrentPageChanged), NULL, this);
+	}
 }
