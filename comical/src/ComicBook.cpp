@@ -29,11 +29,17 @@
  ***************************************************************************/
 
 #include "ComicBook.h"
+#include "Exceptions.h"
+
+DEFINE_EVENT_TYPE(EVT_PAGE_SCALED)
+DEFINE_EVENT_TYPE(EVT_PAGE_THUMBNAILED)
+DEFINE_EVENT_TYPE(EVT_CURRENT_PAGE_CHANGED)
 
 ComicBook::ComicBook(wxString file) : wxThread(wxTHREAD_JOINABLE)
 {
 	pageCount = 0;
-	Current = 0;
+	currentPage = 0;
+	evtHandler = new wxEvtHandler();
 	filename = file;
 	wxConfigBase *config = wxConfigBase::Get();
 	// Each of the long values is followed by the letter L not the number one
@@ -57,6 +63,7 @@ ComicBook::~ComicBook()
 	delete[] Orientations;
 	delete[] imageLockers;
 	delete Filenames;
+	delete evtHandler;
 }
 
 void ComicBook::RotatePage(wxUint32 pagenumber, COMICAL_ROTATE direction)
@@ -95,20 +102,21 @@ bool ComicBook::SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COM
 
 wxBitmap * ComicBook::GetPage(wxUint32 pagenumber)
 {
-wxLog::FlushActive();
-	wxBusyCursor busy;
-	while (!resamples[pagenumber].Ok()) {
-		Sleep(50);
-	}
+	if (pagenumber > pageCount)
+		throw new PageOutOfRangeException(pagenumber, pageCount);
+	if (!resamples[pagenumber].Ok())
+		return NULL;
+	wxMutexLocker lock(imageLockers[pagenumber]);
 	return new wxBitmap(resamples[pagenumber]);
 }
 
 wxBitmap * ComicBook::GetPageLeftHalf(wxUint32 pagenumber)
 {
-	wxBusyCursor busy;
-	while (!resamples[pagenumber].Ok()) {
-		Sleep(50);
-	}
+	if (pagenumber > pageCount)
+		throw new PageOutOfRangeException(pagenumber, pageCount);
+	if (!resamples[pagenumber].Ok())
+		return NULL;
+	wxMutexLocker lock(imageLockers[pagenumber]);
 	wxInt32 rWidth = resamples[pagenumber].GetWidth();
 	wxInt32 rHeight = resamples[pagenumber].GetHeight();
 	return new wxBitmap(resamples[pagenumber].GetSubImage(wxRect(0, 0, rWidth / 2, rHeight)));
@@ -116,10 +124,11 @@ wxBitmap * ComicBook::GetPageLeftHalf(wxUint32 pagenumber)
 
 wxBitmap * ComicBook::GetPageRightHalf(wxUint32 pagenumber)
 {
-	wxBusyCursor busy;
-	while (!resamples[pagenumber].Ok()) {
-		Sleep(50);
-	}
+	if (pagenumber > pageCount)
+		throw new PageOutOfRangeException(pagenumber, pageCount);
+	if (!resamples[pagenumber].Ok())
+		return NULL;
+	wxMutexLocker lock(imageLockers[pagenumber]);
 	wxInt32 rWidth = resamples[pagenumber].GetWidth();
 	wxInt32 rHeight = resamples[pagenumber].GetHeight();
 	wxInt32 offset = rWidth / 2;
@@ -129,26 +138,51 @@ wxBitmap * ComicBook::GetPageRightHalf(wxUint32 pagenumber)
 
 wxBitmap * ComicBook::GetThumbnail(wxUint32 pagenumber)
 {
+	if (pagenumber > pageCount)
+		throw new PageOutOfRangeException(pagenumber, pageCount);
 	if (!thumbnails[pagenumber].Ok())
-		return new wxBitmap(thumbnails[pagenumber]);
-	else
 		return NULL;
+	return new wxBitmap(thumbnails[pagenumber]);
 }
 
 bool ComicBook::IsPageLandscape(wxUint32 pagenumber)
 {
+	wxInt32 rWidth, rHeight;
 	if (pagenumber > pageCount)
 		throw new PageOutOfRangeException(pagenumber, pageCount);
-	wxBusyCursor busy;
-	while (!resamples[pagenumber].Ok()) {
-		Sleep(50);
-	}
-	wxInt32 rWidth = resamples[pagenumber].GetWidth();
-	wxInt32 rHeight = resamples[pagenumber].GetHeight();
+	wxMutexLocker lock(imageLockers[pagenumber]);
+	if (resamples[pagenumber].Ok()) {
+		rWidth = resamples[pagenumber].GetWidth();
+		rHeight = resamples[pagenumber].GetHeight();
+	} else if (originals[pagenumber].Ok()) {
+		if (Orientations[pagenumber] == NORTH ||
+				Orientations[pagenumber] == SOUTH) {
+			rWidth = originals[pagenumber].GetWidth();
+			rHeight = originals[pagenumber].GetHeight();
+		} else {
+			rHeight = originals[pagenumber].GetWidth();
+			rWidth = originals[pagenumber].GetHeight();
+		}
+	} else
+		return false;
 	if ((float(rWidth)/float(rHeight)) > 1.0f)
 		return true;
 	else
 		return false;
+}
+
+bool ComicBook::IsPageReady(wxUint32 pagenumber)
+{
+	if (pagenumber > pageCount)
+		throw new PageOutOfRangeException(pagenumber, pageCount);
+	return resamples[pagenumber].Ok();
+}
+
+bool ComicBook::IsThumbReady(wxUint32 pagenumber)
+{
+	if (pagenumber > pageCount)
+		throw new PageOutOfRangeException(pagenumber, pageCount);
+	return thumbnails[pagenumber].Ok();
 }
 
 bool ComicBook::FitWithoutScrollbars(wxUint32 pagenumber, float *scalingFactor)
@@ -233,10 +267,10 @@ bool ComicBook::FitWithoutScrollbars(wxUint32 pagenumber)
 void * ComicBook::Entry()
 {
 	wxUint32 i;
-	wxInt32 low, high, target, currentPage, pageBytes;
+	wxInt32 low, high, target, stableCurrentPage, pageBytes;
 
 	while (!TestDestroy()) {
-		currentPage = wxInt32(Current); // in case this value changes midloop
+		stableCurrentPage = wxInt32(currentPage); // in case this value changes midloop
 		
 		// The caching algorithm.  First calculates next highest
 		// priority page, then checks to see if that page needs
@@ -252,15 +286,15 @@ void * ComicBook::Entry()
 			high = 2 * cacheLen / 3;
 			low = cacheLen - high;
 			
-			high = currentPage + high - 1;
-			low = currentPage - low;
+			high = stableCurrentPage + high - 1;
+			low = stableCurrentPage - low;
 
 			/* Keep the window within 0 and pageCount. */
 			if (high >= wxInt32(pageCount)) {
 				low -= (high - pageCount) + 1;
 				high = pageCount - 1;
 			} else if (low < 0) {
-				high += low * -1;
+				high -= low; // low is negative, this is an addition
 				low = 0;
 			}
 		}
@@ -268,9 +302,9 @@ void * ComicBook::Entry()
 		for (i = 0; i < cacheLen && i < pageCount; i++) {
 			if (TestDestroy())
 				break;
-			target = currentPage + i;
+			target = stableCurrentPage + i;
 			if (target > high)
-				target = currentPage - (target - high);
+				target = stableCurrentPage - (target - high);
 			
 			imageLockers[target].Lock();
 			
@@ -474,10 +508,8 @@ void ComicBook::ScaleImage(wxUint32 pagenumber)
 	case WEST:
 		resamples[pagenumber] = FreeImage_Rescale(orig, wxInt32(yImage * scalingFactor), wxInt32(xImage * scalingFactor), fiFilter).Rotate90(false);
 		break;
-	default:
-		break;
 	}
-
+	SendScaledEvent(pagenumber);
 }
 
 void ComicBook::ScaleThumbnail(wxUint32 pagenumber)
@@ -496,11 +528,11 @@ void ComicBook::ScaleThumbnail(wxUint32 pagenumber)
 	
 	if(float(yImage) / float(xImage) > 0.6f) {
 		yScaled = 60;
-		scalingFactor = float(yImage) / 60.0f;
+		scalingFactor = 60.0f / float(yImage);
 		xScaled = wxInt32(float(xImage) * scalingFactor);
 	} else {
 		xScaled = 100;
-		scalingFactor = float(xImage) / 100.0f;
+		scalingFactor = 100.0f / float(xImage);
 		yScaled = wxInt32(float(yImage) * scalingFactor);
 	}
 	
@@ -517,7 +549,33 @@ void ComicBook::ScaleThumbnail(wxUint32 pagenumber)
 	case WEST:
 		thumbnails[pagenumber] = FreeImage_Rescale(orig, yScaled, xScaled, fiFilter).Rotate90(false);
 		break;
-	default:
-		break;
 	}
+	SendThumbnailedEvent(pagenumber);
+}
+
+void ComicBook::SetCurrentPage(wxUint32 pagenumber)
+{
+	currentPage = pagenumber;
+	SendCurrentPageChangedEvent();
+}
+
+void ComicBook::SendScaledEvent(wxUint32 pagenumber)
+{
+	wxCommandEvent event(EVT_PAGE_SCALED, ID_PageScaled);
+	event.SetInt(pagenumber);
+	GetEventHandler()->AddPendingEvent(event);
+}
+
+void ComicBook::SendThumbnailedEvent(wxUint32 pagenumber)
+{
+	wxCommandEvent event(EVT_PAGE_THUMBNAILED, ID_PageThumbnailed);
+	event.SetInt(pagenumber);
+	GetEventHandler()->AddPendingEvent(event);
+}
+
+void ComicBook::SendCurrentPageChangedEvent()
+{
+	wxCommandEvent event(EVT_CURRENT_PAGE_CHANGED, -1);
+	event.SetInt(this->GetCurrentPage());
+	GetEventHandler()->AddPendingEvent(event);
 }

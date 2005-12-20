@@ -41,8 +41,8 @@
 #include <wx/timer.h>
 #include <wx/config.h>
 #include <wx/arrstr.h>
+#include <wx/event.h>
 
-#include "Exceptions.h"
 #include "Resize.h"
 
 enum COMICAL_MODE {ONEPAGE, TWOPAGE};
@@ -71,11 +71,27 @@ public:
 	wxBitmap *GetThumbnail(wxUint32 pagenumber);
 	bool IsPageLandscape(wxUint32 pagenumber);
 	wxArrayString *Filenames;
+	bool IsPageReady(wxUint32 pagenumber);
+	bool IsThumbReady(wxUint32 pagenumber);
+	
+	wxUint32 GetCurrentPage() { return currentPage; }
+	void SetCurrentPage(wxUint32 pagenumber);
 
-	/* Used to prefetch nearby pages and discard distant pages. 
-	 * when mode = TWOPAGE, Current is the pagenumber of the page on the right.
-	 * when mode = ONEPAGE, Current is the pagenumber of the displayed page. */
-	wxUint32 Current;
+	// Instead of insane multiple inheritance, put the evtHandler inside this
+	// class and provide passthroughs to its methods
+	wxEvtHandler * GetEventHandler() { return evtHandler; }
+	void Connect(int id, int lastId, wxEventType eventType, wxObjectEventFunction function, wxObject* userData = NULL, wxEvtHandler* eventSink = NULL)
+		{ evtHandler->Connect(id, lastId, eventType, function, userData, eventSink); }
+	void Connect(int id, wxEventType eventType, wxObjectEventFunction function, wxObject* userData = NULL, wxEvtHandler* eventSink = NULL)
+		{ evtHandler->Connect(id, eventType, function, userData, eventSink); }
+	void Connect(wxEventType eventType, wxObjectEventFunction function, wxObject* userData = NULL, wxEvtHandler* eventSink = NULL)
+		{ evtHandler->Connect(eventType, function, userData, eventSink); }
+	bool Disconnect(wxEventType eventType = wxEVT_NULL, wxObjectEventFunction function = NULL, wxObject* userData = NULL, wxEvtHandler* eventSink = NULL)
+		{ return evtHandler->Disconnect(eventType, function, userData, eventSink); }
+	bool Disconnect(int id = wxID_ANY, wxEventType eventType = wxEVT_NULL, wxObjectEventFunction function = NULL, wxObject* userData = NULL, wxEvtHandler* eventSink = NULL)
+		{ return evtHandler->Disconnect(id, eventType, function, userData, eventSink); }
+	bool Disconnect(int id, int lastId = wxID_ANY, wxEventType eventType = wxEVT_NULL, wxObjectEventFunction function = NULL, wxObject* userData = NULL, wxEvtHandler* eventSink = NULL)
+		{ return evtHandler->Disconnect(id, lastId, eventType, function, userData, eventSink); }
 
 	COMICAL_ROTATE *Orientations;
 	
@@ -91,7 +107,16 @@ protected:
 	bool FitWithoutScrollbars(wxUint32 pagenumber, float *scalingFactor);
 	bool FitWithoutScrollbars(wxUint32 pagenumber);
 	
+	void SendScaledEvent(wxUint32 pagenumber);
+	void SendThumbnailedEvent(wxUint32 pagenumber);
+	void SendCurrentPageChangedEvent();
+
 	wxUint32 pageCount;
+	
+	/* Used to prefetch nearby pages and discard distant pages. 
+	 * when mode = TWOPAGE, Current is the pagenumber of the page on the right.
+	 * when mode = ONEPAGE, Current is the pagenumber of the displayed page. */
+	wxUint32 currentPage;
 	wxString filename;
 	wxImage *originals;
 	wxImage *resamples;
@@ -109,6 +134,13 @@ protected:
 	wxInt32 canvasWidth;
 	wxInt32 canvasHeight;
 
+	wxEvtHandler *evtHandler;
 };
+
+enum { ID_PageThumbnailed, ID_PageScaled };
+
+DECLARE_EVENT_TYPE(EVT_PAGE_SCALED, -1)
+DECLARE_EVENT_TYPE(EVT_PAGE_THUMBNAILED, -1)
+DECLARE_EVENT_TYPE(EVT_CURRENT_PAGE_CHANGED, -1)
 
 #endif

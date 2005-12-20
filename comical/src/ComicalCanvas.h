@@ -2,7 +2,7 @@
       ComicalCanvas.h - ComicalCanvas class and supporting declarations
                              -------------------
     begin                : Thu Dec 18 2003
-    copyright            : (C) 2003 by James Athey
+    copyright            : (C) 2003-2005 by James Athey
     email                : jathey@comcast.net
  ***************************************************************************/
 
@@ -55,24 +55,11 @@ class ComicalCanvas : public wxScrolledWindow
     ~ComicalCanvas();
 
     void FirstPage();
-    void LastPage();
     void GoToPage(wxUint32 pagenumber);
-    void PrevPageTurn();
-    void NextPageTurn();
-    void PrevPageSlide();
-    void NextPageSlide();
-    void Zoom(COMICAL_ZOOM);
     void Mode(COMICAL_MODE);
-    void Filter(FREE_IMAGE_FILTER);
-    void Rotate(bool);
-    void RotateLeft(bool);
-    void Rotate(COMICAL_ROTATE);
-    void RotateLeft(COMICAL_ROTATE);
 	void SetZoomEnable(bool);
-	
+	void SetComicBook(ComicBook *book);	
     void SetParams();
-
-    ComicBook *theBook;
 
   private:
 	void clearBitmap(wxBitmap *&bitmap);
@@ -81,26 +68,35 @@ class ComicalCanvas : public wxScrolledWindow
 	void setPage(wxInt32 pagenumber);
 	void resetView();
 
-	void OnPaint(wxPaintEvent &event);
-	void OnKeyDown(wxKeyEvent &event);
-	void OnSize(wxSizeEvent &event);
-	void OnLeftDown(wxMouseEvent &event);
-	void OnLeftUp(wxMouseEvent &event);
-	void OnMouseMove(wxMouseEvent &event);
-	void OnRightClick(wxContextMenuEvent &event);
-	void OnOpen(wxCommandEvent& event);
-	void OnOpenDir(wxCommandEvent& event);
 	void OnFirst(wxCommandEvent& event) { FirstPage(); }
 	void OnLast(wxCommandEvent& event) { LastPage(); }
 	void OnPrevSlide(wxCommandEvent& event) { PrevPageSlide(); }
 	void OnNextSlide(wxCommandEvent& event) { NextPageSlide(); }
 	void OnPrevTurn(wxCommandEvent& event) { PrevPageTurn(); }
 	void OnNextTurn(wxCommandEvent& event) { NextPageTurn(); }
-	void OnRotateLeftCW(wxCommandEvent& event) { RotateLeft(TRUE); }
-	void OnRotateLeftCCW(wxCommandEvent& event) { RotateLeft(FALSE); }
-	void OnRotateCW(wxCommandEvent& event) { Rotate(TRUE); }
-	void OnRotateCCW(wxCommandEvent& event) { Rotate(FALSE); }
+    void OnZoom(wxCommandEvent& event);
+    void OnFilter(wxCommandEvent& event);
+	void OnPaint(wxPaintEvent &event);
+	void OnKeyDown(wxKeyEvent &event);
+	void OnLeftDown(wxMouseEvent &event);
+	void OnLeftUp(wxMouseEvent &event);
+	void OnMouseMove(wxMouseEvent &event);
+	void OnRightClick(wxContextMenuEvent &event);
+	void OnOpen(wxCommandEvent& event);
+	void OnOpenDir(wxCommandEvent& event);
+	void OnRotateLeft(wxCommandEvent& event);
+	void OnRotate(wxCommandEvent& event);
 	void OnFull(wxCommandEvent& event);
+	
+	void OnPageReady(wxCommandEvent& event);
+
+	void LastPage();
+	void PrevPageTurn();
+	void NextPageTurn();
+	void PrevPageSlide();
+	void NextPageSlide();
+
+	void SendCurrentPageChangedEvent();
 
     wxBitmap *leftPage, *rightPage, *centerPage;
     wxUint32 leftNum, rightNum;
@@ -109,6 +105,7 @@ class ComicalCanvas : public wxScrolledWindow
 
 	wxInt32 scrollBarThickness;
 
+    ComicBook *theBook;
 	wxPoint pointerOrigin;
 	bool zoomEnabled, zoomOn;
     COMICAL_ZOOM zoom;
@@ -132,6 +129,7 @@ ID_ContextPrevTurn,
 ID_ContextNextTurn,
 ID_ContextPrevSlide,
 ID_ContextNextSlide,
+ID_CurrentPageChanged,
 //Rotation
 ID_ContextRotate,
 ID_ContextLeftCW,
