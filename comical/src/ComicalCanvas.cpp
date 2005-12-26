@@ -29,8 +29,6 @@
 #include "ComicalFrame.h"
 #include "Exceptions.h"
 
-IMPLEMENT_DYNAMIC_CLASS(ComicalCanvas, wxScrolledWindow)
-
 #if wxCHECK_VERSION(2, 5, 1)
 ComicalCanvas::ComicalCanvas(wxWindow *prnt, const wxPoint &pos, const wxSize &size) : wxScrolledWindow(prnt, -1, pos, size, wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE)
 #else
@@ -235,7 +233,9 @@ void ComicalCanvas::createBitmaps()
 		}
 		SetScrollbars(xStep, yStep, xScroll, yScroll, xScrollPos, 0, TRUE);
 	}
+	//wxLogError(wxT("Before Refresh()"));
 	Refresh();
+	wxLogError(wxT("createBitmaps() done"));
 }
 
 void ComicalCanvas::FirstPage()
@@ -250,8 +250,7 @@ void ComicalCanvas::FirstPage()
 		centerPage = theBook->GetPage(0);
 	else
 	{
-		if (theBook->IsPageLandscape(0))
-		{
+		if (theBook->IsPageLandscape(0)) {
 			leftNum = 0;
 			rightNum = 0;
 			leftPart = LEFT_HALF;
@@ -259,9 +258,7 @@ void ComicalCanvas::FirstPage()
 			leftPage = theBook->GetPageLeftHalf(0);
 			rightPage = theBook->GetPageRightHalf(0);
 		}
-		else
-		{
-			setPage(1);
+		else {
 			leftNum = 0;
 			rightNum = 1;
 			leftPart = FULL_PAGE;
@@ -287,28 +284,29 @@ void ComicalCanvas::LastPage()
 	setPage(theBook->GetPageCount() - 1);
 	clearBitmaps();
 	
-	wxUint32 current = theBook->GetCurrentPage();
+	wxUint32 lastNum = theBook->GetCurrentPage();
 
 	if (mode == ONEPAGE || theBook->GetPageCount() == 1)
-		centerPage = theBook->GetPage(current);
-	else if (theBook->IsPageLandscape(current)) {
-		leftNum = current;
-		rightNum = current;
+		centerPage = theBook->GetPage(lastNum);
+	else if (theBook->IsPageLandscape(lastNum)) {
+		leftNum = lastNum;
+		rightNum = lastNum;
 		leftPart = LEFT_HALF;
 		rightPart = RIGHT_HALF;
-		leftPage = theBook->GetPageLeftHalf(current);
-		rightPage = theBook->GetPageRightHalf(current);
+		leftPage = theBook->GetPageLeftHalf(lastNum);
+		rightPage = theBook->GetPageRightHalf(lastNum);
 	} else {
-		leftNum = current - 1;
-		rightNum = current;
+		setPage(theBook->GetPageCount() - 2);
+		leftNum = lastNum - 1;
+		rightNum = lastNum;
 		rightPart = FULL_PAGE;
 		rightPage = theBook->GetPage(rightNum);
 		if (theBook->IsPageLandscape(leftNum)) {
 			leftPart = RIGHT_HALF;
-			leftPage = theBook->GetPageRightHalf(current - 1);
+			leftPage = theBook->GetPageRightHalf(lastNum - 1);
 		} else {
 			leftPart = FULL_PAGE;
-			leftPage = theBook->GetPage(current - 1);
+			leftPage = theBook->GetPage(lastNum - 1);
 		}
 	}
 	createBitmaps();
@@ -321,13 +319,11 @@ void ComicalCanvas::GoToPage(wxUint32 pagenumber)
 	if (pagenumber >= theBook->GetPageCount())
 		throw new PageOutOfRangeException(pagenumber, theBook->GetPageCount());
 
-	if (pagenumber == 0)
-	{
+	if (pagenumber == 0) {
 		FirstPage();
 		return;
 	}
-	if (pagenumber == theBook->GetPageCount() - 1)
-	{
+	if (pagenumber == theBook->GetPageCount() - 1) {
 		LastPage();
 		return;
 	}
@@ -337,33 +333,25 @@ void ComicalCanvas::GoToPage(wxUint32 pagenumber)
 
 	if (mode == ONEPAGE)
 		centerPage = theBook->GetPage(pagenumber);
-	else
-	{
-		if (theBook->IsPageLandscape(pagenumber))
-		{
-			leftNum = pagenumber;
-			rightNum = pagenumber;
+	else {
+		leftNum = pagenumber;
+		if (theBook->IsPageLandscape(leftNum)) {
+			rightNum = leftNum;
 			leftPart = LEFT_HALF;
 			rightPart = RIGHT_HALF;
 			leftPage = theBook->GetPageLeftHalf(pagenumber);
 			rightPage = theBook->GetPageRightHalf(pagenumber);
-		}
-		else
-		{
-			leftNum = pagenumber - 1;
-			rightNum = pagenumber;
-			if (theBook->IsPageLandscape(pagenumber - 1))
-			{
-				leftPart = RIGHT_HALF;
-				leftPage = theBook->GetPageRightHalf(pagenumber - 1);
+		} else {
+			rightNum = leftNum + 1;
+			leftPart = FULL_PAGE;
+			leftPage = theBook->GetPage(leftNum);
+			if (theBook->IsPageLandscape(rightNum)) {
+				rightPart = LEFT_HALF;
+				rightPage = theBook->GetPageLeftHalf(rightNum);
+			} else {
+				rightPart = FULL_PAGE;
+				rightPage = theBook->GetPage(rightNum);
 			}
-			else
-			{
-				leftPart = FULL_PAGE;
-				leftPage = theBook->GetPage(pagenumber - 1);
-			}
-			rightPart = FULL_PAGE;
-			rightPage = theBook->GetPage(pagenumber);
 		}
 	}
 	createBitmaps();
@@ -375,8 +363,7 @@ void ComicalCanvas::resetView()
 
 	if (mode == ONEPAGE)
 		centerPage = theBook->GetPage(theBook->GetCurrentPage());
-	else
-	{
+	else {
 		if (leftPart == LEFT_HALF)
 			leftPage = theBook->GetPageLeftHalf(leftNum);
 		else if (leftPart == RIGHT_HALF)
@@ -399,50 +386,25 @@ void ComicalCanvas::PrevPageTurn()
 	if (theBook == NULL)
 		return;
 		
-	if (theBook->GetCurrentPage() <= 1) {
-		FirstPage();
-		return;
-	}
-	
 	if (mode == ONEPAGE) {
 		PrevPageSlide();
 		return;
 	}
-
-	if (leftPart != FULL_PAGE) // this covers two different cases
-		setPage(theBook->GetCurrentPage() - 1);
-	else if (theBook->GetCurrentPage() == 2) {
+	
+	if (leftNum == 0 ||
+			(leftNum == 1 && leftPart != RIGHT_HALF)) {
 		FirstPage();
 		return;
-	} else
-		setPage(theBook->GetCurrentPage() - 2);
+	}
 
+	setPage(leftNum - 1);
 	clearBitmaps();
 
-	rightNum = theBook->GetCurrentPage();
-	if (theBook->IsPageLandscape(rightNum)) {
-		if (leftPart == RIGHT_HALF) { // i.e., if the old left page is the right half of the new current
-			rightPart = LEFT_HALF;
-			rightPage = theBook->GetPageLeftHalf(rightNum);
-			leftNum = theBook->GetCurrentPage() - 1;
-			if (theBook->IsPageLandscape(leftNum)) {
-				leftPart = RIGHT_HALF;
-				leftPage = theBook->GetPageRightHalf(leftNum);
-			} else {
-				leftPart = FULL_PAGE;
-				leftPage = theBook->GetPage(leftNum);
-			}
-		} else {
-			leftPart = LEFT_HALF;
-			leftNum = theBook->GetCurrentPage();
-			leftPage = theBook->GetPageLeftHalf(leftNum);
-			rightPart = RIGHT_HALF;
-			rightPage = theBook->GetPageRightHalf(rightNum);
-		}
-	} else {
-		rightPart = FULL_PAGE;
-		rightPage = theBook->GetPage(rightNum);
-		leftNum = rightNum - 1;
+	if (leftPart == RIGHT_HALF) {
+		rightPart = LEFT_HALF;
+		rightNum = leftNum;
+		rightPage = theBook->GetPageLeftHalf(rightNum);
+		leftNum--;
 		if (theBook->IsPageLandscape(leftNum)) {
 			leftPart = RIGHT_HALF;
 			leftPage = theBook->GetPageRightHalf(leftNum);
@@ -450,7 +412,29 @@ void ComicalCanvas::PrevPageTurn()
 			leftPart = FULL_PAGE;
 			leftPage = theBook->GetPage(leftNum);
 		}
+	} else {
+		rightNum = leftNum - 1;
+		if (theBook->IsPageLandscape(rightNum)) {
+			leftNum = rightNum;
+			leftPart = LEFT_HALF;
+			rightPart = RIGHT_HALF;
+			leftPage = theBook->GetPageLeftHalf(leftNum);
+			rightPage = theBook->GetPageRightHalf(rightNum);
+		} else {
+			setPage(leftNum - 2);
+			rightPart = FULL_PAGE;
+			rightPage = theBook->GetPage(rightNum);
+			leftNum = rightNum - 1;
+			if (theBook->IsPageLandscape(leftNum)) {
+				leftPart = RIGHT_HALF;
+				leftPage = theBook->GetPageRightHalf(leftNum);
+			} else {
+				leftPart = FULL_PAGE;
+				leftPage = theBook->GetPage(leftNum);
+			}
+		}
 	}
+
 	createBitmaps();
 }
 
@@ -458,55 +442,56 @@ void ComicalCanvas::NextPageTurn()
 {
 	if (theBook == NULL)
 		return;
-	
-	if (theBook->GetCurrentPage() >= theBook->GetPageCount() - 1) {
-		LastPage();
-		return;
-	} else if (mode == ONEPAGE) {
+		
+	if (mode == ONEPAGE) {
 		NextPageSlide();
 		return;
-	} else if (rightPart == LEFT_HALF) { // right page is old left half of current
-		setPage(rightNum + 1);
-		clearBitmaps();
-		leftPart = RIGHT_HALF;
-		leftNum = rightNum;
-		leftPage = theBook->GetPageRightHalf(leftNum);
-		rightNum = theBook->GetCurrentPage();
-		if (theBook->IsPageLandscape(rightNum)) {
-			rightPart = LEFT_HALF;
-			rightPage = theBook->GetPageLeftHalf(rightNum);
-		} else {
-			rightPart = FULL_PAGE;
-			rightPage = theBook->GetPage(rightNum);
-		}
-	} else if (theBook->IsPageLandscape(rightNum + 1)) {
-		setPage(rightNum + 1);
-		clearBitmaps();
-		leftNum = theBook->GetCurrentPage();
-		leftPart = LEFT_HALF;
-		leftPage = theBook->GetPageLeftHalf(leftNum);
-		rightNum = theBook->GetCurrentPage();
-		rightPart = RIGHT_HALF;
-		rightPage = theBook->GetPageRightHalf(rightNum);
-	} else if (theBook->GetCurrentPage() == theBook->GetPageCount() - 2) {
-		LastPage();
-		return;
-	} else {
-		setPage(rightNum + 2);
-		clearBitmaps();
-		leftNum = theBook->GetCurrentPage() - 1;
-		leftPart = FULL_PAGE;
-		leftPage = theBook->GetPage(leftNum);
-		rightNum = theBook->GetCurrentPage();
-		if (theBook->IsPageLandscape(rightNum)) {
-			rightPart = LEFT_HALF;
-			rightPage = theBook->GetPageLeftHalf(rightNum);
-		} else {
-			rightPart = FULL_PAGE;
-			rightPage = theBook->GetPage(rightNum);
-		}
 	}
 	
+	if (rightNum >= theBook->GetPageCount() - 1 ||
+			(rightNum == theBook->GetPageCount() - 2 && rightPart != LEFT_HALF)) {
+		LastPage();
+		return;
+	}
+	
+	clearBitmaps();
+	
+	if (rightPart == LEFT_HALF) {
+		setPage(rightNum);
+		leftNum = rightNum;
+		leftPart = RIGHT_HALF;
+		leftPage = theBook->GetPageRightHalf(leftNum);
+		rightNum++;
+		if (theBook->IsPageLandscape(rightNum)) {
+			rightPart = LEFT_HALF;
+			rightPage = theBook->GetPageLeftHalf(rightNum);
+		} else {
+			rightPart = FULL_PAGE;
+			rightPage = theBook->GetPage(rightNum);
+		}
+	} else {
+		setPage(rightNum + 1);
+		leftNum = rightNum + 1;
+		if (theBook->IsPageLandscape(leftNum)) {
+			rightNum = leftNum;
+			leftPart = LEFT_HALF;
+			rightPart = RIGHT_HALF;
+			leftPage = theBook->GetPageLeftHalf(leftNum);
+			rightPage = theBook->GetPageRightHalf(rightNum);
+		} else {
+			rightNum = leftNum + 1;
+			leftPart = FULL_PAGE;
+			leftPage = theBook->GetPage(leftNum);
+			if (theBook->IsPageLandscape(rightNum)) {
+				rightPart = LEFT_HALF;
+				rightPage = theBook->GetPageLeftHalf(rightNum);
+			} else {
+				rightPart = FULL_PAGE;
+				rightPage = theBook->GetPage(rightNum);
+			}
+		}
+	}
+
 	createBitmaps();
 }
 
@@ -514,31 +499,24 @@ void ComicalCanvas::PrevPageSlide()
 {
 	if (theBook == NULL)
 		return;
-	if (theBook->GetCurrentPage() <= 0)
+	if (theBook->GetCurrentPage() == 0) // leftNum == currentPage in this case
 		return;
-	if (theBook->GetCurrentPage() == 1)
-	{
-		FirstPage();
-		return;
-	}
+	
 	if (mode == ONEPAGE) {
 		GoToPage(theBook->GetCurrentPage() - 1);
 		return;
 	}
 
-	if (leftNum != rightNum)
-		setPage(theBook->GetCurrentPage() - 1);
-
 	clearBitmaps();
 
-	rightNum = theBook->GetCurrentPage();
+	rightNum = leftNum;
 	if (leftPart == RIGHT_HALF) {
-		leftNum = theBook->GetCurrentPage();
 		leftPart = LEFT_HALF;
 		leftPage = theBook->GetPageLeftHalf(leftNum);
 		rightPart = RIGHT_HALF;
 		rightPage =theBook->GetPageRightHalf(rightNum);
 	} else {
+		setPage(leftNum - 1);
 		if (leftPart == LEFT_HALF) {
 			rightPart = LEFT_HALF;
 			rightPage = theBook->GetPageLeftHalf(rightNum);
@@ -546,7 +524,7 @@ void ComicalCanvas::PrevPageSlide()
 			rightPart = FULL_PAGE;
 			rightPage = theBook->GetPage(rightNum);
 		}
-		leftNum = theBook->GetCurrentPage() - 1;
+		leftNum--;
 		if (theBook->IsPageLandscape(leftNum)) {
 			leftPart = RIGHT_HALF;
 			leftPage = theBook->GetPageRightHalf(leftNum);
@@ -564,33 +542,34 @@ void ComicalCanvas::NextPageSlide()
 		return;
 	if (theBook->GetCurrentPage() >= theBook->GetPageCount() - 1)
 		return;
-	if (theBook->GetCurrentPage() == theBook->GetPageCount() - 2 && rightPart != LEFT_HALF) {
-		LastPage();
-		return;
-	}
+		
 	if (mode == ONEPAGE) {
 		GoToPage(theBook->GetCurrentPage() + 1);
 		return;
 	}
 
-	if (rightPart != LEFT_HALF)
-		setPage(rightNum + 1);
+	if (theBook->GetCurrentPage() == theBook->GetPageCount() - 2 && leftPart != LEFT_HALF) {
+		LastPage();
+		return;
+	}
 
 	clearBitmaps();
 
-	rightNum = theBook->GetCurrentPage();
+	leftNum = rightNum;
 	if (rightPart == LEFT_HALF) {
-		leftNum = rightNum;
+		setPage(leftNum);
 		leftPart = LEFT_HALF;
 		leftPage = theBook->GetPageLeftHalf(leftNum);
 		rightPart = RIGHT_HALF;
 		rightPage = theBook->GetPageRightHalf(rightNum);
 	} else {
-		leftNum = rightNum - 1;
+		rightNum++;
 		if (rightPart == RIGHT_HALF) {
+			// no setPage necessary
 			leftPart = RIGHT_HALF;
 			leftPage = theBook->GetPageRightHalf(leftNum);
 		} else {
+			setPage(leftNum);
 			leftPart = FULL_PAGE;
 			leftPage = theBook->GetPage(leftNum);
 		}
@@ -643,7 +622,7 @@ void ComicalCanvas::OnZoom(wxCommandEvent& event)
 	}
 
 	if (theBook) {
-		SetParams();
+		SetParams(true);
 	}
 }
 
@@ -675,7 +654,7 @@ void ComicalCanvas::OnFilter(wxCommandEvent& event)
 	}
 	
 	if (theBook) {
-		SetParams();
+		SetParams(true);
 	}
 }
 
@@ -685,28 +664,45 @@ void ComicalCanvas::Mode(COMICAL_MODE newMode)
 		if (mode == ONEPAGE && newMode == TWOPAGE) {
 			mode = newMode;
 			if (theBook->GetCurrentPage() == 0) {
-		 		SetParams();
+				SetParams(false);
 				FirstPage();
 				return;
+			} else if (theBook->GetCurrentPage() == theBook->GetPageCount() - 1) {
+				SetParams(false);
+				LastPage();
+				return;
 			} else { // theBook->GetCurrentPage() >= 1
-				leftNum = theBook->GetCurrentPage() - 1;
-				rightNum = theBook->GetCurrentPage();
-		 		SetParams();
+				leftNum = theBook->GetCurrentPage();
+				if (theBook->IsPageLandscape(leftNum)) {
+					leftPart = LEFT_HALF;
+					rightPart = RIGHT_HALF;
+					rightNum = leftNum;
+				} else {
+					leftPart = FULL_PAGE;
+					rightNum = leftNum + 1;
+					if (theBook->IsPageLandscape(rightNum))
+						rightPart = LEFT_HALF;
+					else
+						rightPart = FULL_PAGE;
+					rightNum = leftNum + 1;
+				}
+				SetParams(true);
 			}
 		} else if (mode == TWOPAGE && newMode == ONEPAGE) {
 			mode = newMode;
-			SetParams();
+			SetParams(true);
 		} // else nothing has changed !
 	} else
 		mode = newMode;
 }
 
-void ComicalCanvas::SetParams()
+// boolean to reset view
+void ComicalCanvas::SetParams(bool repaint)
 {
 	wxSize canvasSize = GetSize();
 	if (!theBook)
 		return;
-	if (theBook->SetParams(mode, filter, zoom, canvasSize.x, canvasSize.y, scrollBarThickness) && theBook->IsRunning()) // if the parameters are actually different
+	if (repaint && theBook->SetParams(mode, filter, zoom, canvasSize.x, canvasSize.y, scrollBarThickness) && theBook->IsRunning()) // if the parameters are actually different
 		resetView();
 }
 
@@ -977,7 +973,7 @@ void ComicalCanvas::setPage(wxInt32 pagenumber)
 {
 	if (theBook) {
 		theBook->SetCurrentPage(pagenumber);
-		//SendCurrentPageChangedEvent();
+		SendCurrentPageChangedEvent();
 	}
 }
 

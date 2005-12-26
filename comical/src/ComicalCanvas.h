@@ -50,7 +50,6 @@ class ComicalCanvas : public wxScrolledWindow
 {
 
   public:
-    ComicalCanvas() {}
     ComicalCanvas(wxWindow *parent, const wxPoint &pos, const wxSize &size);
     ~ComicalCanvas();
 
@@ -59,7 +58,7 @@ class ComicalCanvas : public wxScrolledWindow
     void Mode(COMICAL_MODE);
 	void SetZoomEnable(bool);
 	void SetComicBook(ComicBook *book);	
-    void SetParams();
+    void SetParams(bool);
 
   private:
 	void clearBitmap(wxBitmap *&bitmap);
@@ -114,7 +113,6 @@ class ComicalCanvas : public wxScrolledWindow
 
     wxWindow *parent;
 
-    DECLARE_DYNAMIC_CLASS(ComicalCanvas)
     DECLARE_EVENT_TABLE()
 };
 

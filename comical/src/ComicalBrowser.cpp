@@ -41,7 +41,7 @@ ComicalBrowser::ComicalBrowser(wxWindow *prnt, const wxPoint &pos, const wxSize 
 }
 
 BEGIN_EVENT_TABLE(ComicalBrowser, wxVListBox)
-	EVT_LISTBOX(ItemSelected, ComicalBrowser::OnItemSelected)
+	EVT_LISTBOX(wxID_ANY, ComicalBrowser::OnItemSelected)
 END_EVENT_TABLE()
 
 wxCoord ComicalBrowser::OnMeasureItem(size_t n) const
@@ -54,7 +54,6 @@ void ComicalBrowser::OnDrawItem(wxDC& dc, const wxRect& rect, size_t n) const
 	if (theBook) {
 		wxBitmap *thumbnail = theBook->GetThumbnail(n);
 		if (thumbnail) {
-			wxLogError(wxString::Format(wxT("Thumbnail: %d x %d, clipped rect: %d x %d"), thumbnail->GetWidth(), thumbnail->GetHeight(), rect.width, rect.height));
 			wxUint32 xPos = (rect.width / 2) - (thumbnail->GetWidth() / 2) + rect.x;
 			if (xPos < 0)
 				xPos = 0;

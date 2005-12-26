@@ -66,8 +66,4 @@ class ComicalBrowser : public wxVListBox
     DECLARE_EVENT_TABLE()
 };
 
-enum {
-	ItemSelected
-};
-
 #endif

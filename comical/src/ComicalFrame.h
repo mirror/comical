@@ -65,6 +65,8 @@ class ComicalFrame : public wxFrame
     void OnBuffer(wxCommandEvent& event);
 	void OnZoomBox(wxCommandEvent& event);
 
+	void startBook();
+	
     wxConfig *config;
 
     ComicalCanvas *theCanvas;

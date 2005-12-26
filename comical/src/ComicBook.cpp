@@ -267,10 +267,13 @@ bool ComicBook::FitWithoutScrollbars(wxUint32 pagenumber)
 void * ComicBook::Entry()
 {
 	wxUint32 i;
-	wxInt32 low, high, target, stableCurrentPage, pageBytes;
+	wxInt32 low, high, target, curr;
+	bool scalingHappened;
+	wxInputStream *stream;
 
 	while (!TestDestroy()) {
-		stableCurrentPage = wxInt32(currentPage); // in case this value changes midloop
+		scalingHappened = false;
+		curr = wxInt32(currentPage); // in case this value changes midloop
 		
 		// The caching algorithm.  First calculates next highest
 		// priority page, then checks to see if that page needs
@@ -286,8 +289,8 @@ void * ComicBook::Entry()
 			high = 2 * cacheLen / 3;
 			low = cacheLen - high;
 			
-			high = stableCurrentPage + high - 1;
-			low = stableCurrentPage - low;
+			high = curr + high - 1;
+			low = curr - low;
 
 			/* Keep the window within 0 and pageCount. */
 			if (high >= wxInt32(pageCount)) {
@@ -302,17 +305,16 @@ void * ComicBook::Entry()
 		for (i = 0; i < cacheLen && i < pageCount; i++) {
 			if (TestDestroy())
 				break;
-			target = stableCurrentPage + i;
+			target = curr + i;
 			if (target > high)
-				target = stableCurrentPage - (target - high);
+				target = curr - (target - high);
 			
 			imageLockers[target].Lock();
 			
 			if (!resamples[target].Ok()) {
 				try {
 					if (!originals[target].Ok()) {
-						wxInputStream * stream = ExtractStream(target);
-						pageBytes = stream->GetSize();
+						stream = ExtractStream(target);
 						if (stream->IsOk() && stream->GetSize() > 0)
 							originals[target].LoadFile(*stream);
 						else {
@@ -330,6 +332,7 @@ void * ComicBook::Entry()
 					wxLog::FlushActive();
 				}
 				ScaleImage(target);
+				scalingHappened = true;
 				
 				if (!thumbnails[target].Ok())
 					ScaleThumbnail(target);
@@ -342,6 +345,31 @@ void * ComicBook::Entry()
 			}
 
 			imageLockers[target].Unlock();
+		}
+		
+		if (!scalingHappened) {
+			// if the cache is full, then use this iteration to fetch a
+			// thumbnail, if needed.
+			for (wxUint32 j = 0; j < pageCount; j++) {
+				if (!thumbnails[j].Ok()) {
+					if (!originals[j].Ok()) {
+						stream = ExtractStream(j);
+						if (stream->IsOk() && stream->GetSize() > 0)
+							originals[j].LoadFile(*stream);
+						else {
+							wxLogError(wxT("Failed to extract page %d."), j);
+							originals[j] = wxImage(1, 1);
+						}
+						if (!originals[j].Ok()) {
+							wxLogError(wxT("Failed to extract page %d."), j);
+							originals[j] = wxImage(1, 1);
+						}
+						delete stream;
+					}
+					ScaleThumbnail(j);
+					break;
+				}
+			}
 		}
 
 		if (i < cacheLen && i < pageCount) {

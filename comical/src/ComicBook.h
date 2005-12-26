@@ -114,8 +114,8 @@ protected:
 	wxUint32 pageCount;
 	
 	/* Used to prefetch nearby pages and discard distant pages. 
-	 * when mode = TWOPAGE, Current is the pagenumber of the page on the right.
-	 * when mode = ONEPAGE, Current is the pagenumber of the displayed page. */
+	 * when mode = TWOPAGE, currentPage is the pagenumber of the page on the left.
+	 * when mode = ONEPAGE, currentPage is the pagenumber of the displayed page. */
 	wxUint32 currentPage;
 	wxString filename;
 	wxImage *originals;

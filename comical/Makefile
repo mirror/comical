@@ -1,7 +1,6 @@
 CC = `wx-config --cxx`
-LD = `wx-config --ld`
 INCLUDE = -Iunrar
-CFLAGS =  `wx-config --cxxflags` -O2 -Wall -pipe -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -DRARDLL -D_UNIX $(INCLUDE)
+CFLAGS =  `wx-config --cxxflags` -O2 -Wall -pipe -D_UNIX $(INCLUDE)
 LDFLAGS = `wx-config --libs` -Lunrar -lunrar
 STRIP = strip
 
@@ -10,7 +9,7 @@ STRIP = strip
 .cpp.o:
 	$(CC) $(CFLAGS) -c -o $*.o $<
 
-ALL.O = src/ComicBook.o src/ComicBookRAR.o src/ComicBookZIP.o src/ComicBookDir.o src/ComicalApp.o src/ComicalCanvas.o src/ComicalBrowser.o src/Resize.o src/rarstrm.o
+ALL.O := $(patsubst %.cpp,%.o,$(wildcard src/*.cpp))
 
 comical: $(ALL.O) unrar/libunrar.a
 	$(CC) -o $@ $(ALL.O) $(LDFLAGS)

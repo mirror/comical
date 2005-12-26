@@ -246,23 +246,9 @@ void ComicalFrame::OpenFile(wxString filename)
 				theBook = new ComicBookRAR(filename);
 			else if (filename.Right(4).Upper() == wxT(".CBZ") || filename.Right(4).Upper() == wxT(".ZIP"))
 				theBook = new ComicBookZIP(filename);
-
-			if (theBook) {
-				theCanvas->SetComicBook(theBook);
-				theCanvas->SetParams();
-				
-				theBrowser->SetComicBook(theBook);
-				theBrowser->SetItemCount(theBook->GetPageCount());
-
-				toolBarNav->Enable(true);
-	
-				theBook->Run(); // start the thread
-
-				theCanvas->FirstPage();
-				theCanvas->Scroll(-1, 0); // scroll to the top for the first page
-				SetTitle(wxT("Comical - " + filename));
-				config->Write(wxT("/Comical/CWD"), wxPathOnly(filename));
-			}
+			startBook();
+			SetTitle(wxT("Comical - " + filename));
+			config->Write(wxT("/Comical/CWD"), wxPathOnly(filename));
 		} catch (ArchiveException &ae) {
 			wxLogError(ae.Message);
 			wxLog::FlushActive();
@@ -282,27 +268,31 @@ void ComicalFrame::OpenDir(wxString directory)
 
 		try {
 			theBook = new ComicBookDir(directory);
-
-			if (theBook) {
-				theCanvas->SetComicBook(theBook);
-				theCanvas->SetParams();
-
-				theBrowser->SetComicBook(theBook);
-				theBrowser->SetItemCount(theBook->GetPageCount());
-				
-				toolBarNav->Enable(true);
-	
-				theBook->Run(); // start the thread
-
-				theCanvas->FirstPage();
-				theCanvas->Scroll(-1, 0); // scroll to the top for the first page
-				SetTitle(wxT("Comical - " + directory));
-				config->Write(wxT("/Comical/CWD"), directory);
-			}
+			startBook();
+			SetTitle(wxT("Comical - " + directory));
+			config->Write(wxT("/Comical/CWD"), directory);
 		} catch (ArchiveException &ae) {
 			wxLogError(ae.Message);
 			wxLog::FlushActive();
 		}
+	}
+}
+
+void ComicalFrame::startBook()
+{
+	if (theBook) {
+		theCanvas->SetComicBook(theBook);
+		theCanvas->SetParams(false);
+
+		theBrowser->SetComicBook(theBook);
+		theBrowser->SetItemCount(theBook->GetPageCount());
+
+		toolBarNav->Enable(true);
+	
+		theBook->Run(); // start the thread
+	
+		theCanvas->FirstPage();
+		theCanvas->Scroll(-1, 0); // scroll to the top for the first page
 	}
 }
 
@@ -369,7 +359,7 @@ wxSize ComicalFrame::setCanvasSize()
 	if (toolBarNav != NULL && toolBarNav->IsShown())
 		clientSize.y -= toolBarNav->GetSize().y;
 	theCanvas->SetSize(clientSize);
-	theCanvas->SetParams();
+	theCanvas->SetParams(true);
 	return clientSize;
 }
 

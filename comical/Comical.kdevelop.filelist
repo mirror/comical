@@ -209,3 +209,12 @@ src/ComicBookDir.h
 src/ComicBookDir.cpp
 src/ComicalBrowser.h
 src/ComicalBrowser.cpp
+src/PageLoadedEvent.h
+src/PageScaledEvent.h
+src/PageThumbnailedEvent.h
+src/PageLoadedEvent.cpp
+src/PageScaledEvent.cpp
+src/PageThumbnailedEvent.cpp
+src/CurrentPageChangedEvent.h
+src/ComicalFrame.h
+src/ComicalFrame.cpp

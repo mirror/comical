@@ -1,9 +1,12 @@
+currentPage should represent leftNum, not rightNum
+thumbnail selection isn't working yet
+fullscreen mode with no menus, buttons, or thumbnails
+hidable toolbar, thumbnails
+use sizers for children of main frame?
+Opening files from Finder fails on Mac OS X?
 Box Zoom/Magnifying Glass
-Thumbnail pane
-Password-protected archives
+Password-protected archives, use Info-Zip's library?
 Japan-mode (right-to-left)
 const-correctness?
-
-Long Term:
-Draw pages as they are filtered, instead of waiting for them to finish
+Dependency checking in Makefile
 User-configurable keybindings
