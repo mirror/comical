@@ -45,10 +45,10 @@ bool ComicalApp::OnInit()
 	
 	wxConfig *config = new wxConfig(wxT("Comical"));
 	
-	wxInt32 width = (wxInt32) config->Read(wxT("/Comical/FrameWidth"), 600l);
-	wxInt32 height = (wxInt32) config->Read(wxT("/Comical/FrameHeight"), 400l);
-	wxInt32 x = (wxInt32) config->Read(wxT("/Comical/FrameX"), 50l);
-	wxInt32 y = (wxInt32) config->Read(wxT("/Comical/FrameY"), 50l);
+	wxInt32 width = (wxInt32) config->Read(wxT("FrameWidth"), 600l);
+	wxInt32 height = (wxInt32) config->Read(wxT("FrameHeight"), 400l);
+	wxInt32 x = (wxInt32) config->Read(wxT("FrameX"), 50l);
+	wxInt32 y = (wxInt32) config->Read(wxT("FrameY"), 50l);
 	
 	ComicalFrame *frame = new ComicalFrame(wxT("Comical"), wxPoint(x, y), wxSize(width, height), wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE);
 
@@ -56,7 +56,7 @@ bool ComicalApp::OnInit()
 	frame->SetIcon(wxICON(Comical));
 #endif
 
-	frame->Show(TRUE);
+	frame->Show(true);
 	SetTopWindow(frame);
 
 	wxLogStderr *log = new wxLogStderr();
@@ -73,5 +73,5 @@ bool ComicalApp::OnInit()
 		wxLog::FlushActive();
 	}
 
-	return TRUE;
+	return true;
 }

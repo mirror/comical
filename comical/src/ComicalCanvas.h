@@ -41,6 +41,7 @@
 #include <wx/pen.h>
 #include <wx/brush.h>
 #include <wx/utils.h>
+#include <wx/thread.h>
 
 #include "ComicBook.h"
 
@@ -86,7 +87,7 @@ class ComicalCanvas : public wxScrolledWindow
 	void OnRotateLeft(wxCommandEvent& event);
 	void OnRotate(wxCommandEvent& event);
 	void OnFull(wxCommandEvent& event);
-	
+	void OnSize(wxSizeEvent& event);
 	void OnPageReady(wxCommandEvent& event);
 
 	void LastPage();
@@ -111,6 +112,8 @@ class ComicalCanvas : public wxScrolledWindow
     COMICAL_MODE mode;
     FREE_IMAGE_FILTER filter;
 
+	wxMutex paintingMutex;
+	
     wxWindow *parent;
 
     DECLARE_EVENT_TABLE()

@@ -121,7 +121,9 @@ protected:
 	wxImage *originals;
 	wxImage *resamples;
 	wxImage *thumbnails;
-	wxMutex *imageLockers;
+	
+	wxMutex *resampleLockers;
+	wxMutex *thumbnailLockers;
 	
 	wxUint32 cacheLen;
 	

@@ -123,6 +123,8 @@
 		};
 		20286C2AFDCF999611CA2CEA = {
 			children = (
+				D45D9B1C09608E9100C0D459,
+				D45D9B1D09608E9100C0D459,
 				D4725A4D093562660094768B,
 				D4725A4E093562660094768B,
 				D487109809203E8800F112CF,
@@ -276,6 +278,7 @@
 				D4582FF608AAD149007DD6F9,
 				D487109B09203E8800F112CF,
 				D4725A50093562660094768B,
+				D45D9B1F09608E9100C0D459,
 			);
 			isa = PBXHeadersBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -302,6 +305,7 @@
 				D45592BF07E69E73001881E8,
 				D487109A09203E8800F112CF,
 				D4725A4F093562660094768B,
+				D45D9B1E09608E9100C0D459,
 			);
 			isa = PBXSourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -562,6 +566,36 @@
 		};
 		D45830A508AAD3A6007DD6F9 = {
 			fileRef = D45830A208AAD3A6007DD6F9;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D45D9B1C09608E9100C0D459 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.cpp.cpp;
+			name = ComicalFrame.cpp;
+			path = src/ComicalFrame.cpp;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D45D9B1D09608E9100C0D459 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = ComicalFrame.h;
+			path = src/ComicalFrame.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D45D9B1E09608E9100C0D459 = {
+			fileRef = D45D9B1C09608E9100C0D459;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D45D9B1F09608E9100C0D459 = {
+			fileRef = D45D9B1D09608E9100C0D459;
 			isa = PBXBuildFile;
 			settings = {
 			};

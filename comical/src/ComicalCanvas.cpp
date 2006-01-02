@@ -39,9 +39,9 @@ ComicalCanvas::ComicalCanvas(wxWindow *prnt, const wxPoint &pos, const wxSize &s
 	SetBackgroundColour(* wxBLACK);
 	wxConfigBase *config = wxConfigBase::Get();
 	// Each of the long values is followed by the letter L not the number one
-	zoom = (COMICAL_ZOOM) config->Read(wxT("/Comical/Zoom"), 2l); // Fit-to-Width is default
-	mode = (COMICAL_MODE) config->Read(wxT("/Comical/Mode"), 1l); // Double-Page is default
-	filter = (FREE_IMAGE_FILTER) config->Read(wxT("/Comical/Filter"), 4l); // Catmull-Rom is default
+	zoom = (COMICAL_ZOOM) config->Read(wxT("Zoom"), 2l); // Fit-to-Width is default
+	mode = (COMICAL_MODE) config->Read(wxT("Mode"), 1l); // Double-Page is default
+	filter = (FREE_IMAGE_FILTER) config->Read(wxT("Filter"), 4l); // Catmull-Rom is default
 	leftPage = rightPage = centerPage = NULL;
 	theBook = NULL;
 	contextMenu = NULL;
@@ -66,6 +66,7 @@ ComicalCanvas::ComicalCanvas(wxWindow *prnt, const wxPoint &pos, const wxSize &s
 	parent->Connect(ID_CW, ID_West, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(ComicalCanvas::OnRotate), NULL, this);
 	parent->Connect(ID_CWL, ID_WestLeft, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(ComicalCanvas::OnRotateLeft), NULL, this);
 }
+
 BEGIN_EVENT_TABLE(ComicalCanvas, wxScrolledWindow)
 	EVT_PAINT(ComicalCanvas::OnPaint)
 	EVT_KEY_DOWN(ComicalCanvas::OnKeyDown)
@@ -86,15 +87,16 @@ BEGIN_EVENT_TABLE(ComicalCanvas, wxScrolledWindow)
 	EVT_MENU(ID_ContextCW, ComicalCanvas::OnRotate)
 	EVT_MENU(ID_ContextCCW, ComicalCanvas::OnRotate)
 	EVT_MENU(ID_ContextFull, ComicalCanvas::OnFull)
+	EVT_SIZE(ComicalCanvas::OnSize)
 END_EVENT_TABLE()
 
 ComicalCanvas::~ComicalCanvas()
 {
 	clearBitmaps();
 	wxConfigBase *config = wxConfigBase::Get();
-	config->Write(wxT("/Comical/Zoom"), zoom);
-	config->Write(wxT("/Comical/Mode"), mode);
-	config->Write(wxT("/Comical/Filter"), filter);
+	config->Write(wxT("Zoom"), zoom);
+	config->Write(wxT("Mode"), mode);
+	config->Write(wxT("Filter"), filter);
 
 	parent->Disconnect(ID_First, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(ComicalCanvas::OnFirst), NULL, this);
 	parent->Disconnect(ID_Last, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(ComicalCanvas::OnLast), NULL, this);
@@ -118,6 +120,7 @@ void ComicalCanvas::clearBitmap(wxBitmap *&bitmap)
 
 void ComicalCanvas::clearBitmaps()
 {
+	wxMutexLocker lock(paintingMutex);
 	// Get the current scroll positions before we clear the bitmaps
 	clearBitmap(leftPage);
 	clearBitmap(centerPage);
@@ -126,6 +129,8 @@ void ComicalCanvas::clearBitmaps()
 
 void ComicalCanvas::createBitmaps()
 {
+	wxMutexLocker lock(paintingMutex);
+
 	wxInt32 xScroll = 0, yScroll = 0, xWindow, yWindow;
 	bool leftOk = false, rightOk = false;
 	
@@ -233,9 +238,9 @@ void ComicalCanvas::createBitmaps()
 		}
 		SetScrollbars(xStep, yStep, xScroll, yScroll, xScrollPos, 0, TRUE);
 	}
-	//wxLogError(wxT("Before Refresh()"));
+
 	Refresh();
-	wxLogError(wxT("createBitmaps() done"));
+
 }
 
 void ComicalCanvas::FirstPage()
@@ -702,7 +707,7 @@ void ComicalCanvas::SetParams(bool repaint)
 	wxSize canvasSize = GetSize();
 	if (!theBook)
 		return;
-	if (repaint && theBook->SetParams(mode, filter, zoom, canvasSize.x, canvasSize.y, scrollBarThickness) && theBook->IsRunning()) // if the parameters are actually different
+	if (theBook->SetParams(mode, filter, zoom, canvasSize.x, canvasSize.y, scrollBarThickness) && theBook->IsRunning() && repaint) // if the parameters are actually different
 		resetView();
 }
 
@@ -842,7 +847,7 @@ void ComicalCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 	if (mode == ONEPAGE) {
 		if (centerPage && centerPage->Ok())
 			dc.DrawBitmap(*centerPage, xCanvas/2 - centerPage->GetWidth()/2, 0, false);
-		else {
+		else if (theBook) {
 			text = wxString::Format(wxT("Page %d loading"), theBook->GetCurrentPage() + 1);
 			dc.GetTextExtent(text, &textWidth, &textHeight);
 			textX = (xCanvas / 2) - (textWidth / 2);
@@ -856,7 +861,7 @@ void ComicalCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 	} else { // mode == TWOPAGE
 		if (leftPage && leftPage->Ok())
 			dc.DrawBitmap(*leftPage, xCanvas/2 - leftPage->GetWidth(), 0, false);
-		else {
+		else if (theBook) {
 			text = wxString::Format(wxT("Page %d loading"), leftNum + 1);
 			dc.GetTextExtent(text, &textWidth, &textHeight);
 			textX = (xCanvas / 4) - (textWidth / 2);
@@ -870,7 +875,7 @@ void ComicalCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 		
 		if (rightPage && rightPage->Ok())
 			dc.DrawBitmap(*rightPage, xCanvas/2, 0, false);
-		else {
+		else if (theBook) {
 			text = wxString::Format(wxT("Page %d loading"), rightNum + 1);
 			dc.GetTextExtent(text, &textWidth, &textHeight);
 			textX = ((3 * xCanvas) / 4) - (textWidth / 2);
@@ -1132,4 +1137,9 @@ void ComicalCanvas::SendCurrentPageChangedEvent()
 	wxCommandEvent event(EVT_CURRENT_PAGE_CHANGED, ID_CurrentPageChanged);
 	event.SetInt(theBook->GetCurrentPage());
 	GetEventHandler()->AddPendingEvent(event);
+}
+
+void ComicalCanvas::OnSize(wxSizeEvent &event)
+{
+	SetParams(true);
 }

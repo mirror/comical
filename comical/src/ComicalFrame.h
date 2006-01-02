@@ -27,6 +27,7 @@
 #include <wx/log.h>
 #include <wx/toolbar.h>
 #include <wx/stattext.h>
+#include <wx/sizer.h>
 
 #include "ComicalBrowser.h"
 #include "ComicalCanvas.h"
@@ -54,20 +55,25 @@ class ComicalFrame : public wxFrame
 
   private:
 
-    wxSize setCanvasSize();
     void OnQuit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
     void OnClose(wxCloseEvent& event);
     void OnGoTo(wxCommandEvent& event);
     void OnSingle(wxCommandEvent& event);
     void OnDouble(wxCommandEvent& event);
-    void OnSize(wxSizeEvent &event);
     void OnBuffer(wxCommandEvent& event);
 	void OnZoomBox(wxCommandEvent& event);
+	void OnBrowser(wxCommandEvent& event);
+	void OnToolbar(wxCommandEvent& event);
 
 	void startBook();
 	
     wxConfig *config;
+	
+	wxBoxSizer *frameSizer, *bookPanelSizer, *toolbarSizer;
+	wxPanel *bookPanel;
+	
+	bool browserActive, toolbarActive;
 
     ComicalCanvas *theCanvas;
     ComicBook *theBook;
@@ -86,6 +92,8 @@ ID_RotateLeft,
 ID_RotateRight,
 ID_Full,
 ID_ZoomBox,
+ID_Browser,
+ID_Toolbar,
 //Zooms
 ID_Unzoomed,
 ID_3Q,

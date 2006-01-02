@@ -1,8 +1,7 @@
-currentPage should represent leftNum, not rightNum
 thumbnail selection isn't working yet
-fullscreen mode with no menus, buttons, or thumbnails
-hidable toolbar, thumbnails
-use sizers for children of main frame?
+page navigation now blocks sometimes instead of showing loading text
+toolbar layout is broken
+fix config entry duplication
 Opening files from Finder fails on Mac OS X?
 Box Zoom/Magnifying Glass
 Password-protected archives, use Info-Zip's library?
