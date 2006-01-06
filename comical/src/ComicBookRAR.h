@@ -29,9 +29,6 @@
 #define _ComicBookRAR_h_
 
 #include "ComicBook.h"
-#include "rarstrm.h"
-#include "dll.hpp"
-#include "Exceptions.h"
  
 class ComicBookRAR : public ComicBook {
 

@@ -1,11 +1,13 @@
-thumbnail selection isn't working yet
-page navigation now blocks sometimes instead of showing loading text
-toolbar layout is broken
-fix config entry duplication
-Opening files from Finder fails on Mac OS X?
-Box Zoom/Magnifying Glass
+wxMemoryInputStream (from ComicBookZIP) does not free memory, must do it from ComicBook::Entry, using class introspection?
 Password-protected archives, use Info-Zip's library?
+page navigation should be more responsive
+Opening files from Finder fails on Mac OS X?
+compile issues on some distributions - unicode related?
 Japan-mode (right-to-left)
 const-correctness?
+look for any remaining memory leaks
+errno error handling in ComicBookZIP
 Dependency checking in Makefile
 User-configurable keybindings
+OpenGL backend?
+Box Zoom/Magnifying Glass

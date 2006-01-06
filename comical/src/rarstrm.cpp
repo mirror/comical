@@ -270,6 +270,7 @@ int CALLBACK CallbackProc(wxUint32 msg, long UserData, long P1, long P2)
 		*buffer += P2;
 		break;
 	case UCM_NEEDPASSWORD:
+		// implementation needed!
 		break;
 	}
 	return(0);

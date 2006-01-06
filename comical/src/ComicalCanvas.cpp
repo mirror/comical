@@ -236,7 +236,7 @@ void ComicalCanvas::createBitmaps()
 		} else {
 			yStep = 0;
 		}
-		SetScrollbars(xStep, yStep, xScroll, yScroll, xScrollPos, 0, TRUE);
+		SetScrollbars(xStep, yStep, xScroll, yScroll, xScrollPos, 0, true);
 	}
 
 	Refresh();

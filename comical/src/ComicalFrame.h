@@ -65,16 +65,11 @@ class ComicalFrame : public wxFrame
 	void OnZoomBox(wxCommandEvent& event);
 	void OnBrowser(wxCommandEvent& event);
 	void OnToolbar(wxCommandEvent& event);
-
 	void startBook();
 	
     wxConfig *config;
-	
-	wxBoxSizer *frameSizer, *bookPanelSizer, *toolbarSizer;
-	wxPanel *bookPanel;
-	
+	wxBoxSizer *frameSizer, *bookPanelSizer, *toolbarSizer;	
 	bool browserActive, toolbarActive;
-
     ComicalCanvas *theCanvas;
     ComicBook *theBook;
     ComicalBrowser *theBrowser;

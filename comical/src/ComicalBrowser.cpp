@@ -65,9 +65,7 @@ void ComicalBrowser::OnDrawItem(wxDC& dc, const wxRect& rect, size_t n) const
 
 void ComicalBrowser::OnItemSelected(wxCommandEvent &event)
 {
-	wxLogError(wxT("OnItemSelected"));
-	if (event.IsSelection() && theCanvas) {
-		wxLogError(wxString::Format(wxT("OnItemSelected(%d)"), event.GetInt()));
+	if (theCanvas) {
 		theCanvas->GoToPage(event.GetInt());
 	}
 }

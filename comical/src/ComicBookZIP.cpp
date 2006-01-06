@@ -2,7 +2,7 @@
                               ComicBookZIP.cpp
                              -------------------
     begin                : Wed Oct 29 2003
-    copyright            : (C) 2005 by James Athey
+    copyright            : (C) 2003-2006 by James Athey
     email                : jathey@comcast.net
  ***************************************************************************/
 
@@ -26,36 +26,13 @@
  ***************************************************************************/
 
 #include "ComicBookZIP.h"
-
-#if wxCHECK_VERSION(2, 5, 0)
-#include "wx/wfstream.h"
-#else
-#include <cstdlib>
-#endif
+#include <wx/mstream.h>
+#include "unzip.h"
+#include "Exceptions.h"
 
 ComicBookZIP::ComicBookZIP(wxString file) : ComicBook(file)
 {
 	wxString page;
-
-#if wxCHECK_VERSION(2, 5, 0)
-	wxFFileInputStream *fs = new wxFFileInputStream(filename);
-	if (!fs->Ok()) {
-		delete fs;
-		throw ArchiveException(filename, wxT("Could not open ") + filename);
-	}
- 	wxZipInputStream *zipFile = new wxZipInputStream(*fs);
-	wxZipEntry *entry;
-	while ((entry = zipFile->GetNextEntry()) != NULL) {
-		page = entry->GetName();
-		if(	page.Right(5).Upper() == wxT(".JPEG") || page.Right(4).Upper() == wxT(".JPG") ||
-			page.Right(5).Upper() == wxT(".TIFF") || page.Right(4).Upper() == wxT(".TIF") ||
-			page.Right(4).Upper() == wxT(".GIF") ||
-			page.Right(4).Upper() == wxT(".PNG"))
-			Filenames->Add(page);
-	}
-	delete zipFile;
-	delete fs;
-#else
 	static char namebuf[1024];
 	unzFile ZipFile;
 	unz_file_info *fileInfo;
@@ -70,11 +47,10 @@ ComicBookZIP::ComicBookZIP(wxString file) : ComicBook(file)
 	if (ZipFile) {
 		if ((retcode = unzGoToFirstFile(ZipFile)) != UNZ_OK) {
 			unzClose(ZipFile);
-			ZipFile = NULL;
 			throw ArchiveException(filename, OpenArchiveError(retcode));
 		}
 	} else {
-		throw ArchiveException(wxT("Could not open ") + filename);
+		throw ArchiveException(filename, wxT("Could not open the file."));
 	}
 
 	do {
@@ -88,10 +64,9 @@ ComicBookZIP::ComicBookZIP(wxString file) : ComicBook(file)
 	} while (unzGoToNextFile(ZipFile) == UNZ_OK);
 
 	unzClose(ZipFile);	
-#endif
+
 	Filenames->Sort();
 	Filenames->Shrink();
-
 	pageCount = Filenames->GetCount();
 	
 	originals = new wxImage[pageCount];
@@ -108,16 +83,76 @@ ComicBookZIP::ComicBookZIP(wxString file) : ComicBook(file)
 
 wxInputStream * ComicBookZIP::ExtractStream(wxUint32 pageindex)
 {
-	return new wxZipInputStream(filename, Filenames->Item(pageindex));
+	unzFile ZipFile;
+	unz_file_info *fileInfo;
+	wxUint8 *buffer, *inc_buffer;
+	int retcode;
+	uLong length;
+	
+#ifdef wxUSE_UNICODE
+	ZipFile = unzOpen(filename.mb_str(wxConvUTF8));
+#else // ANSI
+	ZipFile = unzOpen(filename.c_str());
+#endif
+	fileInfo = (unz_file_info*) malloc(sizeof(unz_file_info_s));
+
+	if (!ZipFile) {
+		throw ArchiveException(filename, wxT("Could not open the file."));
+	}
+#ifdef wxUSE_UNICODE	
+	if((retcode = unzLocateFile(ZipFile, Filenames->Item(pageindex).mb_str(wxConvUTF8), 0)) != UNZ_OK) {
+#else
+	if((retcode = unzLocateFile(ZipFile, Filenames->Item(pageindex), 0)) != UNZ_OK) {
+#endif
+		unzClose(ZipFile);
+		throw ArchiveException(filename, OpenArchiveError(retcode));
+	}
+	
+	if ((retcode = unzGetCurrentFileInfo(ZipFile, fileInfo, NULL, 0, NULL, 0, NULL, 0)) != UNZ_OK) {
+		unzClose(ZipFile);
+		throw ArchiveException(filename, OpenArchiveError(retcode));
+	}
+	
+	length = fileInfo->uncompressed_size;
+	buffer = (wxUint8*) malloc(length);
+	inc_buffer = buffer;
+
+	if (password)
+		retcode = unzOpenCurrentFilePassword(ZipFile, password);
+	else
+		retcode = unzOpenCurrentFile(ZipFile);
+		
+	if (retcode != UNZ_OK) {
+		unzClose(ZipFile);
+		throw ArchiveException(filename, OpenArchiveError(retcode));
+	}
+	
+	while((retcode = unzReadCurrentFile(ZipFile, inc_buffer, length)) > 0) {
+		inc_buffer += retcode;
+		length -= retcode;
+	}
+	
+	if (retcode < 0) {
+		unzClose(ZipFile);
+		throw ArchiveException(filename, OpenArchiveError(retcode));
+	}
+	
+	if ((retcode = unzCloseCurrentFile(ZipFile)) != UNZ_OK) {
+		unzClose(ZipFile);
+		throw ArchiveException(filename, OpenArchiveError(retcode));
+	}
+	
+	unzClose(ZipFile);
+
+	return new wxMemoryInputStream(buffer, fileInfo->uncompressed_size);
 }
 
-#if !wxCHECK_VERSION(2, 5, 0)
 wxString ComicBookZIP::OpenArchiveError(int Error)
 {
 	wxString prefix = wxT("Could not open ") + filename;
 	switch(Error) {
 		case UNZ_END_OF_LIST_OF_FILE:
-			return wxString(prefix + wxT(": out of memory"));
+			return wxString(prefix + wxT(": file not found in ZIP file"));
 		case UNZ_ERRNO:
 			return wxString(prefix);
 		case UNZ_EOF:
@@ -130,7 +165,7 @@ wxString ComicBookZIP::OpenArchiveError(int Error)
 			return wxString(prefix + wxT(": internal error"));
 		case UNZ_CRCERROR:
 			return wxString(prefix + wxT(": CRC error"));
+		default:
+			return wxString(prefix);
 	}
 }
-#endif
-

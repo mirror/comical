@@ -56,10 +56,12 @@ public:
 	// Constructors / Destructors
 	ComicBook(wxString file);
 	virtual ~ComicBook();
-  
+	
 	// wxThread required functions
 	virtual void * Entry();
 
+	virtual bool RequiresPassword() { return false; }
+	void SetPassword(char* password);
 	void RotatePage(wxUint32 pagenumber, COMICAL_ROTATE direction);
 	wxUint32 GetPageCount() { return pageCount; }
 	bool SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COMICAL_ZOOM newZoom, wxInt32 newWidth, wxInt32 newHeight, wxInt32 newScrollBarThickness);
@@ -126,7 +128,6 @@ protected:
 	wxMutex *thumbnailLockers;
 	
 	wxUint32 cacheLen;
-	
 	wxInt32 scrollBarThickness;
 	
 	// window parameters
@@ -137,6 +138,8 @@ protected:
 	wxInt32 canvasHeight;
 
 	wxEvtHandler *evtHandler;
+	
+	char* password;
 };
 
 enum { ID_PageThumbnailed, ID_PageScaled };

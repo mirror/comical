@@ -30,6 +30,7 @@
 
 #include "ComicBook.h"
 #include "Exceptions.h"
+#include <cstdlib>
 
 DEFINE_EVENT_TYPE(EVT_PAGE_SCALED)
 DEFINE_EVENT_TYPE(EVT_PAGE_THUMBNAILED)
@@ -43,14 +44,15 @@ ComicBook::ComicBook(wxString file) : wxThread(wxTHREAD_JOINABLE)
 	filename = file;
 	wxConfigBase *config = wxConfigBase::Get();
 	// Each of the long values is followed by the letter L not the number one
-	cacheLen = (wxUint32) config->Read(wxT("/Comical/CacheLength"), 10l); // Fit-to-Width is default
+	cacheLen = (wxUint32) config->Read(wxT("CacheLength"), 10l); // Fit-to-Width is default
 	Filenames = new wxArrayString();
+	password = NULL;
 }
 
 ComicBook::~ComicBook()
 {
 	wxConfigBase *config = wxConfigBase::Get();
-	config->Write(wxT("/Comical/CacheLength"), (int) cacheLen);
+	config->Write(wxT("CacheLength"), (int) cacheLen);
 	for(wxUint32 i = 0; i < pageCount; i++) {
 		if (originals[i].Ok())
 			originals[i].Destroy();
@@ -65,6 +67,8 @@ ComicBook::~ComicBook()
 	delete[] thumbnailLockers;
 	delete Filenames;
 	delete evtHandler;
+	if (password)
+		free(password);
 }
 
 void ComicBook::RotatePage(wxUint32 pagenumber, COMICAL_ROTATE direction)
@@ -614,4 +618,12 @@ void ComicBook::SendCurrentPageChangedEvent()
 	wxCommandEvent event(EVT_CURRENT_PAGE_CHANGED, -1);
 	event.SetInt(this->GetCurrentPage());
 	GetEventHandler()->AddPendingEvent(event);
+}
+
+// SetPassword: takes ownership of the c-string in new_password
+void ComicBook::SetPassword(char* new_password)
+{
+	if (password)
+		free(password);
+	password = new_password;
 }

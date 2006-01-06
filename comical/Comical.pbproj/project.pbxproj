@@ -135,7 +135,6 @@
 				D45592B807E69E73001881E8,
 				D45592B907E69E73001881E8,
 				D45592BA07E69E73001881E8,
-				D45592BB07E69E73001881E8,
 				D45592AE07E69E59001881E8,
 				D45592AF07E69E59001881E8,
 				F70D16A2056C429001B74F27,
@@ -164,6 +163,7 @@
 		};
 		20286C32FDCF999611CA2CEA = {
 			children = (
+				D4AB356B096C4C03004C8398,
 				D47336B008F60FAD00968436,
 				D47336A508F60E2700968436,
 				D45830A008AAD3A6007DD6F9,
@@ -191,8 +191,8 @@
 			);
 			buildSettings = {
 				FRAMEWORK_SEARCH_PATHS = "";
-				HEADER_SEARCH_PATHS = "/usr/local/lib/wx/include/mac-ansi-release-static-2.6 /usr/local/include/wx-2.6 unrar";
-				LIBRARY_SEARCH_PATHS = unrar;
+				HEADER_SEARCH_PATHS = "/usr/local/lib/wx/include/mac-ansi-release-static-2.6 /usr/local/include/wx-2.6 unrar unzip";
+				LIBRARY_SEARCH_PATHS = "unrar unzip";
 				OPTIMIZATION_CFLAGS = "-O0";
 				OTHER_CFLAGS = "\U0001-D__WXMAC__ -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -mcpu=750 -DBIG_ENDIAN -D_LARGEFILE_SOURCE -D_BSD_COMPAT -D_UNIX -DNO_GCC_PRAGMA";
 				OTHER_REZFLAGS = "\U0001";
@@ -244,7 +244,7 @@
 	<key>CFBundleExecutable</key>
 	<string>Comical</string>
 	<key>CFBundleGetInfoString</key>
-	<string>Comical version 0.7, Copyright (c) 2003-2005 James Athey</string>
+	<string>Comical version 0.8, Copyright (c) 2003-2006 James Athey</string>
 	<key>CFBundleIconFile</key>
 	<string>comical.icns</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -254,9 +254,9 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>Comical 0.7</string>
+	<string>Comical 0.8</string>
 	<key>CFBundleVersion</key>
-	<string>0.7</string>
+	<string>0.8</string>
 	<key>CSResourcesFileMapped</key>
 	<true/>
 </dict>
@@ -274,7 +274,6 @@
 				D45592BC07E69E73001881E8,
 				D45592BE07E69E73001881E8,
 				D45592C007E69E73001881E8,
-				D45592C107E69E73001881E8,
 				D4582FF608AAD149007DD6F9,
 				D487109B09203E8800F112CF,
 				D4725A50093562660094768B,
@@ -323,6 +322,7 @@
 				D45830A508AAD3A6007DD6F9,
 				D47336A608F60E2700968436,
 				D47336B108F60FAD00968436,
+				D4AB356C096C4C03004C8398,
 			);
 			isa = PBXFrameworksBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -440,15 +440,6 @@
 			refType = 4;
 			sourceTree = "<group>";
 		};
-		D45592BB07E69E73001881E8 = {
-			fileEncoding = 30;
-			isa = PBXFileReference;
-			lastKnownFileType = sourcecode.c.h;
-			name = unzip.h;
-			path = src/unzip.h;
-			refType = 4;
-			sourceTree = "<group>";
-		};
 		D45592BC07E69E73001881E8 = {
 			fileRef = D45592B607E69E73001881E8;
 			isa = PBXBuildFile;
@@ -475,12 +466,6 @@
 		};
 		D45592C007E69E73001881E8 = {
 			fileRef = D45592BA07E69E73001881E8;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
-		D45592C107E69E73001881E8 = {
-			fileRef = D45592BB07E69E73001881E8;
 			isa = PBXBuildFile;
 			settings = {
 			};
@@ -740,6 +725,20 @@
 		};
 		D487109B09203E8800F112CF = {
 			fileRef = D487109909203E8800F112CF;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D4AB356B096C4C03004C8398 = {
+			isa = PBXFileReference;
+			lastKnownFileType = archive.ar;
+			name = libminiunzip.a;
+			path = unzip/libminiunzip.a;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D4AB356C096C4C03004C8398 = {
+			fileRef = D4AB356B096C4C03004C8398;
 			isa = PBXBuildFile;
 			settings = {
 			};

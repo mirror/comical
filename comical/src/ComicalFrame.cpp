@@ -34,7 +34,6 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	toolBarNav = NULL;
 	labelLeft = NULL;
 	labelRight = NULL;
-	bookPanel = NULL;
 	frameSizer = new wxBoxSizer(wxHORIZONTAL);
 	bookPanelSizer = new wxBoxSizer(wxVERTICAL);
 	toolbarSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -167,21 +166,26 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	toolBarNav->Enable(false);
 	toolBarNav->Fit();
 	toolBarNav->Realize();
-		
-	labelLeft = new wxStaticText(this, -1, wxT(""), wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT/* | wxST_NO_AUTORESIZE*/);
-	labelRight = new wxStaticText(this, -1, wxT(""));
+
+	labelLeft = new wxStaticText(this, -1, wxT(""), wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT | wxST_NO_AUTORESIZE);
+	labelRight = new wxStaticText(this, -1, wxT(""), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT | wxST_NO_AUTORESIZE);
 	wxFont font = labelLeft->GetFont();
 	font.SetPointSize(10);
 	labelLeft->SetFont(font);
 	labelRight->SetFont(font);
 	
-	toolbarSizer->Add(labelLeft, 0, wxEXPAND, 0);
-	toolbarSizer->Add(toolBarNav, 0, wxALIGN_CENTER_HORIZONTAL, 0);
-	toolbarSizer->Add(labelRight, 0, wxEXPAND, 0);
+	toolbarSizer->Add(labelLeft, 1, wxALIGN_LEFT, 0);
+	toolbarSizer->AddSpacer(10);
+	toolbarSizer->Add(toolBarNav, 0, wxALIGN_CENTER, 0);
+	toolbarSizer->AddSpacer(10);
+	toolbarSizer->Add(labelRight, 1, wxALIGN_RIGHT, 0);
 	toolbarSizer->Layout();
 	bookPanelSizer->Add(toolbarSizer, 0, wxEXPAND, 0);
 	frameSizer->Add(bookPanelSizer, 1, wxEXPAND);
 	SetSizer(frameSizer);
+	
+	frameSizer->Show(theBrowser, browserActive);
+	bookPanelSizer->Show(toolbarSizer, toolbarActive, true);
 }
 
 BEGIN_EVENT_TABLE(ComicalFrame, wxFrame)
