@@ -1,7 +1,7 @@
 Ordered by decreasing priority:
 
-wxMemoryInputStream (from ComicBookZIP) does not free memory, must do it from ComicBook::Entry, using class introspection?
 Hangs if closed or book is changed while loading pages
+Changing from fit-to-width to 100% failed to draw images to screen (race condition?)
 Onslaught-X-Men skips first panel
 Event for error messages from other thread
 Broken pages should only be tried once

@@ -30,6 +30,12 @@
 #include <wx/textdlg.h>
 #include "Exceptions.h"
 
+#ifdef wxUSE_UNICODE
+#include <wchar.h>
+#else
+#include <cstring>
+#endif
+
 ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 {
 	HANDLE RarFile;
@@ -44,10 +50,12 @@ ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 #ifdef __WXOSX__
 	OpenArchiveData.ArcName = filename.fn_str().data();
 #else
-	OpenArchiveData.ArcNameW = (wchar_t *) filename.c_str();
+	OpenArchiveData.ArcNameW = new wchar_t[filename.Length() + 1];
+	wcscpy(OpenArchiveData.ArcNameW, filename.c_str());
 #endif
 #else // ANSI
-	OpenArchiveData.ArcName = (char *) filename.c_str();
+	OpenArchiveData.ArcName = new char[filename.Length() + 1];
+	strcpy(OpenArchiveData.ArcName, filename.c_str());
 #endif
 	OpenArchiveData.CmtBuf=CmtBuf;
 	OpenArchiveData.CmtBufSize=sizeof(CmtBuf);
@@ -79,7 +87,7 @@ ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 	}
 
 	if (RHCode == ERAR_BAD_DATA) {
-		RARCloseArchive(RARFile);
+		RARCloseArchive(RarFile);
 		throw ArchiveException(filename, OpenArchiveError(RHCode));
 	}
 
@@ -109,6 +117,11 @@ ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 		SetPassword(new_password.ToAscii());
 	}
 
+#ifdef wxUSE_UNICODE
+	delete[] OpenArchiveData.ArcNameW;
+#else
+	delete[] OpenArchiveData.ArcName;
+#endif
 	Create(); // create the wxThread
 }
 
