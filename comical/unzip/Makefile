@@ -14,7 +14,8 @@ OBJECTS=unzip.o ioapi.o
 
 all: unziplib
 
-clean: @rm -f *.o *.bak *~ *.a
+clean:
+	@rm -f *.o *.bak *~ *.a
 
 unziplib: $(OBJECTS)
 	@rm -f libminiunzip.a

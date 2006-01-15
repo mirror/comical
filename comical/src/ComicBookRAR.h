@@ -29,12 +29,14 @@
 #define _ComicBookRAR_h_
 
 #include "ComicBook.h"
+#include "dll.hpp"
  
 class ComicBookRAR : public ComicBook {
 
 public:
 	ComicBookRAR(wxString file);
 	~ComicBookRAR() {};
+	bool TestPassword();
 
 protected:
 	wxInputStream * ExtractStream(wxUint32 pageindex);
@@ -43,6 +45,8 @@ private:
 	wxString OpenArchiveError(int Error);
 	wxString ProcessFileError(int Error, wxString compressedFile);
 };
+
+int CALLBACK CallbackProc(wxUint32 msg, long UserData, long P1, long P2);
 
 #endif
 

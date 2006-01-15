@@ -27,8 +27,11 @@
 
 #include "ComicBookZIP.h"
 #include <wx/mstream.h>
+#include <wx/textdlg.h>
 #include "unzip.h"
 #include "Exceptions.h"
+#include <cstring>
+#include <errno.h>
 
 ComicBookZIP::ComicBookZIP(wxString file) : ComicBook(file)
 {
@@ -37,17 +40,13 @@ ComicBookZIP::ComicBookZIP(wxString file) : ComicBook(file)
 	unzFile ZipFile;
 	unz_file_info *fileInfo;
 	int retcode;
-#ifdef wxUSE_UNICODE
-	ZipFile = unzOpen(filename.mb_str(wxConvUTF8));
-#else // ANSI
-	ZipFile = unzOpen(filename.c_str());
-#endif
+	ZipFile = unzOpen(filename.ToAscii());
 	fileInfo = (unz_file_info*) malloc(sizeof(unz_file_info_s));
 
 	if (ZipFile) {
 		if ((retcode = unzGoToFirstFile(ZipFile)) != UNZ_OK) {
 			unzClose(ZipFile);
-			throw ArchiveException(filename, OpenArchiveError(retcode));
+			throw ArchiveException(filename, ArchiveError(retcode));
 		}
 	} else {
 		throw ArchiveException(filename, wxT("Could not open the file."));
@@ -63,6 +62,7 @@ ComicBookZIP::ComicBookZIP(wxString file) : ComicBook(file)
 			Filenames->Add(page);
 	} while (unzGoToNextFile(ZipFile) == UNZ_OK);
 
+	free(fileInfo);
 	unzClose(ZipFile);	
 
 	Filenames->Sort();
@@ -77,7 +77,17 @@ ComicBookZIP::ComicBookZIP(wxString file) : ComicBook(file)
 	Orientations = new COMICAL_ROTATE[pageCount];
 	for (wxUint32 i = 0; i < pageCount; i++)
 		Orientations[i] = NORTH;
-	
+
+	wxString passwd;
+	while (!TestPassword()) { // if the password needs to be set
+		passwd = wxGetPasswordFromUser(
+				wxT("This archive is password-protected.  Please enter the password."),
+				wxT("Enter Password"));
+		if (passwd.IsEmpty()) // the dialog was cancelled, and the archive cannot be opened
+			throw ArchiveException(filename, wxT("Could not open the file, because it is password-protected."));
+		SetPassword(passwd.ToAscii());
+	}
+
 	Create(); // create the wxThread
 }
 
@@ -89,32 +99,24 @@ wxInputStream * ComicBookZIP::ExtractStream(wxUint32 pageindex)
 	int retcode;
 	uLong length;
 	
-#ifdef wxUSE_UNICODE
-	ZipFile = unzOpen(filename.mb_str(wxConvUTF8));
-#else // ANSI
-	ZipFile = unzOpen(filename.c_str());
-#endif
+	ZipFile = unzOpen(filename.ToAscii());
 	fileInfo = (unz_file_info*) malloc(sizeof(unz_file_info_s));
 
 	if (!ZipFile) {
 		throw ArchiveException(filename, wxT("Could not open the file."));
 	}
-#ifdef wxUSE_UNICODE	
-	if((retcode = unzLocateFile(ZipFile, Filenames->Item(pageindex).mb_str(wxConvUTF8), 0)) != UNZ_OK) {
-#else
-	if((retcode = unzLocateFile(ZipFile, Filenames->Item(pageindex), 0)) != UNZ_OK) {
-#endif
+	if((retcode = unzLocateFile(ZipFile, Filenames->Item(pageindex).ToAscii(), 0)) != UNZ_OK) {
 		unzClose(ZipFile);
-		throw ArchiveException(filename, OpenArchiveError(retcode));
+		throw ArchiveException(filename, ArchiveError(retcode));
 	}
 	
 	if ((retcode = unzGetCurrentFileInfo(ZipFile, fileInfo, NULL, 0, NULL, 0, NULL, 0)) != UNZ_OK) {
 		unzClose(ZipFile);
-		throw ArchiveException(filename, OpenArchiveError(retcode));
+		throw ArchiveException(filename, ArchiveError(retcode));
 	}
 	
 	length = fileInfo->uncompressed_size;
-	buffer = (wxUint8*) malloc(length);
+	buffer = new wxUint8[length];
 	inc_buffer = buffer;
 
 	if (password)
@@ -124,7 +126,7 @@ wxInputStream * ComicBookZIP::ExtractStream(wxUint32 pageindex)
 		
 	if (retcode != UNZ_OK) {
 		unzClose(ZipFile);
-		throw ArchiveException(filename, OpenArchiveError(retcode));
+		throw ArchiveException(filename, ArchiveError(retcode));
 	}
 	
 	while((retcode = unzReadCurrentFile(ZipFile, inc_buffer, length)) > 0) {
@@ -134,38 +136,73 @@ wxInputStream * ComicBookZIP::ExtractStream(wxUint32 pageindex)
 	
 	if (retcode < 0) {
 		unzClose(ZipFile);
-		throw ArchiveException(filename, OpenArchiveError(retcode));
+		throw ArchiveException(filename, ArchiveError(retcode));
 	}
 	
 	if ((retcode = unzCloseCurrentFile(ZipFile)) != UNZ_OK) {
 		unzClose(ZipFile);
-		throw ArchiveException(filename, OpenArchiveError(retcode));
+		throw ArchiveException(filename, ArchiveError(retcode));
 	}
 	
+	free(fileInfo);
 	unzClose(ZipFile);
 
 	return new wxMemoryInputStream(buffer, fileInfo->uncompressed_size);
 }
 
-wxString ComicBookZIP::OpenArchiveError(int Error)
+wxString ComicBookZIP::ArchiveError(int error)
 {
 	wxString prefix = wxT("Could not open ") + filename;
-	switch(Error) {
+	switch(error) {
 		case UNZ_END_OF_LIST_OF_FILE:
-			return wxString(prefix + wxT(": file not found in ZIP file"));
+			return prefix + wxT(": file not found in ZIP file");
 		case UNZ_ERRNO:
-			return wxString(prefix);
+			return prefix + wxString::FromAscii(strerror(errno));
 		case UNZ_EOF:
-			return wxString(prefix + wxT(": reached the end of the file"));
+			return prefix + wxT(": reached the end of the file");
 		case UNZ_PARAMERROR:
-			return wxString(prefix + wxT(": invalid parameter"));
+			return prefix + wxT(": invalid parameter");
 		case UNZ_BADZIPFILE:
-			return wxString(prefix + wxT(": invalid or corrupted ZIP file"));
+			return prefix + wxT(": invalid or corrupted ZIP file");
 		case UNZ_INTERNALERROR:
-			return wxString(prefix + wxT(": internal error"));
+			return prefix + wxT(": internal error");
 		case UNZ_CRCERROR:
-			return wxString(prefix + wxT(": CRC error"));
+			return prefix + wxT(": CRC error");
 		default:
-			return wxString(prefix);
+			return prefix + wxT(": unknown error ") + wxString::Format(wxT("%d"), error);
 	}
+}
+
+bool ComicBookZIP::TestPassword()
+{
+	int retcode;
+	unzFile ZipFile;
+	ZipFile = unzOpen(filename.ToAscii());
+	bool retval;
+	
+	if (!ZipFile) {
+		throw ArchiveException(filename, wxT("Could not open the file."));
+	}
+	if((retcode = unzLocateFile(ZipFile, Filenames->Item(0).ToAscii(), 0)) != UNZ_OK) {
+		unzClose(ZipFile);
+		throw ArchiveException(filename, ArchiveError(retcode));
+	}
+	
+	if (password)
+		retcode = unzOpenCurrentFilePassword(ZipFile, password);
+	else
+		retcode = unzOpenCurrentFile(ZipFile);
+	if (retcode != UNZ_OK) {
+		unzClose(ZipFile);
+		throw ArchiveException(filename, ArchiveError(retcode));
+	}
+	
+	char testByte;
+	if(unzReadCurrentFile(ZipFile, &testByte, 1) == Z_DATA_ERROR) // if the password is wrong
+		retval = false;
+	else
+		retval = true;
+	unzCloseCurrentFile(ZipFile);
+	unzClose(ZipFile);	
+	return retval;
 }

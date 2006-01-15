@@ -1,13 +1,23 @@
+Ordered by decreasing priority:
+
 wxMemoryInputStream (from ComicBookZIP) does not free memory, must do it from ComicBook::Entry, using class introspection?
+Hangs if closed or book is changed while loading pages
+Onslaught-X-Men skips first panel
+Event for error messages from other thread
+Broken pages should only be tried once
+make install target for Linux systems
+Windows installer (NSIS, InnoSetup)?
+nothing in ComicBook::Entry can call gui functions, including wxLogError!
 Password-protected archives, use Info-Zip's library?
-page navigation should be more responsive
-Opening files from Finder fails on Mac OS X?
 compile issues on some distributions - unicode related?
+Fix string conversion calls in RAR/ZIP ctors on MacOSX
+Opening files from Finder fails on Mac OS X?
+page navigation should be more responsive
 Japan-mode (right-to-left)
 const-correctness?
 look for any remaining memory leaks
-errno error handling in ComicBookZIP
 Dependency checking in Makefile
-User-configurable keybindings
+User-configurable keybindings, use KeyBinder?
 OpenGL backend?
 Box Zoom/Magnifying Glass
+multi-volume RAR?

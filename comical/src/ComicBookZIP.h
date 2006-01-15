@@ -35,12 +35,13 @@ class ComicBookZIP : public ComicBook {
 public:
 	ComicBookZIP(wxString file);
 	~ComicBookZIP() {};
+	bool TestPassword();
 
 protected:
 	wxInputStream * ExtractStream(wxUint32 pageindex);
 
 private:
-	wxString OpenArchiveError(int Error);
+	wxString ArchiveError(int Error);
 
 };
 

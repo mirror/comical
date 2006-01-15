@@ -30,7 +30,8 @@
 
 #include "ComicBook.h"
 #include "Exceptions.h"
-#include <cstdlib>
+#include <cstring>
+#include <wx/mstream.h>
 
 DEFINE_EVENT_TYPE(EVT_PAGE_SCALED)
 DEFINE_EVENT_TYPE(EVT_PAGE_THUMBNAILED)
@@ -66,9 +67,11 @@ ComicBook::~ComicBook()
 	delete[] resampleLockers;
 	delete[] thumbnailLockers;
 	delete Filenames;
+	if (password) {
+		delete[] password;
+		password = NULL;
+	}
 	delete evtHandler;
-	if (password)
-		free(password);
 }
 
 void ComicBook::RotatePage(wxUint32 pagenumber, COMICAL_ROTATE direction)
@@ -161,6 +164,9 @@ bool ComicBook::IsPageLandscape(wxUint32 pagenumber)
 	if (resamples[pagenumber].Ok()) {
 		rWidth = resamples[pagenumber].GetWidth();
 		rHeight = resamples[pagenumber].GetHeight();
+	} else if (thumbnails[pagenumber].Ok()) {
+		rWidth = thumbnails[pagenumber].GetWidth();
+		rHeight = thumbnails[pagenumber].GetHeight();
 	} else if (originals[pagenumber].Ok()) {
 		if (Orientations[pagenumber] == NORTH ||
 				Orientations[pagenumber] == SOUTH) {
@@ -277,6 +283,7 @@ void * ComicBook::Entry()
 	wxInt32 low, high, target, curr;
 	bool scalingHappened;
 	wxInputStream *stream;
+	wxMemoryInputStream *mstream;
 
 	while (!TestDestroy()) {
 		scalingHappened = false;
@@ -322,8 +329,14 @@ void * ComicBook::Entry()
 				try {
 					if (!originals[target].Ok()) {
 						stream = ExtractStream(target);
-						if (stream->IsOk() && stream->GetSize() > 0)
+						if (stream->IsOk() && stream->GetSize() > 0) {
 							originals[target].LoadFile(*stream);
+							// Memory Input Streams don't take ownership of the buffer
+							mstream = dynamic_cast<wxMemoryInputStream*>(stream);
+							if (mstream) {
+								delete[] (wxUint8 *) mstream->GetInputStreamBuffer()->GetBufferStart();
+							}
+						}
 						else {
 							wxLogError(wxT("Failed to extract page %d."), target);
 							originals[target] = wxImage(1, 1);
@@ -334,8 +347,8 @@ void * ComicBook::Entry()
 						}
 						delete stream;
 					}
-				} catch (ArchiveException &ae) {
-					wxLogError(ae.Message);
+				} catch (ArchiveException *ae) {
+					wxLogError(ae->Message);
 					wxLog::FlushActive();
 				}
 				ScaleImage(target);
@@ -620,10 +633,12 @@ void ComicBook::SendCurrentPageChangedEvent()
 	GetEventHandler()->AddPendingEvent(event);
 }
 
-// SetPassword: takes ownership of the c-string in new_password
-void ComicBook::SetPassword(char* new_password)
+void ComicBook::SetPassword(const char* new_password)
 {
+	if (!new_password)
+		return;
 	if (password)
-		free(password);
-	password = new_password;
+		delete[] password;
+	password = new char[strlen(new_password) + 1];
+	strcpy(password, new_password);
 }

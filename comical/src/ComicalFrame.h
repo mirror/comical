@@ -14,17 +14,9 @@
 #ifndef _ComicalFrame_h
 #define _ComicalFrame_h
 
-#include <wx/utils.h>
 #include <wx/frame.h>
-#include <wx/filedlg.h>
-#include <wx/dirdlg.h>
 #include <wx/menu.h>
-#include <wx/textctrl.h>
-#include <wx/msgdlg.h>
-#include <wx/textdlg.h>
-#include <wx/tokenzr.h>
 #include <wx/config.h>
-#include <wx/log.h>
 #include <wx/toolbar.h>
 #include <wx/stattext.h>
 #include <wx/sizer.h>

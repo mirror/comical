@@ -60,8 +60,6 @@ public:
 	// wxThread required functions
 	virtual void * Entry();
 
-	virtual bool RequiresPassword() { return false; }
-	void SetPassword(char* password);
 	void RotatePage(wxUint32 pagenumber, COMICAL_ROTATE direction);
 	wxUint32 GetPageCount() { return pageCount; }
 	bool SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COMICAL_ZOOM newZoom, wxInt32 newWidth, wxInt32 newHeight, wxInt32 newScrollBarThickness);
@@ -140,6 +138,8 @@ protected:
 	wxEvtHandler *evtHandler;
 	
 	char* password;
+	virtual bool TestPassword() { return true; }
+	void SetPassword(const char* new_password);
 };
 
 enum { ID_PageThumbnailed, ID_PageScaled };

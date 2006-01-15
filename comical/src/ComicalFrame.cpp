@@ -15,6 +15,14 @@
 #include "ComicBookZIP.h"
 #include "ComicBookDir.h"
 #include "Exceptions.h"
+#include <wx/textdlg.h>
+#include <wx/textctrl.h>
+#include <wx/filedlg.h>
+#include <wx/dirdlg.h>
+#include <wx/msgdlg.h>
+#include <wx/tokenzr.h>
+#include <wx/log.h>
+#include <wx/utils.h>
 
 #if !defined(__WXMSW__) && !defined(__WXPM__)
 #include "../Comical Icons/firstpage.xpm"
@@ -154,9 +162,9 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	toolBarNav->AddTool(ID_First, wxT("First Page"), wxBITMAP(firstpage), wxT("First Page"));
 	toolBarNav->AddTool(ID_PrevTurn, wxT("Previous Page Turn"), wxBITMAP(prevpage), wxT("Previous Page Turn"));
 	toolBarNav->AddTool(ID_PrevSlide, wxT("Previous Page"), wxBITMAP(prev), wxT("Previous Page"));
-	toolBarNav->AddSeparator();
-	toolBarNav->AddTool(ID_ZoomBox, wxT("Zoom"), wxBITMAP(rot_cw), wxT("Zoom"), wxITEM_CHECK);
-	toolBarNav->AddSeparator();
+//	toolBarNav->AddSeparator();
+//	toolBarNav->AddTool(ID_ZoomBox, wxT("Zoom"), wxBITMAP(rot_cw), wxT("Zoom"), wxITEM_CHECK); // Zoom Box disabled for now
+//	toolBarNav->AddSeparator();
 	toolBarNav->AddTool(ID_NextSlide, wxT("Next Page"), wxBITMAP(next), wxT("Next Page"));
 	toolBarNav->AddTool(ID_NextTurn, wxT("Next Page Turn"), wxBITMAP(nextpage), wxT("Next Page Turn"));
 	toolBarNav->AddTool(ID_Last, wxT("Last Page"), wxBITMAP(lastpage), wxT("Last Page"));
@@ -268,10 +276,15 @@ void ComicalFrame::OpenFile(wxString filename)
 				theBook = new ComicBookRAR(filename);
 			else if (filename.Right(4).Upper() == wxT(".CBZ") || filename.Right(4).Upper() == wxT(".ZIP"))
 				theBook = new ComicBookZIP(filename);
+			
 			startBook();
 			SetTitle(wxT("Comical - " + filename));
 			config->Write(wxT("CWD"), wxPathOnly(filename));
 		} catch (ArchiveException &ae) {
+			if (theBook) {
+				delete theBook;
+				theBook = NULL;
+			}
 			wxLogError(ae.Message);
 			wxLog::FlushActive();
 		}

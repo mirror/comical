@@ -35,7 +35,10 @@ TIFF support provided by:
 Copyright (c) 1988-1997 Sam Leffler
 Copyright (c) 1991-1997 Silicon Graphics, Inc.
 
-Unrar decompression provided by RARLabs.  You cannot use the unrar source to
+ZIP decompression provided by:
+Copyright (C) 1998-2005 Gilles Vollant.
+
+RAR decompression provided by RARLabs.  You cannot use the unrar source to
 re-create the RAR compression algorithm, which is proprietary.  Distribution
 of modified Unrar source in separate form or as part of other software is
 permitted, provided that it is clearly stated in the documentation and source

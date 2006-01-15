@@ -27,7 +27,7 @@
 
 #include "ComicBookRAR.h"
 #include <wx/mstream.h>
-#include "dll.hpp"
+#include <wx/textdlg.h>
 #include "Exceptions.h"
 
 ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
@@ -44,7 +44,7 @@ ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 #ifdef __WXOSX__
 	OpenArchiveData.ArcName = filename.fn_str().data();
 #else
-	OpenArchiveData.ArcNameW = (wchar_t *) filename.wc_str(wxConvLocal);
+	OpenArchiveData.ArcNameW = (wchar_t *) filename.c_str();
 #endif
 #else // ANSI
 	OpenArchiveData.ArcName = (char *) filename.c_str();
@@ -72,12 +72,16 @@ ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 		page.Right(4).Upper() == wxT(".PNG"))
 			Filenames->Add(page);
 		
-		if ((PFCode = RARProcessFile(RarFile, RAR_SKIP, NULL, NULL)) != 0)
+		if ((PFCode = RARProcessFile(RarFile, RAR_SKIP, NULL, NULL)) != 0) {
+			RARCloseArchive(RarFile);
 			throw ArchiveException(filename, ProcessFileError(PFCode, page));
+		}
 	}
 
-	if (RHCode == ERAR_BAD_DATA)
+	if (RHCode == ERAR_BAD_DATA) {
+		RARCloseArchive(RARFile);
 		throw ArchiveException(filename, OpenArchiveError(RHCode));
+	}
 
 	RARCloseArchive(RarFile);
 	
@@ -94,7 +98,17 @@ ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 	Orientations = new COMICAL_ROTATE[pageCount]; // NORTH == 0
 	for (wxUint32 i = 0; i < pageCount; i++)
 		Orientations[i] = NORTH;
-	
+
+	wxString new_password;
+	while (!TestPassword()) { // if the password needs to be set
+		new_password = wxGetPasswordFromUser(
+				wxT("This archive is password-protected.  Please enter the password."),
+				wxT("Enter Password"));
+		if (new_password.IsEmpty()) // the dialog was cancelled, and the archive cannot be opened
+			throw ArchiveException(filename, wxT("Could not open the file, because it is password-protected."));
+		SetPassword(new_password.ToAscii());
+	}
+
 	Create(); // create the wxThread
 }
 
@@ -105,20 +119,16 @@ wxInputStream * ComicBookRAR::ExtractStream(wxUint32 pageindex)
 	char CmtBuf[16384];
 	struct RARHeaderDataEx HeaderData;
 	struct RAROpenArchiveDataEx OpenArchiveData;
-	char * CallBackBuffer;
 	
-	wxString file = Filenames->Item(pageindex);
-	
-	m_Pos = 0;
-	m_Size = 0;
-	m_ArcName = archive;
+	wxString page = Filenames->Item(pageindex);
+	size_t length = 0;
 	
 	memset(&OpenArchiveData, 0, sizeof(OpenArchiveData));
 #ifdef wxUSE_UNICODE
 #ifdef __WXOSX__
 	OpenArchiveData.ArcName = filename.fn_str().data();	
 #else
-	OpenArchiveData.ArcNameW = (wchar_t *) filename.wc_str(wxConvLocal);
+	OpenArchiveData.ArcNameW = (wchar_t *) filename.c_str();
 #endif
 #else
 	OpenArchiveData.ArcName = (char *) filename.c_str();
@@ -129,47 +139,47 @@ wxInputStream * ComicBookRAR::ExtractStream(wxUint32 pageindex)
 	RarFile = RAROpenArchiveEx(&OpenArchiveData);
 
 	if ((RHCode = OpenArchiveData.OpenResult) != 0) {
-		m_lasterror = wxSTREAM_READ_ERROR;
-		throw new ArchiveException(m_ArcName, OpenArchiveError(RHCode));
+		throw new ArchiveException(filename, OpenArchiveError(RHCode));
 	}
+
+	if (password)
+		RARSetPassword(RarFile, password);
 
 	HeaderData.CmtBuf=NULL;
 
 	while ((RHCode = RARReadHeaderEx(RarFile, &HeaderData)) == 0) {
 #ifdef wxUSE_UNICODE
-		if (file.IsSameAs(wxString(HeaderData.FileNameW))) {
+		if (page.IsSameAs(wxString(HeaderData.FileNameW))) {
 #else // ANSI
-		if (file.IsSameAs(HeaderData.FileName)) {
+		if (page.IsSameAs(HeaderData.FileName)) {
 #endif
-			m_Size = HeaderData.UnpSize;
+			length = HeaderData.UnpSize;
 			break;	
 		} else {
 			if ((PFCode = RARProcessFile(RarFile, RAR_SKIP, NULL, NULL)) != 0)
-				throw ArchiveException(archive, ProcessFileError(PFCode, file));
+				throw ArchiveException(filename, ProcessFileError(PFCode, page));
 		}
 	}
 	
-	if (m_Size == 0) { // archived file not found
-		m_lasterror = wxSTREAM_READ_ERROR;
-		throw new ArchiveException(m_ArcName, file + wxT(" not found in ") + archive + wxT("."));
+	if (length == 0) { // archived file not found
+		throw new ArchiveException(filename, page + wxT(" not found in this archive."));
 	}
 
-	m_Buffer = new char[m_Size];
-	CallBackBuffer = m_Buffer;
+	wxUint8 *buffer = new wxUint8[length];
+	wxUint8 *callBackBuffer = buffer;
 
-	RARSetCallback(RarFile, CallbackProc, (long) &CallBackBuffer);
+	RARSetCallback(RarFile, CallbackProc, (long) &callBackBuffer);
 
 	PFCode = RARProcessFile(RarFile, RAR_TEST, NULL, NULL);
 
 	if (PFCode != 0) {
-		m_lasterror = wxSTREAM_READ_ERROR;
-		throw new ArchiveException(m_ArcName, ProcessFileError(PFCode, file));	
+		throw new ArchiveException(filename, ProcessFileError(PFCode, page));	
 	}
 
 	if (RarFile)  
 		RARCloseArchive(RarFile);
 
-	return new wxMemoryInputStream(m_Buffer, m_Size);
+	return new wxMemoryInputStream(buffer, length);
 }
 
 wxString ComicBookRAR::OpenArchiveError(int Error)
@@ -218,16 +228,21 @@ wxString ComicBookRAR::ProcessFileError(int Error, wxString compressedFile)
 	}
 }
 
+bool ComicBookRAR::TestPassword()
+{
+	return true;
+}
+
 int CALLBACK CallbackProc(wxUint32 msg, long UserData, long P1, long P2)
 {
-	char **buffer;
+	wxUint8 **buffer;
 	switch(msg) {
 
 	case UCM_CHANGEVOLUME:
 		break;
 	case UCM_PROCESSDATA:
-		buffer = (char **) UserData;
-		memcpy(*buffer, (char *)P1, P2);
+		buffer = (wxUint8 **) UserData;
+		memcpy(*buffer, (wxUint8 *)P1, P2);
 		// advance the buffer ptr, original m_buffer ptr is untouched
 		*buffer += P2;
 		break;
