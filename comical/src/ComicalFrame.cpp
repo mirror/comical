@@ -277,6 +277,12 @@ void ComicalFrame::OpenFile(wxString filename)
 			else if (filename.Right(4).Upper() == wxT(".CBZ") || filename.Right(4).Upper() == wxT(".ZIP"))
 				theBook = new ComicBookZIP(filename);
 			
+			if (theBook->GetPageCount() == 0) {
+				wxLogError(wxT("The archive \"") + filename + wxT("\" does not contain any pages."));
+				wxLog::FlushActive();
+				return;
+			}
+			
 			startBook();
 			SetTitle(wxT("Comical - " + filename));
 			config->Write(wxT("CWD"), wxPathOnly(filename));

@@ -1121,12 +1121,12 @@ void ComicalCanvas::SetComicBook(ComicBook *book)
 void ComicalCanvas::OnPageReady(wxCommandEvent &event)
 {
 	if (mode == ONEPAGE) {
-		if (theBook->GetCurrentPage() == event.GetInt()) {
+		if (theBook->GetCurrentPage() == (wxUint32) event.GetInt()) {
 			resetView();
 		}
 	} else { // mode == TWOPAGE
-		if (leftNum == event.GetInt() ||
-				rightNum == event.GetInt()) {
+		if (leftNum == (wxUint32) event.GetInt() ||
+				rightNum == (wxUint32) event.GetInt()) {
 			resetView();
 		}
 	}

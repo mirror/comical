@@ -43,12 +43,13 @@ ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 	char CmtBuf[16384];
 	struct RARHeaderDataEx HeaderData;
 	struct RAROpenArchiveDataEx OpenArchiveData;
-	wxString page;
+	wxString page, new_password;
 	
 	memset(&OpenArchiveData, 0, sizeof(OpenArchiveData));
 #ifdef wxUSE_UNICODE
 #ifdef __WXOSX__
-	OpenArchiveData.ArcName = filename.fn_str().data();
+	OpenArchiveData.ArcName = new char[filename.Length() + 1];
+	strcpy(OpenArchiveData.ArcName, filename.fn_str().data());
 #else
 	OpenArchiveData.ArcNameW = new wchar_t[filename.Length() + 1];
 	wcscpy(OpenArchiveData.ArcNameW, filename.c_str());
@@ -57,17 +58,21 @@ ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 	OpenArchiveData.ArcName = new char[filename.Length() + 1];
 	strcpy(OpenArchiveData.ArcName, filename.c_str());
 #endif
-	OpenArchiveData.CmtBuf=CmtBuf;
-	OpenArchiveData.CmtBufSize=sizeof(CmtBuf);
-	OpenArchiveData.OpenMode=RAR_OM_LIST;
-	RarFile=RAROpenArchiveEx(&OpenArchiveData);
+	OpenArchiveData.CmtBuf = CmtBuf;
+	OpenArchiveData.CmtBufSize = sizeof(CmtBuf);
+	OpenArchiveData.OpenMode = RAR_OM_LIST;
 
+	open_rar:
+	RarFile = RAROpenArchiveEx(&OpenArchiveData);
 	if (OpenArchiveData.OpenResult != 0)
 		throw ArchiveException(filename, OpenArchiveError(OpenArchiveData.OpenResult));
 
-	HeaderData.CmtBuf=CmtBuf;
-	HeaderData.CmtBufSize=sizeof(CmtBuf);
-	
+	if (password)
+		RARSetPassword(RarFile, password);
+
+	HeaderData.CmtBuf = CmtBuf;
+	HeaderData.CmtBufSize = sizeof(CmtBuf);
+
 	while ((RHCode = RARReadHeaderEx(RarFile, &HeaderData)) == 0) {
 #ifdef wxUSE_UNICODE
 		page = wxString(HeaderData.FileNameW);
@@ -86,13 +91,19 @@ ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 		}
 	}
 
-	if (RHCode == ERAR_BAD_DATA) {
-		RARCloseArchive(RarFile);
-		throw ArchiveException(filename, OpenArchiveError(RHCode));
-	}
-
 	RARCloseArchive(RarFile);
 	
+	// Determine whether the files AND the headers in this RAR are password-protected
+	if (RHCode == ERAR_UNKNOWN || RHCode == ERAR_BAD_DATA) { // ERAR_UNKNOWN means no password specified, ERAR_BAD_DATA means wrong password
+		new_password = wxGetPasswordFromUser(
+				wxT("This archive is password-protected.  Please enter the password."),
+				wxT("Enter Password"));
+		if (new_password.IsEmpty()) // the dialog was cancelled, and the archive cannot be opened
+			throw ArchiveException(filename, wxT("Could not open the file, because it is password-protected."));
+		SetPassword(new_password.ToAscii());
+		goto open_rar;
+	}
+
 	Filenames->Sort();
 	Filenames->Shrink();
 	
@@ -107,7 +118,6 @@ ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 	for (wxUint32 i = 0; i < pageCount; i++)
 		Orientations[i] = NORTH;
 
-	wxString new_password;
 	while (!TestPassword()) { // if the password needs to be set
 		new_password = wxGetPasswordFromUser(
 				wxT("This archive is password-protected.  Please enter the password."),
@@ -118,7 +128,11 @@ ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 	}
 
 #ifdef wxUSE_UNICODE
+#ifdef __WXOSX__
+	delete[] OpenArchiveData.ArcName;
+#else
 	delete[] OpenArchiveData.ArcNameW;
+#endif
 #else
 	delete[] OpenArchiveData.ArcName;
 #endif
@@ -139,12 +153,15 @@ wxInputStream * ComicBookRAR::ExtractStream(wxUint32 pageindex)
 	memset(&OpenArchiveData, 0, sizeof(OpenArchiveData));
 #ifdef wxUSE_UNICODE
 #ifdef __WXOSX__
-	OpenArchiveData.ArcName = filename.fn_str().data();	
+	OpenArchiveData.ArcName = new char[filename.Length() + 1];
+	strcpy(OpenArchiveData.ArcName, filename.fn_str().data());
 #else
-	OpenArchiveData.ArcNameW = (wchar_t *) filename.c_str();
+	OpenArchiveData.ArcNameW = new wchar_t[filename.Length() + 1];
+	wcscpy(OpenArchiveData.ArcNameW, filename.c_str());
 #endif
-#else
-	OpenArchiveData.ArcName = (char *) filename.c_str();
+#else // ANSI
+	OpenArchiveData.ArcName = new char[filename.Length() + 1];
+	strcpy(OpenArchiveData.ArcName, filename.c_str());
 #endif
 	OpenArchiveData.CmtBuf = CmtBuf;
 	OpenArchiveData.CmtBufSize = sizeof(CmtBuf);
@@ -192,6 +209,15 @@ wxInputStream * ComicBookRAR::ExtractStream(wxUint32 pageindex)
 	if (RarFile)  
 		RARCloseArchive(RarFile);
 
+#ifdef wxUSE_UNICODE
+#ifdef __WXOSX__
+	delete[] OpenArchiveData.ArcName;
+#else
+	delete[] OpenArchiveData.ArcNameW;
+#endif
+#else
+	delete[] OpenArchiveData.ArcName;
+#endif
 	return new wxMemoryInputStream(buffer, length);
 }
 
@@ -260,7 +286,6 @@ int CALLBACK CallbackProc(wxUint32 msg, long UserData, long P1, long P2)
 		*buffer += P2;
 		break;
 	case UCM_NEEDPASSWORD:
-		// implementation needed!
 		break;
 	}
 	return(0);

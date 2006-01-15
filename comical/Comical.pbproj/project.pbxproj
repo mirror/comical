@@ -131,8 +131,6 @@
 				D487109909203E8800F112CF,
 				D4582FF508AAD149007DD6F9,
 				D45592B607E69E73001881E8,
-				D45592B707E69E73001881E8,
-				D45592B807E69E73001881E8,
 				D45592B907E69E73001881E8,
 				D45592BA07E69E73001881E8,
 				D45592AE07E69E59001881E8,
@@ -272,7 +270,6 @@
 				F70D16B1056C429001B74F27,
 				D45592B307E69E59001881E8,
 				D45592BC07E69E73001881E8,
-				D45592BE07E69E73001881E8,
 				D45592C007E69E73001881E8,
 				D4582FF608AAD149007DD6F9,
 				D487109B09203E8800F112CF,
@@ -300,7 +297,6 @@
 				F70D16AE056C429001B74F27,
 				F70D16B0056C429001B74F27,
 				D45592B207E69E59001881E8,
-				D45592BD07E69E73001881E8,
 				D45592BF07E69E73001881E8,
 				D487109A09203E8800F112CF,
 				D4725A4F093562660094768B,
@@ -404,24 +400,6 @@
 			refType = 4;
 			sourceTree = "<group>";
 		};
-		D45592B707E69E73001881E8 = {
-			fileEncoding = 30;
-			isa = PBXFileReference;
-			lastKnownFileType = sourcecode.cpp.cpp;
-			name = rarstrm.cpp;
-			path = src/rarstrm.cpp;
-			refType = 4;
-			sourceTree = "<group>";
-		};
-		D45592B807E69E73001881E8 = {
-			fileEncoding = 30;
-			isa = PBXFileReference;
-			lastKnownFileType = sourcecode.c.h;
-			name = rarstrm.h;
-			path = src/rarstrm.h;
-			refType = 4;
-			sourceTree = "<group>";
-		};
 		D45592B907E69E73001881E8 = {
 			fileEncoding = 30;
 			isa = PBXFileReference;
@@ -442,18 +420,6 @@
 		};
 		D45592BC07E69E73001881E8 = {
 			fileRef = D45592B607E69E73001881E8;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
-		D45592BD07E69E73001881E8 = {
-			fileRef = D45592B707E69E73001881E8;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
-		D45592BE07E69E73001881E8 = {
-			fileRef = D45592B807E69E73001881E8;
 			isa = PBXBuildFile;
 			settings = {
 			};

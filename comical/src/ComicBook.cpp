@@ -47,6 +47,12 @@ ComicBook::ComicBook(wxString file) : wxThread(wxTHREAD_JOINABLE)
 	// Each of the long values is followed by the letter L not the number one
 	cacheLen = (wxUint32) config->Read(wxT("CacheLength"), 10l); // Fit-to-Width is default
 	Filenames = new wxArrayString();
+	originals = NULL;
+	resamples = NULL;
+	thumbnails = NULL;
+	Orientations = NULL;
+	resampleLockers = NULL;
+	thumbnailLockers = NULL;
 	password = NULL;
 }
 
@@ -60,18 +66,26 @@ ComicBook::~ComicBook()
 		if (resamples[i].Ok())
 			resamples[i].Destroy();
 	}
-	delete[] originals;
-	delete[] resamples;
-	delete[] thumbnails;
-	delete[] Orientations;
-	delete[] resampleLockers;
-	delete[] thumbnailLockers;
-	delete Filenames;
+	if (originals)
+		delete[] originals;
+	if (resamples)
+		delete[] resamples;
+	if (thumbnails)
+		delete[] thumbnails;
+	if (Orientations)
+		delete[] Orientations;
+	if (resampleLockers)
+		delete[] resampleLockers;
+	if (thumbnailLockers)
+		delete[] thumbnailLockers;
+	if (Filenames)
+		delete Filenames;
 	if (password) {
 		delete[] password;
 		password = NULL;
 	}
-	delete evtHandler;
+	if (evtHandler)
+		delete evtHandler;
 }
 
 void ComicBook::RotatePage(wxUint32 pagenumber, COMICAL_ROTATE direction)
