@@ -32,8 +32,6 @@
 #include <wx/string.h>
 #include <wx/tokenzr.h>
 #include <wx/log.h>
-#include <wx/datetime.h>
-#include <wx/utils.h>
 #include <wx/stream.h>
 #include <wx/thread.h>
 #include <wx/image.h>
@@ -118,10 +116,12 @@ protected:
 	 * when mode = ONEPAGE, currentPage is the pagenumber of the displayed page. */
 	wxUint32 currentPage;
 	wxString filename;
+	
 	wxImage *originals;
 	wxImage *resamples;
 	wxImage *thumbnails;
 	
+	wxMutex *originalLockers;
 	wxMutex *resampleLockers;
 	wxMutex *thumbnailLockers;
 	
@@ -140,6 +140,8 @@ protected:
 	char* password;
 	virtual bool TestPassword() { return true; }
 	void SetPassword(const char* new_password);
+	
+	void postCtor();
 };
 
 enum { ID_PageThumbnailed, ID_PageScaled };

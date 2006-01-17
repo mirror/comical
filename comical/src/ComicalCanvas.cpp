@@ -253,8 +253,7 @@ void ComicalCanvas::FirstPage()
 
 	if (mode == ONEPAGE || theBook->GetPageCount() == 1)
 		centerPage = theBook->GetPage(0);
-	else
-	{
+	else {
 		if (theBook->IsPageLandscape(0)) {
 			leftNum = 0;
 			rightNum = 0;
@@ -262,8 +261,7 @@ void ComicalCanvas::FirstPage()
 			rightPart = RIGHT_HALF;
 			leftPage = theBook->GetPageLeftHalf(0);
 			rightPage = theBook->GetPageRightHalf(0);
-		}
-		else {
+		} else {
 			leftNum = 0;
 			rightNum = 1;
 			leftPart = FULL_PAGE;

@@ -27,7 +27,6 @@
 
 #include "ComicBookZIP.h"
 #include <wx/mstream.h>
-#include <wx/textdlg.h>
 #include "unzip.h"
 #include "Exceptions.h"
 #include <cstring>
@@ -65,29 +64,8 @@ ComicBookZIP::ComicBookZIP(wxString file) : ComicBook(file)
 	free(fileInfo);
 	unzClose(ZipFile);	
 
-	Filenames->Sort();
-	Filenames->Shrink();
-	pageCount = Filenames->GetCount();
+	postCtor();
 	
-	originals = new wxImage[pageCount];
-	resamples = new wxImage[pageCount];
-	thumbnails = new wxImage[pageCount];
-	resampleLockers = new wxMutex[pageCount];
-	thumbnailLockers = new wxMutex[pageCount];
-	Orientations = new COMICAL_ROTATE[pageCount];
-	for (wxUint32 i = 0; i < pageCount; i++)
-		Orientations[i] = NORTH;
-
-	wxString passwd;
-	while (!TestPassword()) { // if the password needs to be set
-		passwd = wxGetPasswordFromUser(
-				wxT("This archive is password-protected.  Please enter the password."),
-				wxT("Enter Password"));
-		if (passwd.IsEmpty()) // the dialog was cancelled, and the archive cannot be opened
-			throw ArchiveException(filename, wxT("Could not open the file, because it is password-protected."));
-		SetPassword(passwd.ToAscii());
-	}
-
 	Create(); // create the wxThread
 }
 

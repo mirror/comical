@@ -2,12 +2,10 @@ Ordered by decreasing priority:
 
 Hangs if closed or book is changed while loading pages
 Changing from fit-to-width to 100% failed to draw images to screen (race condition?)
-Onslaught-X-Men skips first panel
-Event for error messages from other thread
+Event for error messages from other thread, nothing in ComicBook::Entry can call gui functions, including wxLogError!
 Broken pages should only be tried once
 make install target for Linux systems
 Windows installer (NSIS, InnoSetup)?
-nothing in ComicBook::Entry can call gui functions, including wxLogError!
 Password-protected archives, use Info-Zip's library?
 compile issues on some distributions - unicode related?
 Fix string conversion calls in RAR/ZIP ctors on MacOSX

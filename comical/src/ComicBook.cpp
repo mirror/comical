@@ -31,7 +31,10 @@
 #include "ComicBook.h"
 #include "Exceptions.h"
 #include <cstring>
+#include <wx/datetime.h>
 #include <wx/mstream.h>
+#include <wx/textdlg.h>
+#include <wx/utils.h>
 
 DEFINE_EVENT_TYPE(EVT_PAGE_SCALED)
 DEFINE_EVENT_TYPE(EVT_PAGE_THUMBNAILED)
@@ -51,6 +54,7 @@ ComicBook::ComicBook(wxString file) : wxThread(wxTHREAD_JOINABLE)
 	resamples = NULL;
 	thumbnails = NULL;
 	Orientations = NULL;
+	originalLockers = NULL;
 	resampleLockers = NULL;
 	thumbnailLockers = NULL;
 	password = NULL;
@@ -65,6 +69,8 @@ ComicBook::~ComicBook()
 			originals[i].Destroy();
 		if (resamples[i].Ok())
 			resamples[i].Destroy();
+		if (thumbnails[i].Ok())
+			thumbnails[i].Destroy();
 	}
 	if (originals)
 		delete[] originals;
@@ -74,16 +80,16 @@ ComicBook::~ComicBook()
 		delete[] thumbnails;
 	if (Orientations)
 		delete[] Orientations;
+	if (originalLockers)
+		delete[] originalLockers;
 	if (resampleLockers)
 		delete[] resampleLockers;
 	if (thumbnailLockers)
 		delete[] thumbnailLockers;
 	if (Filenames)
 		delete Filenames;
-	if (password) {
+	if (password)
 		delete[] password;
-		password = NULL;
-	}
 	if (evtHandler)
 		delete evtHandler;
 }
@@ -174,24 +180,48 @@ bool ComicBook::IsPageLandscape(wxUint32 pagenumber)
 	wxInt32 rWidth, rHeight;
 	if (pagenumber > pageCount)
 		throw new PageOutOfRangeException(pagenumber, pageCount);
-	wxMutexLocker lock(resampleLockers[pagenumber]);
+	
+	resampleLockers[pagenumber].Lock();
 	if (resamples[pagenumber].Ok()) {
 		rWidth = resamples[pagenumber].GetWidth();
 		rHeight = resamples[pagenumber].GetHeight();
-	} else if (thumbnails[pagenumber].Ok()) {
+		resampleLockers[pagenumber].Unlock();
+		goto IsPageLandscapeRatioCalculate;
+	} 
+	resampleLockers[pagenumber].Unlock();
+	
+	thumbnailLockers[pagenumber].Lock();
+	if (thumbnails[pagenumber].Ok()) {
 		rWidth = thumbnails[pagenumber].GetWidth();
 		rHeight = thumbnails[pagenumber].GetHeight();
-	} else if (originals[pagenumber].Ok()) {
-		if (Orientations[pagenumber] == NORTH ||
-				Orientations[pagenumber] == SOUTH) {
-			rWidth = originals[pagenumber].GetWidth();
-			rHeight = originals[pagenumber].GetHeight();
-		} else {
-			rHeight = originals[pagenumber].GetWidth();
-			rWidth = originals[pagenumber].GetHeight();
-		}
-	} else
-		return false;
+		thumbnailLockers[pagenumber].Unlock();
+		goto IsPageLandscapeRatioCalculate;
+	}
+	thumbnailLockers[pagenumber].Unlock();
+
+	wxBeginBusyCursor();
+	
+	// If the page has never been loaded, even in thumbnail form, the display
+	// will really screw up if the page IS landscape and this function says
+	// it's not.  Therefore, we wait until it is ready.
+	while (!originals[pagenumber].Ok()) {
+		wxMilliSleep(10);
+	}
+	
+	originalLockers[pagenumber].Lock();
+	if (Orientations[pagenumber] == NORTH ||
+			Orientations[pagenumber] == SOUTH) {
+		rWidth = originals[pagenumber].GetWidth();
+		rHeight = originals[pagenumber].GetHeight();
+	} else {
+		rHeight = originals[pagenumber].GetWidth();
+		rWidth = originals[pagenumber].GetHeight();
+	}
+	originalLockers[pagenumber].Unlock();
+	
+	wxEndBusyCursor();
+	
+	IsPageLandscapeRatioCalculate:
 	if ((float(rWidth)/float(rHeight)) > 1.0f)
 		return true;
 	else
@@ -341,15 +371,15 @@ void * ComicBook::Entry()
 			
 			if (!resamples[target].Ok()) {
 				try {
+					originalLockers[target].Lock();
 					if (!originals[target].Ok()) {
 						stream = ExtractStream(target);
 						if (stream->IsOk() && stream->GetSize() > 0) {
 							originals[target].LoadFile(*stream);
 							// Memory Input Streams don't take ownership of the buffer
 							mstream = dynamic_cast<wxMemoryInputStream*>(stream);
-							if (mstream) {
+							if (mstream)
 								delete[] (wxUint8 *) mstream->GetInputStreamBuffer()->GetBufferStart();
-							}
 						}
 						else {
 							wxLogError(wxT("Failed to extract page %d."), target);
@@ -366,21 +396,22 @@ void * ComicBook::Entry()
 					wxLog::FlushActive();
 				}
 				ScaleImage(target);
+				resampleLockers[target].Unlock();
 				scalingHappened = true;
 				
 				thumbnailLockers[target].Lock();
 				if (!thumbnails[target].Ok())
 					ScaleThumbnail(target);
-					
+				thumbnailLockers[target].Unlock();
+				originalLockers[target].Unlock();
+				
 				if (!resamples[target].Ok() || !thumbnails[target].Ok())
 					wxLogError(wxT("Could not scale page %d."), target);
 
-				thumbnailLockers[target].Unlock();
-				resampleLockers[target].Unlock();
 				break;
 			}
 
-			resampleLockers[target].Unlock(); // the break above will put execution BELOW the next brace
+			resampleLockers[target].Unlock(); // the break above will put execution BELOW the following brace
 		}
 		
 		if (!scalingHappened) {
@@ -389,11 +420,16 @@ void * ComicBook::Entry()
 			for (wxUint32 j = 0; j < pageCount; j++) {
 				thumbnailLockers[j].Lock();
 				if (!thumbnails[j].Ok()) {
+					originalLockers[j].Lock();
 					if (!originals[j].Ok()) {
 						stream = ExtractStream(j);
-						if (stream->IsOk() && stream->GetSize() > 0)
+						if (stream->IsOk() && stream->GetSize() > 0) {
 							originals[j].LoadFile(*stream);
-						else {
+							// Memory Input Streams don't take ownership of the buffer
+							mstream = dynamic_cast<wxMemoryInputStream*>(stream);
+							if (mstream)
+								delete[] (wxUint8 *) mstream->GetInputStreamBuffer()->GetBufferStart();
+						} else {
 							wxLogError(wxT("Failed to extract page %d."), j);
 							originals[j] = wxImage(1, 1);
 						}
@@ -404,6 +440,7 @@ void * ComicBook::Entry()
 						delete stream;
 					}
 					ScaleThumbnail(j);
+					originalLockers[j].Unlock();
 					thumbnailLockers[j].Unlock();
 					break;
 				}
@@ -415,29 +452,29 @@ void * ComicBook::Entry()
 			if (cacheLen < pageCount) {
 				// Delete pages outside of the cache's range.
 				for (i = 0; wxInt32(i) < low; i++) {
-					
+
 					resampleLockers[i].Lock();
-					
 					if(resamples[i].Ok())
 						resamples[i].Destroy();
-						
 					resampleLockers[i].Unlock();
 					
+					originalLockers[i].Lock();
 					if(originals[i].Ok())
 						originals[i].Destroy();
+					originalLockers[i].Unlock();
 				}
 				
 				for (i = pageCount - 1; wxInt32(i) > high; i--) {
 
 					resampleLockers[i].Lock();
-
 					if(resamples[i].Ok())
 						resamples[i].Destroy();
-					
 					resampleLockers[i].Unlock();
 					
+					originalLockers[i].Lock();
 					if(originals[i].Ok())
 						originals[i].Destroy();
+					originalLockers[i].Unlock();
 				}
 			}
 		}
@@ -655,4 +692,32 @@ void ComicBook::SetPassword(const char* new_password)
 		delete[] password;
 	password = new char[strlen(new_password) + 1];
 	strcpy(password, new_password);
+}
+
+void ComicBook::postCtor()
+{
+	Filenames->Sort();
+	Filenames->Shrink();
+	
+	pageCount = Filenames->GetCount();
+	
+	originals = new wxImage[pageCount];
+	resamples = new wxImage[pageCount];
+	thumbnails = new wxImage[pageCount];
+	originalLockers = new wxMutex[pageCount];
+	resampleLockers = new wxMutex[pageCount];
+	thumbnailLockers = new wxMutex[pageCount];
+	Orientations = new COMICAL_ROTATE[pageCount]; // NORTH == 0
+	for (wxUint32 i = 0; i < pageCount; i++)
+		Orientations[i] = NORTH;
+
+	wxString new_password;
+	while (!TestPassword()) { // if the password needs to be set
+		new_password = wxGetPasswordFromUser(
+				wxT("This archive is password-protected.  Please enter the password."),
+				wxT("Enter Password"));
+		if (new_password.IsEmpty()) // the dialog was cancelled, and the archive cannot be opened
+			throw ArchiveException(filename, wxT("Comical could not open this file because it is password-protected."));
+		SetPassword(new_password.ToAscii());
+	}
 }

@@ -40,7 +40,6 @@ ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 {
 	HANDLE RarFile;
 	int RHCode,PFCode;
-	char CmtBuf[16384];
 	struct RARHeaderDataEx HeaderData;
 	struct RAROpenArchiveDataEx OpenArchiveData;
 	wxString page, new_password;
@@ -58,11 +57,11 @@ ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 	OpenArchiveData.ArcName = new char[filename.Length() + 1];
 	strcpy(OpenArchiveData.ArcName, filename.c_str());
 #endif
-	OpenArchiveData.CmtBuf = CmtBuf;
-	OpenArchiveData.CmtBufSize = sizeof(CmtBuf);
+	open_rar:
+	OpenArchiveData.OpenResult = 0;
+	OpenArchiveData.CmtBuf = NULL;
 	OpenArchiveData.OpenMode = RAR_OM_LIST;
 
-	open_rar:
 	RarFile = RAROpenArchiveEx(&OpenArchiveData);
 	if (OpenArchiveData.OpenResult != 0)
 		throw ArchiveException(filename, OpenArchiveError(OpenArchiveData.OpenResult));
@@ -70,8 +69,7 @@ ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 	if (password)
 		RARSetPassword(RarFile, password);
 
-	HeaderData.CmtBuf = CmtBuf;
-	HeaderData.CmtBufSize = sizeof(CmtBuf);
+	HeaderData.CmtBuf = NULL;
 
 	while ((RHCode = RARReadHeaderEx(RarFile, &HeaderData)) == 0) {
 #ifdef wxUSE_UNICODE
@@ -104,29 +102,6 @@ ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 		goto open_rar;
 	}
 
-	Filenames->Sort();
-	Filenames->Shrink();
-	
-	pageCount = Filenames->GetCount();
-	
-	originals = new wxImage[pageCount];
-	resamples = new wxImage[pageCount];
-	thumbnails = new wxImage[pageCount];
-	resampleLockers = new wxMutex[pageCount];
-	thumbnailLockers = new wxMutex[pageCount];
-	Orientations = new COMICAL_ROTATE[pageCount]; // NORTH == 0
-	for (wxUint32 i = 0; i < pageCount; i++)
-		Orientations[i] = NORTH;
-
-	while (!TestPassword()) { // if the password needs to be set
-		new_password = wxGetPasswordFromUser(
-				wxT("This archive is password-protected.  Please enter the password."),
-				wxT("Enter Password"));
-		if (new_password.IsEmpty()) // the dialog was cancelled, and the archive cannot be opened
-			throw ArchiveException(filename, wxT("Could not open the file, because it is password-protected."));
-		SetPassword(new_password.ToAscii());
-	}
-
 #ifdef wxUSE_UNICODE
 #ifdef __WXOSX__
 	delete[] OpenArchiveData.ArcName;
@@ -136,6 +111,8 @@ ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 #else
 	delete[] OpenArchiveData.ArcName;
 #endif
+	
+	postCtor();
 	Create(); // create the wxThread
 }
 
@@ -143,7 +120,6 @@ wxInputStream * ComicBookRAR::ExtractStream(wxUint32 pageindex)
 {
 	HANDLE RarFile;
 	int RHCode, PFCode;
-	char CmtBuf[16384];
 	struct RARHeaderDataEx HeaderData;
 	struct RAROpenArchiveDataEx OpenArchiveData;
 	
@@ -163,8 +139,7 @@ wxInputStream * ComicBookRAR::ExtractStream(wxUint32 pageindex)
 	OpenArchiveData.ArcName = new char[filename.Length() + 1];
 	strcpy(OpenArchiveData.ArcName, filename.c_str());
 #endif
-	OpenArchiveData.CmtBuf = CmtBuf;
-	OpenArchiveData.CmtBufSize = sizeof(CmtBuf);
+	OpenArchiveData.CmtBuf = NULL;
 	OpenArchiveData.OpenMode = RAR_OM_EXTRACT;
 	RarFile = RAROpenArchiveEx(&OpenArchiveData);
 

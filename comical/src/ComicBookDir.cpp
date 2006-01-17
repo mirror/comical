@@ -44,19 +44,7 @@ ComicBookDir::ComicBookDir(wxString dir) : ComicBook(dir)
 	
 	delete allFiles;
 	
-	Filenames->Sort();
-	Filenames->Shrink();
-	pageCount = Filenames->GetCount();
-	
-	originals = new wxImage[pageCount];
-	resamples = new wxImage[pageCount];
-	thumbnails = new wxImage[pageCount];
-	resampleLockers = new wxMutex[pageCount];
-	thumbnailLockers = new wxMutex[pageCount];
-	Orientations = new COMICAL_ROTATE[pageCount]; // NORTH == 0
-	for (wxUint32 i = 0; i < pageCount; i++)
-		Orientations[i] = NORTH;
-	
+	postCtor();	
 	Create(); // create the wxThread
 }
 
