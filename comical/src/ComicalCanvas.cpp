@@ -42,7 +42,9 @@ ComicalCanvas::ComicalCanvas(wxWindow *prnt, const wxPoint &pos, const wxSize &s
 	zoom = (COMICAL_ZOOM) config->Read(wxT("Zoom"), 2l); // Fit-to-Width is default
 	mode = (COMICAL_MODE) config->Read(wxT("Mode"), 1l); // Double-Page is default
 	filter = (FREE_IMAGE_FILTER) config->Read(wxT("Filter"), 4l); // Catmull-Rom is default
-	leftPage = rightPage = centerPage = NULL;
+	leftPage = NULL;
+	rightPage = NULL;
+	centerPage = NULL;
 	theBook = NULL;
 	contextMenu = NULL;
 	contextRotate = NULL;
@@ -1113,6 +1115,8 @@ void ComicalCanvas::SetComicBook(ComicBook *book)
 	theBook = book;
 	if (theBook) {
 		theBook->Connect(ID_PageScaled, EVT_PAGE_SCALED, wxCommandEventHandler(ComicalCanvas::OnPageReady), NULL, this);
+		leftNum = 0;
+		rightNum = 1;
 	}
 }
 
@@ -1141,3 +1145,11 @@ void ComicalCanvas::OnSize(wxSizeEvent &event)
 {
 	SetParams(true);
 }
+
+void ComicalCanvas::ClearCanvas()
+{
+	SetComicBook(NULL);
+	clearBitmaps();
+	Refresh();
+}
+

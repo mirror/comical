@@ -37,6 +37,7 @@
 
 ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSize& size, long style) : wxFrame(NULL, -1, title, pos, size, style)
 {
+	theCanvas = NULL;
 	theBook = NULL;
 	theBrowser = NULL;
 	toolBarNav = NULL;
@@ -237,7 +238,7 @@ void ComicalFrame::OnQuit(wxCommandEvent& event)
 
 void ComicalFrame::OnAbout(wxCommandEvent& event)
 {
-	wxMessageDialog AboutDlg(this, wxT("Comical 0.7, (c) 2003-2005 James Athey.\nComical is licensed under the GPL, version 2,\nwith a linking exception; see README for details."), wxT("About Comical"), wxOK);
+	wxMessageDialog AboutDlg(this, wxT("Comical 0.8, (c) 2003-2005 James Athey.\nComical is licensed under the GPL, version 2,\nwith a linking exception; see README for details."), wxT("About Comical"), wxOK);
 	AboutDlg.ShowModal();
 }
 
@@ -263,34 +264,27 @@ void ComicalFrame::OnOpenDir(wxCommandEvent& event)
 
 void ComicalFrame::OpenFile(wxString filename)
 {
-	if (!filename.empty()) {
+	ComicBook *newBook;
 	
-		if (theBook) {
-			theBook->Delete(); // delete the ComicBook thread
-			delete theBook; // clear out the rest of the ComicBook
-			theBook = NULL;
-		}
-
+	if (!filename.empty()) {
+		clearComicBook();
 		try {
 			if (filename.Right(4).Upper() == wxT(".CBR") || filename.Right(4).Upper() == wxT(".RAR"))
-				theBook = new ComicBookRAR(filename);
+				newBook = new ComicBookRAR(filename);
 			else if (filename.Right(4).Upper() == wxT(".CBZ") || filename.Right(4).Upper() == wxT(".ZIP"))
-				theBook = new ComicBookZIP(filename);
+				newBook = new ComicBookZIP(filename);
 			
-			if (theBook->GetPageCount() == 0) {
+			if (newBook->GetPageCount() == 0) {
 				wxLogError(wxT("The archive \"") + filename + wxT("\" does not contain any pages."));
 				wxLog::FlushActive();
 				return;
 			}
-			
+			setComicBook(newBook);
 			startBook();
 			SetTitle(wxT("Comical - " + filename));
 			config->Write(wxT("CWD"), wxPathOnly(filename));
 		} catch (ArchiveException &ae) {
-			if (theBook) {
-				delete theBook;
-				theBook = NULL;
-			}
+			clearComicBook();
 			wxLogError(ae.Message);
 			wxLog::FlushActive();
 		}
@@ -299,16 +293,12 @@ void ComicalFrame::OpenFile(wxString filename)
 
 void ComicalFrame::OpenDir(wxString directory)
 {
+	ComicBook *newBook;
 	if (!directory.empty()) {
-	
-		if (theBook) {
-			theBook->Delete(); // delete the ComicBook thread
-			delete theBook; // clear out the rest of the ComicBook
-			theBook = NULL;
-		}
-
+		clearComicBook();
 		try {
-			theBook = new ComicBookDir(directory);
+			newBook = new ComicBookDir(directory);
+			setComicBook(newBook);
 			startBook();
 			SetTitle(wxT("Comical - " + directory));
 			config->Write(wxT("CWD"), directory);
@@ -406,7 +396,7 @@ void ComicalFrame::OnToolbar(wxCommandEvent &event)
 {
 	toolbarActive = event.IsChecked();
 	bookPanelSizer->Show(toolbarSizer, toolbarActive, true);
-	bookPanelSizer->Layout();		
+	bookPanelSizer->Layout();
 }
 
 void ComicalFrame::OnBrowser(wxCommandEvent &event)
@@ -415,4 +405,34 @@ void ComicalFrame::OnBrowser(wxCommandEvent &event)
 	if (theBrowser)
 		frameSizer->Show(theBrowser, browserActive);
 	frameSizer->Layout();
+}
+
+void ComicalFrame::OnPageError(wxCommandEvent &event)
+{
+	wxLogError(event.GetString());
+	wxLog::FlushActive();
+}
+
+void ComicalFrame::setComicBook(ComicBook *newBook)
+{
+	if (theBook)
+		clearComicBook();
+	theBook = newBook;
+	if (theBook) {
+		theBook->Connect(ID_PageError, EVT_PAGE_ERROR, wxCommandEventHandler(ComicalFrame::OnPageError), NULL, this);
+	}
+}
+
+void ComicalFrame::clearComicBook()
+{
+	if (theBook) {
+		theBook->Disconnect(ID_PageError, EVT_PAGE_ERROR, wxCommandEventHandler(ComicalFrame::OnPageError), NULL, this);
+		theBook->Delete(); // delete the ComicBook thread
+		delete theBook; // clear out the rest of the ComicBook
+		theBook = NULL;
+	}
+	if (theCanvas)
+		theCanvas->ClearCanvas();
+	if (theBrowser)
+		theBrowser->ClearBrowser();
 }

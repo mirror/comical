@@ -50,6 +50,7 @@ class ComicalBrowser : public wxVListBox
 
 	void SetComicBook(ComicBook *book);
 	void SetComicalCanvas(ComicalCanvas *canvas);
+	void ClearBrowser();
 	
   private:
 	

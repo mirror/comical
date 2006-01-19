@@ -1,21 +1,19 @@
 Ordered by decreasing priority:
 
 Hangs if closed or book is changed while loading pages
-Changing from fit-to-width to 100% failed to draw images to screen (race condition?)
-Event for error messages from other thread, nothing in ComicBook::Entry can call gui functions, including wxLogError!
 Broken pages should only be tried once
+Password-protected archives
 make install target for Linux systems
 Windows installer (NSIS, InnoSetup)?
-Password-protected archives, use Info-Zip's library?
 compile issues on some distributions - unicode related?
 Fix string conversion calls in RAR/ZIP ctors on MacOSX
 Opening files from Finder fails on Mac OS X?
-page navigation should be more responsive
+page navigation sometimes blocks on Mac OS X
 Japan-mode (right-to-left)
 const-correctness?
 look for any remaining memory leaks
 Dependency checking in Makefile
 User-configurable keybindings, use KeyBinder?
 OpenGL backend?
-Box Zoom/Magnifying Glass
+Box Zoom/Magnifying Glass - started, postponed for now.  Will require refactoring rescale logic
 multi-volume RAR?

@@ -108,6 +108,7 @@ protected:
 	void SendScaledEvent(wxUint32 pagenumber);
 	void SendThumbnailedEvent(wxUint32 pagenumber);
 	void SendCurrentPageChangedEvent();
+	void SendPageErrorEvent(wxUint32 pagenumber, wxString message);
 
 	wxUint32 pageCount;
 	
@@ -144,10 +145,11 @@ protected:
 	void postCtor();
 };
 
-enum { ID_PageThumbnailed, ID_PageScaled };
+enum { ID_PageThumbnailed, ID_PageScaled, ID_PageError };
 
 DECLARE_EVENT_TYPE(EVT_PAGE_SCALED, -1)
 DECLARE_EVENT_TYPE(EVT_PAGE_THUMBNAILED, -1)
 DECLARE_EVENT_TYPE(EVT_CURRENT_PAGE_CHANGED, -1)
+DECLARE_EVENT_TYPE(EVT_PAGE_ERROR, -1)
 
 #endif

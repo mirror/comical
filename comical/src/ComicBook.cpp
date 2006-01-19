@@ -39,6 +39,7 @@
 DEFINE_EVENT_TYPE(EVT_PAGE_SCALED)
 DEFINE_EVENT_TYPE(EVT_PAGE_THUMBNAILED)
 DEFINE_EVENT_TYPE(EVT_CURRENT_PAGE_CHANGED)
+DEFINE_EVENT_TYPE(EVT_PAGE_ERROR)
 
 ComicBook::ComicBook(wxString file) : wxThread(wxTHREAD_JOINABLE)
 {
@@ -382,18 +383,17 @@ void * ComicBook::Entry()
 								delete[] (wxUint8 *) mstream->GetInputStreamBuffer()->GetBufferStart();
 						}
 						else {
-							wxLogError(wxT("Failed to extract page %d."), target);
+							SendPageErrorEvent(target, wxString::Format(wxT("Failed to extract page %d."), target));
 							originals[target] = wxImage(1, 1);
 						}
 						if (!originals[target].Ok()) {
-							wxLogError(wxT("Failed to extract page %d."), target);
+							SendPageErrorEvent(target, wxString::Format(wxT("Failed to extract page %d."), target));
 							originals[target] = wxImage(1, 1);
 						}
 						delete stream;
 					}
 				} catch (ArchiveException *ae) {
-					wxLogError(ae->Message);
-					wxLog::FlushActive();
+					SendPageErrorEvent(target, ae->Message);
 				}
 				ScaleImage(target);
 				resampleLockers[target].Unlock();
@@ -406,7 +406,7 @@ void * ComicBook::Entry()
 				originalLockers[target].Unlock();
 				
 				if (!resamples[target].Ok() || !thumbnails[target].Ok())
-					wxLogError(wxT("Could not scale page %d."), target);
+					SendPageErrorEvent(target, wxString::Format(wxT("Could not scale page %d."), target));
 
 				break;
 			}
@@ -430,11 +430,11 @@ void * ComicBook::Entry()
 							if (mstream)
 								delete[] (wxUint8 *) mstream->GetInputStreamBuffer()->GetBufferStart();
 						} else {
-							wxLogError(wxT("Failed to extract page %d."), j);
+							SendPageErrorEvent(j, wxString::Format(wxT("Failed to extract page %d."), j));
 							originals[j] = wxImage(1, 1);
 						}
 						if (!originals[j].Ok()) {
-							wxLogError(wxT("Failed to extract page %d."), j);
+							SendPageErrorEvent(j, wxString::Format(wxT("Failed to extract page %d."), j));
 							originals[j] = wxImage(1, 1);
 						}
 						delete stream;
@@ -596,6 +596,7 @@ void ComicBook::ScaleImage(wxUint32 pagenumber)
 		default:
 			break;
 		}
+		SendScaledEvent(pagenumber);
 		return;
 	}
 
@@ -681,6 +682,14 @@ void ComicBook::SendCurrentPageChangedEvent()
 {
 	wxCommandEvent event(EVT_CURRENT_PAGE_CHANGED, -1);
 	event.SetInt(this->GetCurrentPage());
+	GetEventHandler()->AddPendingEvent(event);
+}
+
+void ComicBook::SendPageErrorEvent(wxUint32 pagenumber, wxString message)
+{
+	wxCommandEvent event(EVT_PAGE_ERROR, -1);
+	event.SetInt(pagenumber);
+	event.SetString(message);
 	GetEventHandler()->AddPendingEvent(event);
 }
 

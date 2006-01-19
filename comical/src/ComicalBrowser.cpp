@@ -101,3 +101,11 @@ void ComicalBrowser::SetComicalCanvas(ComicalCanvas *canvas)
 		theCanvas->Connect(ID_CurrentPageChanged, EVT_CURRENT_PAGE_CHANGED, wxCommandEventHandler(ComicalBrowser::OnCurrentPageChanged), NULL, this);
 	}
 }
+
+void ComicalBrowser::ClearBrowser()
+{
+	SetComicBook(NULL);
+	Clear();
+	SetItemCount(1);
+}
+

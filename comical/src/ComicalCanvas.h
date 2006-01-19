@@ -60,6 +60,7 @@ class ComicalCanvas : public wxScrolledWindow
 	void SetZoomEnable(bool);
 	void SetComicBook(ComicBook *book);	
     void SetParams(bool);
+    void ClearCanvas();
 
   private:
 	void clearBitmap(wxBitmap *&bitmap);
