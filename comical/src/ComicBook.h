@@ -50,7 +50,6 @@ enum COMICAL_ROTATE {NORTH = 0, EAST, SOUTH, WEST};
 class ComicBook : public wxThread {
 
 public:
-
 	// Constructors / Destructors
 	ComicBook(wxString file);
 	virtual ~ComicBook();
@@ -95,7 +94,16 @@ public:
 	
 protected:
 	virtual wxInputStream * ExtractStream(wxUint32 pageindex) = 0;
+
+	wxString filename;
 	
+	char* password;
+	virtual bool TestPassword() { return true; }
+	void SetPassword(const char* new_password);
+	
+	void postCtor();
+
+private:
 	void ScaleImage(wxUint32 pagenumber);
 	void ScaleThumbnail(wxUint32 pagenumber);
 	// Returns true if the page can fit well in the current zoom mode, i.e., if
@@ -110,14 +118,6 @@ protected:
 	void SendCurrentPageChangedEvent();
 	void SendPageErrorEvent(wxUint32 pagenumber, wxString message);
 
-	wxUint32 pageCount;
-	
-	/* Used to prefetch nearby pages and discard distant pages. 
-	 * when mode = TWOPAGE, currentPage is the pagenumber of the page on the left.
-	 * when mode = ONEPAGE, currentPage is the pagenumber of the displayed page. */
-	wxUint32 currentPage;
-	wxString filename;
-	
 	wxImage *originals;
 	wxImage *resamples;
 	wxImage *thumbnails;
@@ -127,6 +127,16 @@ protected:
 	wxMutex *thumbnailLockers;
 	
 	wxUint32 cacheLen;
+
+	wxEvtHandler *evtHandler;
+
+	wxUint32 pageCount;
+	
+	/* Used to prefetch nearby pages and discard distant pages. 
+	 * when mode = TWOPAGE, currentPage is the pagenumber of the page on the left.
+	 * when mode = ONEPAGE, currentPage is the pagenumber of the displayed page. */
+	wxUint32 currentPage;
+	
 	wxInt32 scrollBarThickness;
 	
 	// window parameters
@@ -135,14 +145,6 @@ protected:
 	COMICAL_ZOOM zoom;
 	wxInt32 canvasWidth;
 	wxInt32 canvasHeight;
-
-	wxEvtHandler *evtHandler;
-	
-	char* password;
-	virtual bool TestPassword() { return true; }
-	void SetPassword(const char* new_password);
-	
-	void postCtor();
 };
 
 enum { ID_PageThumbnailed, ID_PageScaled, ID_PageError };

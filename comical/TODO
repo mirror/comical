@@ -2,7 +2,7 @@ Ordered by decreasing priority:
 
 Hangs if closed or book is changed while loading pages
 Broken pages should only be tried once
-Password-protected archives
+Many error cases in ComicBookRAR do not free all memory
 make install target for Linux systems
 Windows installer (NSIS, InnoSetup)?
 compile issues on some distributions - unicode related?

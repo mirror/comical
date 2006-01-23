@@ -2,7 +2,7 @@
                               ComicBookRAR.cpp
                              -------------------
     begin                : Wed Oct 29 2003
-    copyright            : (C) 2005 by James Athey
+    copyright            : (C) 2003-2006 by James Athey
     email                : jathey@comcast.net
  ***************************************************************************/
 
@@ -38,44 +38,34 @@
 
 ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 {
-	HANDLE RarFile;
-	int RHCode,PFCode;
-	struct RARHeaderDataEx HeaderData;
-	struct RAROpenArchiveDataEx OpenArchiveData;
+	HANDLE rarFile;
+	int RHCode = 0, PFCode = 0;
+	struct RARHeaderDataEx header;
+	struct RAROpenArchiveDataEx flags;
 	wxString page, new_password;
 	
-	memset(&OpenArchiveData, 0, sizeof(OpenArchiveData));
-#ifdef wxUSE_UNICODE
-#ifdef __WXOSX__
-	OpenArchiveData.ArcName = new char[filename.Length() + 1];
-	strcpy(OpenArchiveData.ArcName, filename.fn_str().data());
-#else
-	OpenArchiveData.ArcNameW = new wchar_t[filename.Length() + 1];
-	wcscpy(OpenArchiveData.ArcNameW, filename.c_str());
-#endif
-#else // ANSI
-	OpenArchiveData.ArcName = new char[filename.Length() + 1];
-	strcpy(OpenArchiveData.ArcName, filename.c_str());
-#endif
 	open_rar:
-	OpenArchiveData.OpenResult = 0;
-	OpenArchiveData.CmtBuf = NULL;
-	OpenArchiveData.OpenMode = RAR_OM_LIST;
+	
+	rarFile = openRar(&flags, &header, RAR_OM_LIST);
 
-	RarFile = RAROpenArchiveEx(&OpenArchiveData);
-	if (OpenArchiveData.OpenResult != 0)
-		throw ArchiveException(filename, OpenArchiveError(OpenArchiveData.OpenResult));
-
+	if (flags.Flags & 0x0080) { // if the headers are encrypted
+		new_password = wxGetPasswordFromUser(
+				wxT("This archive is password-protected.  Please enter the password."),
+				wxT("Enter Password"));
+		if (new_password.IsEmpty()) { // the dialog was cancelled, and the archive cannot be opened
+			closeRar(rarFile, &flags);
+			throw ArchiveException(filename, wxT("Comical could not open this file because it is password-protected."));
+		}
+		SetPassword(new_password.ToAscii());
+	}
 	if (password)
-		RARSetPassword(RarFile, password);
+		RARSetPassword(rarFile, password);
 
-	HeaderData.CmtBuf = NULL;
-
-	while ((RHCode = RARReadHeaderEx(RarFile, &HeaderData)) == 0) {
+	while ((RHCode = RARReadHeaderEx(rarFile, &header)) == 0) {
 #ifdef wxUSE_UNICODE
-		page = wxString(HeaderData.FileNameW);
+		page = wxString(header.FileNameW);
 #else
-		page = wxString(HeaderData.FileName);
+		page = wxString(header.FileName);
 #endif
 		if(page.Right(5).Upper() == wxT(".JPEG") || page.Right(4).Upper() == wxT(".JPG") ||
 		page.Right(5).Upper() == wxT(".TIFF") || page.Right(4).Upper() == wxT(".TIF") ||
@@ -83,117 +73,124 @@ ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
 		page.Right(4).Upper() == wxT(".PNG"))
 			Filenames->Add(page);
 		
-		if ((PFCode = RARProcessFile(RarFile, RAR_SKIP, NULL, NULL)) != 0) {
-			RARCloseArchive(RarFile);
+		if ((PFCode = RARProcessFile(rarFile, RAR_SKIP, NULL, NULL)) != 0) {
+			closeRar(rarFile, &flags);
 			throw ArchiveException(filename, ProcessFileError(PFCode, page));
 		}
 	}
 
-	RARCloseArchive(RarFile);
+	closeRar(rarFile, &flags);
 	
-	// Determine whether the files AND the headers in this RAR are password-protected
-	if (RHCode == ERAR_UNKNOWN || RHCode == ERAR_BAD_DATA) { // ERAR_UNKNOWN means no password specified, ERAR_BAD_DATA means wrong password
-		new_password = wxGetPasswordFromUser(
-				wxT("This archive is password-protected.  Please enter the password."),
-				wxT("Enter Password"));
-		if (new_password.IsEmpty()) // the dialog was cancelled, and the archive cannot be opened
-			throw ArchiveException(filename, wxT("Could not open the file, because it is password-protected."));
-		SetPassword(new_password.ToAscii());
+	// Wrong return code + needs password = wrong password given
+	if (RHCode != ERAR_END_ARCHIVE && flags.Flags & 0x0080) 
 		goto open_rar;
-	}
 
-#ifdef wxUSE_UNICODE
-#ifdef __WXOSX__
-	delete[] OpenArchiveData.ArcName;
-#else
-	delete[] OpenArchiveData.ArcNameW;
-#endif
-#else
-	delete[] OpenArchiveData.ArcName;
-#endif
-	
 	postCtor();
 	Create(); // create the wxThread
 }
 
 wxInputStream * ComicBookRAR::ExtractStream(wxUint32 pageindex)
 {
-	HANDLE RarFile;
-	int RHCode, PFCode;
-	struct RARHeaderDataEx HeaderData;
-	struct RAROpenArchiveDataEx OpenArchiveData;
+	HANDLE rarFile;
+	int RHCode = 0, PFCode = 0;
+	struct RARHeaderDataEx header;
+	struct RAROpenArchiveDataEx flags;
 	
 	wxString page = Filenames->Item(pageindex);
 	size_t length = 0;
 	
-	memset(&OpenArchiveData, 0, sizeof(OpenArchiveData));
-#ifdef wxUSE_UNICODE
-#ifdef __WXOSX__
-	OpenArchiveData.ArcName = new char[filename.Length() + 1];
-	strcpy(OpenArchiveData.ArcName, filename.fn_str().data());
-#else
-	OpenArchiveData.ArcNameW = new wchar_t[filename.Length() + 1];
-	wcscpy(OpenArchiveData.ArcNameW, filename.c_str());
-#endif
-#else // ANSI
-	OpenArchiveData.ArcName = new char[filename.Length() + 1];
-	strcpy(OpenArchiveData.ArcName, filename.c_str());
-#endif
-	OpenArchiveData.CmtBuf = NULL;
-	OpenArchiveData.OpenMode = RAR_OM_EXTRACT;
-	RarFile = RAROpenArchiveEx(&OpenArchiveData);
-
-	if ((RHCode = OpenArchiveData.OpenResult) != 0) {
-		throw new ArchiveException(filename, OpenArchiveError(RHCode));
-	}
+	rarFile = openRar(&flags, &header, RAR_OM_EXTRACT);
 
 	if (password)
-		RARSetPassword(RarFile, password);
+		RARSetPassword(rarFile, password);
 
-	HeaderData.CmtBuf=NULL;
-
-	while ((RHCode = RARReadHeaderEx(RarFile, &HeaderData)) == 0) {
+	while ((RHCode = RARReadHeaderEx(rarFile, &header)) == 0) {
 #ifdef wxUSE_UNICODE
-		if (page.IsSameAs(wxString(HeaderData.FileNameW))) {
-#else // ANSI
-		if (page.IsSameAs(HeaderData.FileName)) {
+		if (page.IsSameAs(wxString(header.FileNameW))) {
+#else // ASCII
+		if (page.IsSameAs(header.FileName)) {
 #endif
-			length = HeaderData.UnpSize;
+			length = header.UnpSize;
 			break;	
 		} else {
-			if ((PFCode = RARProcessFile(RarFile, RAR_SKIP, NULL, NULL)) != 0)
+			if ((PFCode = RARProcessFile(rarFile, RAR_SKIP, NULL, NULL)) != 0) {
+				closeRar(rarFile, &flags);
 				throw ArchiveException(filename, ProcessFileError(PFCode, page));
+			}
 		}
 	}
 	
 	if (length == 0) { // archived file not found
+		closeRar(rarFile, &flags);
 		throw new ArchiveException(filename, page + wxT(" not found in this archive."));
+	}
+	if (RHCode) {
+		closeRar(rarFile, &flags);
+		throw new ArchiveException(filename, OpenArchiveError(PFCode));
 	}
 
 	wxUint8 *buffer = new wxUint8[length];
 	wxUint8 *callBackBuffer = buffer;
 
-	RARSetCallback(RarFile, CallbackProc, (long) &callBackBuffer);
+	RARSetCallback(rarFile, CallbackProc, (long) &callBackBuffer);
 
-	PFCode = RARProcessFile(RarFile, RAR_TEST, NULL, NULL);
+	PFCode = RARProcessFile(rarFile, RAR_TEST, NULL, NULL);
 
-	if (PFCode != 0) {
+	closeRar(rarFile, &flags);
+	
+	if (PFCode != 0)
 		throw new ArchiveException(filename, ProcessFileError(PFCode, page));	
+
+	return new wxMemoryInputStream(buffer, length);
+}
+
+bool ComicBookRAR::TestPassword()
+{
+	HANDLE rarFile;
+	int RHCode = 0, PFCode = 0;
+	struct RARHeaderDataEx header;
+	struct RAROpenArchiveDataEx flags;
+	bool passwordCorrect = true;
+	
+	wxString page = Filenames->Item(0); // test using the first page
+	
+	rarFile = openRar(&flags, &header, RAR_OM_EXTRACT);
+
+	if (password)
+		RARSetPassword(rarFile, password);
+
+	while ((RHCode = RARReadHeaderEx(rarFile, &header)) == 0) {
+#ifdef wxUSE_UNICODE
+		if (page.IsSameAs(wxString(header.FileNameW))) {
+#else // ASCII
+		if (page.IsSameAs(header.FileName)) {
+#endif
+			break;	
+		} else {
+			if ((PFCode = RARProcessFile(rarFile, RAR_SKIP, NULL, NULL)) != 0) {
+				closeRar(rarFile, &flags);
+				throw ArchiveException(filename, ProcessFileError(PFCode, page));
+			}
+		}
+	}
+	
+	if (RHCode != 0) {
+		closeRar(rarFile, &flags);
+		throw new ArchiveException(filename, OpenArchiveError(RHCode));
 	}
 
-	if (RarFile)  
-		RARCloseArchive(RarFile);
+	RARSetCallback(rarFile, TestPasswordCallbackProc, (long) &passwordCorrect);
+	PFCode = RARProcessFile(rarFile, RAR_TEST, NULL, NULL);
 
-#ifdef wxUSE_UNICODE
-#ifdef __WXOSX__
-	delete[] OpenArchiveData.ArcName;
-#else
-	delete[] OpenArchiveData.ArcNameW;
-#endif
-#else
-	delete[] OpenArchiveData.ArcName;
-#endif
-	return new wxMemoryInputStream(buffer, length);
+	closeRar(rarFile, &flags);
+
+	// If the password is wrong, RARProcessFile will return ERAR_BAD_DATA.  Of
+	// course, it will also return ERAR_BAD_DATA when the first file in the archive
+	// is corrupted.  How does one tell the difference?
+	if (PFCode == ERAR_BAD_DATA)
+		return false;
+
+	return passwordCorrect;
 }
 
 wxString ComicBookRAR::OpenArchiveError(int Error)
@@ -242,20 +239,14 @@ wxString ComicBookRAR::ProcessFileError(int Error, wxString compressedFile)
 	}
 }
 
-bool ComicBookRAR::TestPassword()
-{
-	return true;
-}
-
 int CALLBACK CallbackProc(wxUint32 msg, long UserData, long P1, long P2)
 {
-	wxUint8 **buffer;
 	switch(msg) {
 
 	case UCM_CHANGEVOLUME:
 		break;
 	case UCM_PROCESSDATA:
-		buffer = (wxUint8 **) UserData;
+		wxUint8 **buffer = (wxUint8 **) UserData;
 		memcpy(*buffer, (wxUint8 *)P1, P2);
 		// advance the buffer ptr, original m_buffer ptr is untouched
 		*buffer += P2;
@@ -264,4 +255,63 @@ int CALLBACK CallbackProc(wxUint32 msg, long UserData, long P1, long P2)
 		break;
 	}
 	return(0);
+}
+
+int CALLBACK TestPasswordCallbackProc(wxUint32 msg, long UserData, long P1, long P2)
+{
+	switch(msg) {
+
+	case UCM_CHANGEVOLUME:
+		break;
+	case UCM_PROCESSDATA:
+		break;
+	case UCM_NEEDPASSWORD:
+		bool *passwordCorrect = (bool*) UserData;
+		*passwordCorrect = false;
+		break;
+	}
+	return(0);
+}
+
+HANDLE ComicBookRAR::openRar(RAROpenArchiveDataEx *flags, RARHeaderDataEx *header, wxUint8 mode)
+{
+	HANDLE rarFile;
+
+	memset(flags, 0, sizeof(flags));
+#ifdef wxUSE_UNICODE
+#ifdef __WXOSX__
+	flags->ArcName = new char[filename.fn_str().Length() + 1];
+	strcpy(flags->ArcName, filename.fn_str().data());
+#else
+	flags->ArcNameW = new wchar_t[filename.Length() + 1];
+	wcscpy(flags->ArcNameW, filename.c_str());
+#endif
+#else // ASCII
+	flags->ArcName = new char[filename.Length() + 1];
+	strcpy(flags->ArcName, filename.c_str());
+#endif
+	flags->CmtBuf = NULL;
+	flags->OpenMode = mode;
+
+	rarFile = RAROpenArchiveEx(flags);
+	if (flags->OpenResult != 0) {
+		closeRar(rarFile, flags);
+		throw ArchiveException(filename, OpenArchiveError(flags->OpenResult));
+	}
+
+	header->CmtBuf = NULL;
+
+	return rarFile;
+}
+
+void ComicBookRAR::closeRar(HANDLE rarFile, RAROpenArchiveDataEx *flags)
+{
+	if (rarFile)  
+		RARCloseArchive(rarFile);
+
+#if defined(wxUSE_UNICODE) && !defined(__WXOSX__)
+	delete[] flags->ArcNameW;
+#else
+	delete[] flags->ArcName;
+#endif
 }

@@ -36,17 +36,19 @@ class ComicBookRAR : public ComicBook {
 public:
 	ComicBookRAR(wxString file);
 	~ComicBookRAR() {};
-	bool TestPassword();
 
 protected:
 	wxInputStream * ExtractStream(wxUint32 pageindex);
+	bool TestPassword();
 
 private:
 	wxString OpenArchiveError(int Error);
 	wxString ProcessFileError(int Error, wxString compressedFile);
+	HANDLE openRar(RAROpenArchiveDataEx *flags, RARHeaderDataEx *header, wxUint8 mode);
+	void closeRar(HANDLE rarFile, RAROpenArchiveDataEx *flags);
 };
 
 int CALLBACK CallbackProc(wxUint32 msg, long UserData, long P1, long P2);
+int CALLBACK TestPasswordCallbackProc(wxUint32 msg, long UserData, long P1, long P2);
 
 #endif
-

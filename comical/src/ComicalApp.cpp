@@ -59,8 +59,8 @@ bool ComicalApp::OnInit()
 	frame->Show(true);
 	SetTopWindow(frame);
 
-	wxLogStderr *log = new wxLogStderr();
-	wxLog::SetActiveTarget(log);
+//	wxLogStderr *log = new wxLogStderr();
+//	wxLog::SetActiveTarget(log);
 	
 	if (argc == 1)
 		frame->OnOpen(*(new wxCommandEvent()));

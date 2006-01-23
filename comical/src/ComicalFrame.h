@@ -58,6 +58,7 @@ class ComicalFrame : public wxFrame
 	void OnBrowser(wxCommandEvent& event);
 	void OnToolbar(wxCommandEvent& event);
 	void OnPageError(wxCommandEvent& event);
+	void OnHomepage(wxCommandEvent& event);
 	void startBook();
 	void setComicBook(ComicBook *newBook);
 	void clearComicBook();
@@ -84,6 +85,7 @@ ID_Full,
 ID_ZoomBox,
 ID_Browser,
 ID_Toolbar,
+ID_Homepage,
 //Zooms
 ID_Unzoomed,
 ID_3Q,

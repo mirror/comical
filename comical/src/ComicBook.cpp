@@ -33,8 +33,8 @@
 #include <cstring>
 #include <wx/datetime.h>
 #include <wx/mstream.h>
-#include <wx/textdlg.h>
 #include <wx/utils.h>
+#include <wx/textdlg.h>
 
 DEFINE_EVENT_TYPE(EVT_PAGE_SCALED)
 DEFINE_EVENT_TYPE(EVT_PAGE_THUMBNAILED)
@@ -720,13 +720,15 @@ void ComicBook::postCtor()
 	for (wxUint32 i = 0; i < pageCount; i++)
 		Orientations[i] = NORTH;
 
-	wxString new_password;
-	while (!TestPassword()) { // if the password needs to be set
-		new_password = wxGetPasswordFromUser(
-				wxT("This archive is password-protected.  Please enter the password."),
-				wxT("Enter Password"));
-		if (new_password.IsEmpty()) // the dialog was cancelled, and the archive cannot be opened
-			throw ArchiveException(filename, wxT("Comical could not open this file because it is password-protected."));
-		SetPassword(new_password.ToAscii());
+	if (!password) { // the password may already have been set if this is a RAR with encrypted headers
+		wxString new_password;
+		while (!TestPassword()) { // if the password needs to be set
+			new_password = wxGetPasswordFromUser(
+					wxT("This archive is password-protected.  Please enter the password."),
+					wxT("Enter Password"));
+			if (new_password.IsEmpty()) // the dialog was cancelled, and the archive cannot be opened
+				throw ArchiveException(filename, wxT("Comical could not open this file because it is password-protected."));
+			SetPassword(new_password.ToAscii());
+		}
 	}
 }

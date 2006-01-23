@@ -23,6 +23,7 @@
 #include <wx/tokenzr.h>
 #include <wx/log.h>
 #include <wx/utils.h>
+#include <wx/mimetype.h>
 
 #if !defined(__WXMSW__) && !defined(__WXPM__)
 #include "../Comical Icons/firstpage.xpm"
@@ -125,6 +126,7 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 
 	menuHelp = new wxMenu;
 	menuHelp->Append(wxID_ABOUT, wxT("&About...\tF1"), wxT("Display About Dialog."));
+	menuHelp->Append(ID_Homepage, wxT("&Comical Homepage"), wxT("Go to http://comical.sourceforge.net/"));
 
 	menuBar = new wxMenuBar();
 	menuBar->Append(menuFile, wxT("&File"));
@@ -210,6 +212,7 @@ BEGIN_EVENT_TABLE(ComicalFrame, wxFrame)
 	EVT_MENU(ID_ZoomBox, ComicalFrame::OnZoomBox)
 	EVT_MENU(ID_Browser, ComicalFrame::OnBrowser)
 	EVT_MENU(ID_Toolbar, ComicalFrame::OnToolbar)
+	EVT_MENU(ID_Homepage, ComicalFrame::OnHomepage)
 	EVT_CLOSE(ComicalFrame::OnClose)
 END_EVENT_TABLE()
 
@@ -411,6 +414,34 @@ void ComicalFrame::OnPageError(wxCommandEvent &event)
 {
 	wxLogError(event.GetString());
 	wxLog::FlushActive();
+}
+
+void ComicalFrame::OnHomepage(wxCommandEvent &event)
+{
+	// Untested code follows
+	wxFileType *ft = wxTheMimeTypesManager->GetFileTypeFromMimeType(wxT("text/html"));
+	if (!ft) {
+		wxLogError(wxT("Could not find a program to open HTML files."));
+		wxLog::FlushActive();
+		return;
+	}
+
+	wxString cmd;
+	bool open = ft->GetOpenCommand(&cmd, wxFileType::MessageParameters(wxT("http://comical.sourceforge.net/"), wxT("text/html")));
+	delete ft;
+
+	wxLogError(cmd);
+	
+	if (!open) {
+		wxLogError(wxT("Could not construct command to start web browser."));
+		wxLog::FlushActive();
+		return;
+	}
+
+	if (wxExecute(cmd) == 0) {
+		wxLogError(wxT("Could not launch web browser."));
+		wxLog::FlushActive();
+	}
 }
 
 void ComicalFrame::setComicBook(ComicBook *newBook)

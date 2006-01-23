@@ -65,7 +65,6 @@ ComicBookZIP::ComicBookZIP(wxString file) : ComicBook(file)
 	unzClose(ZipFile);	
 
 	postCtor();
-	
 	Create(); // create the wxThread
 }
 
