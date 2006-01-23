@@ -2,7 +2,7 @@
                 ComicBook.h - ComicBook class and its children
                              -------------------
     begin                : Mon Sep 29 2003
-    copyright            : (C) 2004 by James Athey
+    copyright            : (C) 2003-2006 by James Athey
     email                : jathey@comcast.net
  ***************************************************************************/
 

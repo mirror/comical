@@ -2,7 +2,7 @@
               ComicalCanvas.cpp - ComicalCanvas implementation
                              -------------------
     begin                : Thu Dec 18 2003
-    copyright            : (C) 2004-2005 by James Athey
+    copyright            : (C) 2003-2006 by James Athey
     email                : jathey@comcast.net
  ***************************************************************************/
 

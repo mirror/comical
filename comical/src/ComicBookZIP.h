@@ -1,8 +1,8 @@
 /***************************************************************************
-                          ComicBookZIP.h  -  description
+                               ComicBookZIP.h
                              -------------------
     begin                : Wed Oct 29 2003
-    copyright            : (C) 2003 by James Athey
+    copyright            : (C) 2003-2006 by James Athey
     email                : jathey@comcast.net
  ***************************************************************************/
 

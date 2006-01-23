@@ -1,5 +1,5 @@
 // This file has been modified to work with 24-bit wxImages instead of
-// 32-bit FreeImage objects.  Modifications (c) 2005 James Athey
+// 32-bit FreeImage objects.  Modifications (c) 2003 James Athey
 
 // ==========================================================
 // Upsampling / downsampling routine

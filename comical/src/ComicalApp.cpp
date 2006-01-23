@@ -2,7 +2,7 @@
               ComicalApp.cpp - ComicalApp class and gui functions
                              -------------------
     begin                : Wed Oct 22 2003
-    copyright            : (C) 2003-2005 by James Athey
+    copyright            : (C) 2003-2006 by James Athey
     email                : jathey@comcast.net
  ***************************************************************************/
 
