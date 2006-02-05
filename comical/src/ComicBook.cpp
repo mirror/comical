@@ -37,15 +37,12 @@ DEFINE_EVENT_TYPE(EVT_PAGE_THUMBNAILED)
 DEFINE_EVENT_TYPE(EVT_CURRENT_PAGE_CHANGED)
 DEFINE_EVENT_TYPE(EVT_PAGE_ERROR)
 
-ComicBook::ComicBook(wxString file) : wxThread(wxTHREAD_JOINABLE)
+ComicBook::ComicBook(wxString _filename, wxUint32 _cacheLen, COMICAL_ZOOM _zoom, long _zoomLevel, bool _fitOnlyOversize, COMICAL_MODE _mode, FREE_IMAGE_FILTER _filter, COMICAL_DIRECTION _direction, wxInt32 _scrollbarThickness) : wxThread(wxTHREAD_JOINABLE), filename(_filename), cacheLen(_cacheLen), zoom(_zoom), zoomLevel(_zoomLevel), fitOnlyOversize(_fitOnlyOversize), mode(_mode), filter(_filter), direction(_direction), scrollbarThickness(_scrollbarThickness)
 {
 	pageCount = 0;
 	currentPage = 0;
 	evtHandler = new wxEvtHandler();
-	filename = file;
-	wxConfigBase *config = wxConfigBase::Get();
 	// Each of the long values is followed by the letter L not the number one
-	cacheLen = (wxUint32) config->Read(wxT("CacheLength"), 10l); // Fit-to-Width is default
 	Filenames = new wxArrayString();
 	originals = NULL;
 	resamples = NULL;
@@ -59,8 +56,6 @@ ComicBook::ComicBook(wxString file) : wxThread(wxTHREAD_JOINABLE)
 
 ComicBook::~ComicBook()
 {
-	wxConfigBase *config = wxConfigBase::Get();
-	config->Write(wxT("CacheLength"), (int) cacheLen);
 	for(wxUint32 i = 0; i < pageCount; i++) {
 		if (originals[i].Ok())
 			originals[i].Destroy();
@@ -102,10 +97,10 @@ void ComicBook::RotatePage(wxUint32 pagenumber, COMICAL_ROTATE direction)
 	}
 }
 
-/* returns TRUE if paramaters were different, FALSE if parameters were the same and no changes were made */
-bool ComicBook::SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COMICAL_ZOOM newZoom, wxInt32 newWidth, wxInt32 newHeight, wxInt32 newScrollBarThickness)
+/* returns TRUE if newMode is different, FALSE if the same and no changes were made */
+bool ComicBook::SetMode(COMICAL_MODE newMode)
 {
-	if(mode != newMode || fiFilter != newFilter || zoom != newZoom || canvasWidth != newWidth || canvasHeight != newHeight || scrollBarThickness != newScrollBarThickness) {
+	if(mode != newMode) {
 		wxUint32 i;
 		for (i = 0; i < pageCount; i++) {
 			resampleLockers[i].Lock();
@@ -113,17 +108,133 @@ bool ComicBook::SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COM
 				resamples[i].Destroy();
 		}
 		mode = newMode;
-		fiFilter = newFilter;
-		zoom = newZoom;
-		canvasWidth = newWidth;
-		canvasHeight = newHeight;
-		scrollBarThickness = newScrollBarThickness;
 		for (i = 0; i < pageCount; i++)
 			resampleLockers[i].Unlock();
 		return TRUE;
 	} else
 		return FALSE;
+}
 
+/* returns TRUE if newFilter is different, FALSE if the same and no changes were made */
+bool ComicBook::SetFilter(FREE_IMAGE_FILTER newFilter)
+{
+	if(filter != newFilter) {
+		wxUint32 i;
+		for (i = 0; i < pageCount; i++) {
+			resampleLockers[i].Lock();
+			if (resamples[i].Ok())
+				resamples[i].Destroy();
+		}
+		filter = newFilter;
+		for (i = 0; i < pageCount; i++)
+			resampleLockers[i].Unlock();
+		return TRUE;
+	} else
+		return FALSE;
+}
+
+/* Makes pages zoom to newZoom level, and will zoom pages that are smaller than the canvas only if newFitOnlyIfOversize is FALSE.
+ * returns TRUE if parameters were different, FALSE if parameters were the same and no changes were made */
+bool ComicBook::SetZoom(COMICAL_ZOOM newZoom)
+{
+	if(zoom != newZoom) {
+		wxUint32 i;
+		for (i = 0; i < pageCount; i++) {
+			resampleLockers[i].Lock();
+			if (resamples[i].Ok())
+				resamples[i].Destroy();
+		}
+
+		zoom = newZoom;
+		for (i = 0; i < pageCount; i++)
+			resampleLockers[i].Unlock();
+		return TRUE;
+	} else
+		return FALSE;
+}
+
+/* Makes pages zoom to newZoomLevel%, and sets zoom to ZOOM_CUSTOM.
+ * returns TRUE if parameters were different, FALSE if parameters were the same and no changes were made */
+bool ComicBook::SetZoom(long newZoomLevel)
+{
+	if(zoom != ZOOM_CUSTOM || zoomLevel != newZoomLevel) {
+		wxUint32 i;
+		for (i = 0; i < pageCount; i++) {
+			resampleLockers[i].Lock();
+			if (resamples[i].Ok())
+				resamples[i].Destroy();
+		}
+		zoom = ZOOM_CUSTOM;
+		zoomLevel = newZoomLevel;
+		for (i = 0; i < pageCount; i++)
+			resampleLockers[i].Unlock();
+		return TRUE;
+	} else
+		return FALSE;
+}
+
+bool ComicBook::SetFitOnlyOversize(bool newFitOnlyOversize)
+{
+	if (fitOnlyOversize != newFitOnlyOversize) {
+		wxUint32 i;
+		for (i = 0; i < pageCount; i++) {
+			resampleLockers[i].Lock();
+			if (resamples[i].Ok())
+				resamples[i].Destroy();
+		}
+		
+		fitOnlyOversize = newFitOnlyOversize;
+		for (i = 0; i < pageCount; i++)
+			resampleLockers[i].Unlock();
+		return TRUE;
+	} else
+		return FALSE;
+}
+
+/* returns TRUE if direction is different, FALSE if same and no changes were made */
+bool ComicBook::SetDirection(COMICAL_DIRECTION newDirection)
+{
+	if(direction != newDirection) {
+		direction = newDirection;
+		return TRUE;
+	} else
+		return FALSE;
+}
+
+/* returns TRUE if parameters were different, FALSE if parameters were the same and no changes were made */
+bool ComicBook::SetCanvasSize(wxSize canvasSize)
+{
+	if(canvasWidth != canvasSize.x || canvasHeight != canvasSize.y) {
+		wxUint32 i;
+		for (i = 0; i < pageCount; i++) {
+			resampleLockers[i].Lock();
+			if (resamples[i].Ok())
+				resamples[i].Destroy();
+		}
+		canvasWidth = canvasSize.x;
+		canvasHeight = canvasSize.y;
+		for (i = 0; i < pageCount; i++)
+			resampleLockers[i].Unlock();
+		return TRUE;
+	} else
+		return FALSE;
+}
+
+bool ComicBook::SetScrollbarThickness(wxInt32 newScrollbarThickness)
+{
+	if(scrollbarThickness != newScrollbarThickness) {
+		wxUint32 i;
+		for (i = 0; i < pageCount; i++) {
+			resampleLockers[i].Lock();
+			if (resamples[i].Ok())
+				resamples[i].Destroy();
+		}
+		scrollbarThickness = newScrollbarThickness;
+		for (i = 0; i < pageCount; i++)
+			resampleLockers[i].Unlock();
+		return TRUE;
+	} else
+		return FALSE;
 }
 
 wxBitmap * ComicBook::GetPage(wxUint32 pagenumber)
@@ -145,7 +256,12 @@ wxBitmap * ComicBook::GetPageLeftHalf(wxUint32 pagenumber)
 		return NULL;
 	wxInt32 rWidth = resamples[pagenumber].GetWidth();
 	wxInt32 rHeight = resamples[pagenumber].GetHeight();
-	return new wxBitmap(resamples[pagenumber].GetSubImage(wxRect(0, 0, rWidth / 2, rHeight)));
+	if (direction == COMICAL_RTL) {
+		wxInt32 offset = rWidth / 2;
+		wxInt32 remainder = rWidth % 2;
+		return new wxBitmap(resamples[pagenumber].GetSubImage(wxRect(offset, 0, offset + remainder, rHeight)));
+	} else
+		return new wxBitmap(resamples[pagenumber].GetSubImage(wxRect(0, 0, rWidth / 2, rHeight)));
 }
 
 wxBitmap * ComicBook::GetPageRightHalf(wxUint32 pagenumber)
@@ -157,9 +273,12 @@ wxBitmap * ComicBook::GetPageRightHalf(wxUint32 pagenumber)
 		return NULL;
 	wxInt32 rWidth = resamples[pagenumber].GetWidth();
 	wxInt32 rHeight = resamples[pagenumber].GetHeight();
-	wxInt32 offset = rWidth / 2;
-	wxInt32 remainder = rWidth % 2;
-	return new wxBitmap(resamples[pagenumber].GetSubImage(wxRect(offset, 0, offset + remainder, rHeight)));
+	if (direction == COMICAL_LTR) {
+		wxInt32 offset = rWidth / 2;
+		wxInt32 remainder = rWidth % 2;
+		return new wxBitmap(resamples[pagenumber].GetSubImage(wxRect(offset, 0, offset + remainder, rHeight)));
+	} else
+		return new wxBitmap(resamples[pagenumber].GetSubImage(wxRect(0, 0, rWidth / 2, rHeight)));
 }
 
 wxBitmap * ComicBook::GetThumbnail(wxUint32 pagenumber)
@@ -255,19 +374,19 @@ bool ComicBook::FitWithoutScrollbars(wxUint32 pagenumber, float *scalingFactor)
 	float ratio = float (size.x) / float(size.y);
 
 	switch(zoom) {
-	case FITWIDTH:
+	case ZOOM_WIDTH:
 		if (ratio >= 1.0f || mode == ONEPAGE) {
 			usableWidth = canvasWidth;
-			usableWidthScrollbar = canvasWidth - scrollBarThickness;
+			usableWidthScrollbar = canvasWidth - scrollbarThickness;
 		} else {
 			usableWidth = canvasWidth / 2;
-			usableWidthScrollbar = (canvasWidth - scrollBarThickness) / 2;
+			usableWidthScrollbar = (canvasWidth - scrollbarThickness) / 2;
 		}
 		*scalingFactor = float(usableWidth) / float(size.x);
 		withoutScrollBarHeight = wxInt32(float(size.y) * *scalingFactor);
 		if (withoutScrollBarHeight > canvasHeight) {
 			// it's possible the page will fit without scrollbars at some
-			// width in between canvasWidth - scrollBarThickness and
+			// width in between canvasWidth - scrollbarThickness and
 			// canvasWidth.
 			// scaling factor if height is maximized
 			*scalingFactor = float(canvasHeight) / float(size.y);
@@ -278,7 +397,7 @@ bool ComicBook::FitWithoutScrollbars(wxUint32 pagenumber, float *scalingFactor)
 				return false;
 		} else
 			return true;
-	case FITHEIGHT:
+	case ZOOM_HEIGHT:
 		if (ratio >= 1.0f || mode == ONEPAGE) {
 			usableWidth = canvasWidth;
 		} else {
@@ -288,25 +407,22 @@ bool ComicBook::FitWithoutScrollbars(wxUint32 pagenumber, float *scalingFactor)
 		withoutScrollBarWidth = wxInt32(float(size.x) * *scalingFactor);
 		if (withoutScrollBarWidth > usableWidth) {
 			// it's possible the page will fit without scrollbars at some
-			// width in between canvasHeight - scrollBarThickness and
+			// width in between canvasHeight - scrollbarThickness and
 			// canvasHeight.
 			// scaling factor if width is maximized
 			*scalingFactor = float(usableWidth) / float(size.x);
 			// which will fit best?
-			usableHeightScrollbar = canvasHeight - scrollBarThickness;
+			usableHeightScrollbar = canvasHeight - scrollbarThickness;
 			if ((*scalingFactor * size.y) > usableHeightScrollbar)
 				return true;
 			else
 				return false;
 		} else
 			return true;
-	case FIT:
+	case ZOOM_FIT:
 		return true;
-	case ONEQ:
-	case HALF:
-	case THREEQ:
-	case FULL:
-		// this function should not be called in these cases
+	default:
+		// this function should not be called for other zooms
 		break;
 	}
 	return false;
@@ -316,6 +432,60 @@ bool ComicBook::FitWithoutScrollbars(wxUint32 pagenumber)
 {
 	float throwaway = 0.0f;
 	return FitWithoutScrollbars(pagenumber, &throwaway);
+}
+
+bool ComicBook::IsOversize(wxUint32 pagenumber)
+{
+	wxSize size;
+	wxInt32 usableWidth, usableHeight;
+
+	if (pagenumber > pageCount)
+		throw new PageOutOfRangeException(pagenumber, pageCount);
+
+	if (Orientations[pagenumber] == NORTH || Orientations[pagenumber] == SOUTH)		
+		size = wxSize(originals[pagenumber].GetWidth(), originals[pagenumber].GetHeight());
+	else
+		size = wxSize(originals[pagenumber].GetHeight(), originals[pagenumber].GetWidth());
+
+	float ratio = float (size.x) / float(size.y);
+	
+	switch(zoom) {
+	
+	case ZOOM_FIT:
+		usableHeight = canvasHeight;
+		if (ratio > 1.0f || mode == ONEPAGE)
+			usableWidth = canvasWidth;
+		else
+			usableWidth = canvasWidth / 2;
+		break;
+	
+	case ZOOM_WIDTH:
+		usableHeight = canvasHeight;
+		// For now, to be safe, assume vertical scrollbar is present thanks to neighboring page.
+		if (ratio > 1.0f || mode == ONEPAGE)
+			usableWidth = canvasWidth - scrollbarThickness;
+		else
+			usableWidth = (canvasWidth - scrollbarThickness) / 2;
+		break;
+	
+	case ZOOM_HEIGHT:
+		usableWidth = canvasWidth;
+		// For now, to be safe, assume horizontal scrollbar is present thanks to neighboring page.
+		if (ratio > 1.0f || mode == ONEPAGE)
+			usableHeight = canvasHeight - scrollbarThickness;
+		else
+			usableHeight = (canvasHeight - scrollbarThickness) / 2;
+		break;
+	
+	default:
+		return true;
+	
+	}
+	
+	if (size.x > usableWidth || size.y > usableHeight)
+		return true;
+	else
+		return false;
 }
 
 void * ComicBook::Entry()
@@ -500,19 +670,13 @@ void ComicBook::ScaleImage(wxUint32 pagenumber)
 	
 	switch(zoom) {
 
-	case THREEQ:
-		scalingFactor = 0.75f;
+	case ZOOM_CUSTOM:
+		scalingFactor = zoomLevel / 100.0f;
 		break;
 
-	case HALF:
-		scalingFactor = 0.5f;
-		break;
-
-	case ONEQ:
-		scalingFactor = 0.25f;
-		break;
-
-	case FIT:
+	case ZOOM_FIT:
+		if (fitOnlyOversize && !IsOversize(pagenumber))
+			goto zoom_original;
 		rImage = float(xImage) / float(yImage);
 		if (rImage >= 1.0f || mode == ONEPAGE) {
 			rCanvas = float(canvasWidth) / float(canvasHeight);
@@ -529,7 +693,9 @@ void ComicBook::ScaleImage(wxUint32 pagenumber)
 		}
 		break;
 
-	case FITWIDTH:
+	case ZOOM_WIDTH:
+		if (fitOnlyOversize && !IsOversize(pagenumber))
+			goto zoom_original;
 		if (FitWithoutScrollbars(pagenumber, &scalingFactor)) {
 			if (mode == TWOPAGE) {
 				// check neighbor pages to see if they fit too
@@ -547,14 +713,16 @@ void ComicBook::ScaleImage(wxUint32 pagenumber)
 			rImage = float(xImage) / float(yImage);
 			// fit with scrollbars
 			if (rImage >= 1.0f || mode == ONEPAGE) {
-				scalingFactor = float(canvasWidth - scrollBarThickness) / float(xImage);
+				scalingFactor = float(canvasWidth - scrollbarThickness) / float(xImage);
 			} else {
-				scalingFactor = float ((canvasWidth - scrollBarThickness) / 2) / float(xImage);
+				scalingFactor = float ((canvasWidth - scrollbarThickness) / 2) / float(xImage);
 			}
 		}
 		break;
 
-	case FITHEIGHT: // fit to height
+	case ZOOM_HEIGHT: // fit to height
+		if (fitOnlyOversize && !IsOversize(pagenumber))
+			goto zoom_original;
 		if (FitWithoutScrollbars(pagenumber, &scalingFactor)) {
 			if (mode == TWOPAGE) {
 				// check neighbor pages to see if they fit too
@@ -570,12 +738,13 @@ void ComicBook::ScaleImage(wxUint32 pagenumber)
 		} else {
 			fitv_nofit:
 			// fit with scrollbars
-			scalingFactor = float(canvasHeight - scrollBarThickness) / float(yImage);
+			scalingFactor = float(canvasHeight - scrollbarThickness) / float(yImage);
 		}
 		break;
 		
-	case FULL: // no resize
+	case ZOOM_FULL: // no resize
 	default:
+	zoom_original:
 		switch (Orientations[pagenumber]) {
 		case NORTH:
 			resamples[pagenumber] = wxImage(orig);
@@ -598,16 +767,16 @@ void ComicBook::ScaleImage(wxUint32 pagenumber)
 
 	switch (Orientations[pagenumber]) {
 	case NORTH:
-		resamples[pagenumber] = FreeImage_Rescale(orig, wxInt32(xImage * scalingFactor), wxInt32(yImage * scalingFactor), fiFilter);
+		resamples[pagenumber] = FreeImage_Rescale(orig, wxInt32(xImage * scalingFactor), wxInt32(yImage * scalingFactor), filter);
 		break;
 	case EAST:
-		resamples[pagenumber] = FreeImage_Rescale(orig, wxInt32(yImage * scalingFactor), wxInt32(xImage * scalingFactor), fiFilter).Rotate90(true);
+		resamples[pagenumber] = FreeImage_Rescale(orig, wxInt32(yImage * scalingFactor), wxInt32(xImage * scalingFactor), filter).Rotate90(true);
 		break;
 	case SOUTH:
-		resamples[pagenumber] = FreeImage_Rescale(orig, wxInt32(xImage * scalingFactor), wxInt32(yImage * scalingFactor), fiFilter).Rotate90().Rotate90();
+		resamples[pagenumber] = FreeImage_Rescale(orig, wxInt32(xImage * scalingFactor), wxInt32(yImage * scalingFactor), filter).Rotate90().Rotate90();
 		break;
 	case WEST:
-		resamples[pagenumber] = FreeImage_Rescale(orig, wxInt32(yImage * scalingFactor), wxInt32(xImage * scalingFactor), fiFilter).Rotate90(false);
+		resamples[pagenumber] = FreeImage_Rescale(orig, wxInt32(yImage * scalingFactor), wxInt32(xImage * scalingFactor), filter).Rotate90(false);
 		break;
 	}
 	SendScaledEvent(pagenumber);
@@ -639,16 +808,16 @@ void ComicBook::ScaleThumbnail(wxUint32 pagenumber)
 	
 	switch (Orientations[pagenumber]) {
 	case NORTH:
-		thumbnails[pagenumber] = FreeImage_Rescale(orig, xScaled, yScaled, fiFilter);
+		thumbnails[pagenumber] = FreeImage_Rescale(orig, xScaled, yScaled, filter);
 		break;
 	case EAST:
-		thumbnails[pagenumber] = FreeImage_Rescale(orig, yScaled, xScaled, fiFilter).Rotate90(true);
+		thumbnails[pagenumber] = FreeImage_Rescale(orig, yScaled, xScaled, filter).Rotate90(true);
 		break;
 	case SOUTH:
-		thumbnails[pagenumber] = FreeImage_Rescale(orig, xScaled, yScaled, fiFilter).Rotate90().Rotate90();
+		thumbnails[pagenumber] = FreeImage_Rescale(orig, xScaled, yScaled, filter).Rotate90().Rotate90();
 		break;
 	case WEST:
-		thumbnails[pagenumber] = FreeImage_Rescale(orig, yScaled, xScaled, fiFilter).Rotate90(false);
+		thumbnails[pagenumber] = FreeImage_Rescale(orig, yScaled, xScaled, filter).Rotate90(false);
 		break;
 	}
 	SendThumbnailedEvent(pagenumber);

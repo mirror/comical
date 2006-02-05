@@ -38,6 +38,9 @@ IMPLEMENT_APP(ComicalApp)
 
 bool ComicalApp::OnInit()
 {	
+	//wxLogStderr *log = new wxLogStderr();
+	//wxLog::SetActiveTarget(log);
+	
 	wxImage::AddHandler(new wxJPEGHandler);
 	wxImage::AddHandler(new wxPNGHandler);
 	wxImage::AddHandler(new wxGIFHandler);
@@ -58,9 +61,6 @@ bool ComicalApp::OnInit()
 
 	frame->Show(true);
 	SetTopWindow(frame);
-
-//	wxLogStderr *log = new wxLogStderr();
-//	wxLog::SetActiveTarget(log);
 	
 	if (argc == 1)
 		frame->OnOpen(*(new wxCommandEvent()));
@@ -73,5 +73,7 @@ bool ComicalApp::OnInit()
 		wxLog::FlushActive();
 	}
 
+	//delete log;
+	
 	return true;
 }

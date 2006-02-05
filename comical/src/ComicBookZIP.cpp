@@ -32,7 +32,7 @@
 #include <cstring>
 #include <errno.h>
 
-ComicBookZIP::ComicBookZIP(wxString file) : ComicBook(file)
+ComicBookZIP::ComicBookZIP(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, long zoomLevel, bool fitOnlyOversize, COMICAL_MODE mode, FREE_IMAGE_FILTER filter, COMICAL_DIRECTION direction, wxInt32 scrollbarThickness) : ComicBook(file, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness)
 {
 	wxString page;
 	static char namebuf[1024];

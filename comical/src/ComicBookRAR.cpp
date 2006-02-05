@@ -36,7 +36,7 @@
 #include <cstring>
 #endif
 
-ComicBookRAR::ComicBookRAR(wxString file) : ComicBook(file)
+ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, long zoomLevel, bool fitOnlyOversize, COMICAL_MODE mode, FREE_IMAGE_FILTER filter, COMICAL_DIRECTION direction, wxInt32 scrollbarThickness) : ComicBook(file, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness)
 {
 	HANDLE rarFile;
 	int RHCode = 0, PFCode = 0;

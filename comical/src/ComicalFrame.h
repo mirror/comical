@@ -55,23 +55,26 @@ class ComicalFrame : public wxFrame
 
     wxToolBar *toolBarNav;
     wxMenuBar *menuBar;
-    wxMenu *menuFile, *menuGo, *menuView, *menuHelp, *menuZoom, *menuMode, *menuFilter, *menuRotate, *menuRotateLeft, *menuRotateRight;
+    wxMenu *menuFile, *menuGo, *menuView, *menuHelp, *menuZoom, *menuMode, *menuFilter, *menuDirection, *menuRotate, *menuRotateLeft, *menuRotateRight;
 	wxStaticText *labelLeft, *labelRight;
 
   private:
 
-    void OnQuit(wxCommandEvent& event);
-    void OnAbout(wxCommandEvent& event);
-    void OnClose(wxCloseEvent& event);
-    void OnGoTo(wxCommandEvent& event);
-    void OnSingle(wxCommandEvent& event);
-    void OnDouble(wxCommandEvent& event);
-    void OnBuffer(wxCommandEvent& event);
+	void OnQuit(wxCommandEvent& event);
+	void OnAbout(wxCommandEvent& event);
+	void OnClose(wxCloseEvent& event);
+	void OnGoTo(wxCommandEvent& event);
+	void OnMode(wxCommandEvent& event);
+	void OnBuffer(wxCommandEvent& event);
 	void OnZoomBox(wxCommandEvent& event);
 	void OnBrowser(wxCommandEvent& event);
 	void OnToolbar(wxCommandEvent& event);
 	void OnPageError(wxCommandEvent& event);
 	void OnHomepage(wxCommandEvent& event);
+	void OnZoom(wxCommandEvent& event);
+	void OnFilter(wxCommandEvent& event);
+	void OnFitOnlyOversize(wxCommandEvent& event);
+	void OnDirection(wxCommandEvent& event);
 	void startBook();
 	void setComicBook(ComicBook *newBook);
 	void clearComicBook();
@@ -79,17 +82,27 @@ class ComicalFrame : public wxFrame
     wxConfig *config;
 	wxBoxSizer *frameSizer, *bookPanelSizer, *toolbarSizer;	
 	bool browserActive, toolbarActive;
-    ComicalCanvas *theCanvas;
-    ComicBook *theBook;
-    ComicalBrowser *theBrowser;
+	ComicalCanvas *theCanvas;
+	ComicBook *theBook;
+	ComicalBrowser *theBrowser;
 
-    DECLARE_EVENT_TABLE()
+	wxUint32 cacheLen;
+	COMICAL_MODE mode;
+	FREE_IMAGE_FILTER filter;
+	COMICAL_ZOOM zoom;
+	bool fitOnlyOversize;
+	long zoomLevel;
+	COMICAL_DIRECTION direction;
+	wxInt32 scrollbarThickness;
+
+	DECLARE_EVENT_TABLE()
 };
 
 enum
 {
 ID_S,
 ID_M,
+ID_D,
 ID_OpenDir,
 ID_Rotate,
 ID_RotateLeft,
@@ -100,13 +113,12 @@ ID_Browser,
 ID_Toolbar,
 ID_Homepage,
 //Zooms
-ID_Unzoomed,
-ID_3Q,
-ID_Half,
-ID_1Q,
 ID_Fit,
 ID_FitV,
 ID_FitH,
+ID_Unzoomed,
+ID_Custom,
+ID_FitOnlyOversize,
 //Modes
 ID_Single,
 ID_Double,
@@ -117,6 +129,9 @@ ID_Bilinear,
 ID_BSpline,
 ID_CatmullRom,
 ID_Lanczos,
+//Directions
+ID_LeftToRight,
+ID_RightToLeft,
 //Navigation
 ID_First,
 ID_Last,

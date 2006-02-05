@@ -37,7 +37,7 @@
 class ComicBookDir : public ComicBook {
 
 public:
-	ComicBookDir(wxString);
+	ComicBookDir(wxString _filename, wxUint32 _cacheLen, COMICAL_ZOOM _zoom, long _zoomLevel, bool _fitOnlyOversize, COMICAL_MODE _mode, FREE_IMAGE_FILTER _filter, COMICAL_DIRECTION _direction, wxInt32 _scrollbarThickness);
 	~ComicBookDir() {};
 
 protected:

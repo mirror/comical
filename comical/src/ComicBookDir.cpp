@@ -27,7 +27,7 @@
 
 #include "ComicBookDir.h"
 
-ComicBookDir::ComicBookDir(wxString dir) : ComicBook(dir)
+ComicBookDir::ComicBookDir(wxString dir, wxUint32 cacheLen, COMICAL_ZOOM zoom, long zoomLevel, bool fitOnlyOversize, COMICAL_MODE mode, FREE_IMAGE_FILTER filter, COMICAL_DIRECTION direction, wxInt32 scrollbarThickness) : ComicBook(dir, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness)
 {
 	wxArrayString *allFiles = new wxArrayString();
 	size_t count = wxDir::GetAllFiles(dir, allFiles, wxEmptyString, wxDIR_FILES | wxDIR_DIRS);

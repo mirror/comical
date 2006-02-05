@@ -44,14 +44,15 @@
 #include "Resize.h"
 
 enum COMICAL_MODE {ONEPAGE, TWOPAGE};
-enum COMICAL_ZOOM {FIT, FITHEIGHT, FITWIDTH, FULL, THREEQ, HALF, ONEQ};
+enum COMICAL_ZOOM {ZOOM_FIT, ZOOM_HEIGHT, ZOOM_WIDTH, ZOOM_FULL, ZOOM_CUSTOM};
 enum COMICAL_ROTATE {NORTH = 0, EAST, SOUTH, WEST};
+enum COMICAL_DIRECTION {COMICAL_LTR, COMICAL_RTL};
 
 class ComicBook : public wxThread {
 
 public:
 	// Constructors / Destructors
-	ComicBook(wxString file);
+	ComicBook(wxString filename, wxUint32 cacheLen, COMICAL_ZOOM, long zoomLevel, bool fitOnlyOversize, COMICAL_MODE, FREE_IMAGE_FILTER, COMICAL_DIRECTION, wxInt32 scrollbarThickness);
 	virtual ~ComicBook();
 	
 	// wxThread required functions
@@ -59,7 +60,14 @@ public:
 
 	void RotatePage(wxUint32 pagenumber, COMICAL_ROTATE direction);
 	wxUint32 GetPageCount() { return pageCount; }
-	bool SetParams(COMICAL_MODE newMode, FREE_IMAGE_FILTER newFilter, COMICAL_ZOOM newZoom, wxInt32 newWidth, wxInt32 newHeight, wxInt32 newScrollBarThickness);
+	bool SetZoom(COMICAL_ZOOM zoom);
+	bool SetFitOnlyOversize(bool fitOnlyOversize);
+	bool SetZoom(long zoomLevel);
+	bool SetMode(COMICAL_MODE mode);
+	bool SetFilter(FREE_IMAGE_FILTER filter);
+	bool SetDirection(COMICAL_DIRECTION direction);
+	bool SetCanvasSize(wxSize size);
+	bool SetScrollbarThickness(wxInt32 scrollbarThickness);
 	wxUint32 GetCacheLen() { return cacheLen; }
 	void SetCacheLen(wxUint32 newCacheLen) { cacheLen = newCacheLen; }
 	wxBitmap *GetPage(wxUint32 pagenumber);
@@ -113,6 +121,8 @@ private:
 	bool FitWithoutScrollbars(wxUint32 pagenumber, float *scalingFactor);
 	bool FitWithoutScrollbars(wxUint32 pagenumber);
 	
+	bool IsOversize(wxUint32 pagenumber);
+	
 	void SendScaledEvent(wxUint32 pagenumber);
 	void SendThumbnailedEvent(wxUint32 pagenumber);
 	void SendCurrentPageChangedEvent();
@@ -126,8 +136,6 @@ private:
 	wxMutex *resampleLockers;
 	wxMutex *thumbnailLockers;
 	
-	wxUint32 cacheLen;
-
 	wxEvtHandler *evtHandler;
 
 	wxUint32 pageCount;
@@ -137,12 +145,16 @@ private:
 	 * when mode = ONEPAGE, currentPage is the pagenumber of the displayed page. */
 	wxUint32 currentPage;
 	
-	wxInt32 scrollBarThickness;
-	
 	// window parameters
-	COMICAL_MODE mode;
-	FREE_IMAGE_FILTER fiFilter;
+	wxUint32 cacheLen;
 	COMICAL_ZOOM zoom;
+	long zoomLevel;
+	bool fitOnlyOversize;
+	COMICAL_MODE mode;
+	FREE_IMAGE_FILTER filter;
+	COMICAL_DIRECTION direction;
+	wxInt32 scrollbarThickness;
+	
 	wxInt32 canvasWidth;
 	wxInt32 canvasHeight;
 };
