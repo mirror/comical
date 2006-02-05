@@ -257,11 +257,7 @@ END_EVENT_TABLE()
 
 void ComicalFrame::OnClose(wxCloseEvent& event)
 {
-	if (theBook) {
-		theBook->Delete(); // delete the ComicBook thread
-		delete theBook; // clear out the rest of the ComicBook
-		theBook = NULL;
-	}
+	clearComicBook();
 
 	wxRect frameDim = GetRect();
 	config->Write(wxT("CacheLength"), (int) cacheLen);
@@ -618,6 +614,10 @@ void ComicalFrame::setComicBook(ComicBook *newBook)
 
 void ComicalFrame::clearComicBook()
 {
+	if (theCanvas)
+		theCanvas->SetComicBook(NULL);
+	if (theBrowser)
+		theBrowser->SetComicBook(NULL);
 	if (theBook) {
 		theBook->Disconnect(ID_PageError, EVT_PAGE_ERROR, wxCommandEventHandler(ComicalFrame::OnPageError), NULL, this);
 		theBook->Delete(); // delete the ComicBook thread

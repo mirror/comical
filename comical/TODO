@@ -9,7 +9,6 @@ Investigate whether FitWithoutScrollbars sometimes returns the wrong result-
 	off by one error possible thanks to canvasWidth / 2 integer division?
 	properly taking neighboring pages into account?
 Open next book in series or directory
-Hangs if closed or book is changed while loading pages on MacOSX?
 page navigation sometimes blocks on Mac OS X
 Broken pages should only be tried once
 make install target for Linux systems
@@ -18,10 +17,10 @@ compile issues on some distributions - unicode related
 const-correctness
 look for any remaining memory leaks
 User-configurable keybindings, use KeyBinder
-OpenGL backend
 Box Zoom/Magnifying Glass - started, postponed for now
 Multi-document mode on Mac OS X (i.e., act like a native Mac app)
 Resume last comic book on open
 Bookmarks
 resizable ComicalBrowser
+OpenGL backend
 multi-volume RAR
