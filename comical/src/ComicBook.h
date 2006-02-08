@@ -159,8 +159,6 @@ private:
 	wxInt32 canvasHeight;
 };
 
-enum { ID_PageThumbnailed, ID_PageScaled, ID_PageError };
-
 DECLARE_EVENT_TYPE(EVT_PAGE_SCALED, -1)
 DECLARE_EVENT_TYPE(EVT_PAGE_THUMBNAILED, -1)
 DECLARE_EVENT_TYPE(EVT_CURRENT_PAGE_CHANGED, -1)

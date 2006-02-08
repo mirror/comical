@@ -51,15 +51,10 @@ class ComicalFrame : public wxFrame
     void OpenDir(wxString);
     void OnOpen(wxCommandEvent& event);
     void OnOpenDir(wxCommandEvent& event);
-    void OnFull(wxCommandEvent& event);
-
-    wxToolBar *toolBarNav;
-    wxMenuBar *menuBar;
-    wxMenu *menuFile, *menuGo, *menuView, *menuHelp, *menuZoom, *menuMode, *menuFilter, *menuDirection, *menuRotate, *menuRotateLeft, *menuRotateRight;
-	wxStaticText *labelLeft, *labelRight;
 
   private:
 
+	void OnFull(wxCommandEvent& event);
 	void OnQuit(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
 	void OnClose(wxCloseEvent& event);
@@ -75,10 +70,16 @@ class ComicalFrame : public wxFrame
 	void OnFilter(wxCommandEvent& event);
 	void OnFitOnlyOversize(wxCommandEvent& event);
 	void OnDirection(wxCommandEvent& event);
+	void OnPageShown(wxCommandEvent& event);
 	void startBook();
 	void setComicBook(ComicBook *newBook);
 	void clearComicBook();
 	
+	wxToolBar *toolBarNav;
+	wxMenuBar *menuBar;
+	wxMenu *menuFile, *menuGo, *menuView, *menuHelp, *menuZoom, *menuMode, *menuFilter, *menuDirection, *menuRotate, *menuRotateLeft, *menuRotateRight;
+	wxStaticText *labelLeft, *labelRight;
+
     wxConfig *config;
 	wxBoxSizer *frameSizer, *bookPanelSizer, *toolbarSizer;	
 	bool browserActive, toolbarActive;

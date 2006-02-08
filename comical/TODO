@@ -2,14 +2,13 @@ Ordered by decreasing priority:
 
 Old config file group needs to be cleared out on startup
 Opening files from Finder fails on Mac OS X
-Let only ComicalFrame handle updating menus and toolbars
-Run through indent
 Dependency checking in Makefile
 Investigate whether FitWithoutScrollbars sometimes returns the wrong result-
 	off by one error possible thanks to canvasWidth / 2 integer division?
 	properly taking neighboring pages into account?
-Open next book in series or directory
 page navigation sometimes blocks on Mac OS X
+Open next book in series or directory
+Run through beautifier
 Broken pages should only be tried once
 make install target for Linux systems
 Windows installer (NSIS, InnoSetup)
@@ -22,5 +21,6 @@ Multi-document mode on Mac OS X (i.e., act like a native Mac app)
 Resume last comic book on open
 Bookmarks
 resizable ComicalBrowser
+Fat binary on MacOSX
 OpenGL backend
 multi-volume RAR

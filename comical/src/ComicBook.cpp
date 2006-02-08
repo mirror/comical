@@ -831,14 +831,14 @@ void ComicBook::SetCurrentPage(wxUint32 pagenumber)
 
 void ComicBook::SendScaledEvent(wxUint32 pagenumber)
 {
-	wxCommandEvent event(EVT_PAGE_SCALED, ID_PageScaled);
+	wxCommandEvent event(EVT_PAGE_SCALED, -1);
 	event.SetInt(pagenumber);
 	GetEventHandler()->AddPendingEvent(event);
 }
 
 void ComicBook::SendThumbnailedEvent(wxUint32 pagenumber)
 {
-	wxCommandEvent event(EVT_PAGE_THUMBNAILED, ID_PageThumbnailed);
+	wxCommandEvent event(EVT_PAGE_THUMBNAILED, -1);
 	event.SetInt(pagenumber);
 	GetEventHandler()->AddPendingEvent(event);
 }

@@ -83,23 +83,19 @@ void ComicalBrowser::OnCurrentPageChanged(wxCommandEvent &event)
 void ComicalBrowser::SetComicBook(ComicBook *book)
 {
 	if (theBook) {
-		theBook->Disconnect(ID_PageThumbnailed, EVT_PAGE_THUMBNAILED, wxCommandEventHandler(ComicalBrowser::OnThumbnailReady), NULL, this);
+		theBook->Disconnect(EVT_PAGE_THUMBNAILED, wxCommandEventHandler(ComicalBrowser::OnThumbnailReady), NULL, this);
+		theBook->Disconnect(EVT_CURRENT_PAGE_CHANGED, wxCommandEventHandler(ComicalBrowser::OnCurrentPageChanged), NULL, this);
 	}
 	theBook = book;
 	if (theBook) {
-		theBook->Connect(ID_PageThumbnailed, EVT_PAGE_THUMBNAILED, wxCommandEventHandler(ComicalBrowser::OnThumbnailReady), NULL, this);
+		theBook->Connect(EVT_PAGE_THUMBNAILED, wxCommandEventHandler(ComicalBrowser::OnThumbnailReady), NULL, this);
+		theBook->Connect(EVT_CURRENT_PAGE_CHANGED, wxCommandEventHandler(ComicalBrowser::OnCurrentPageChanged), NULL, this);
 	}
 }
 
 void ComicalBrowser::SetComicalCanvas(ComicalCanvas *canvas)
 {
-	if (theCanvas) {
-		theCanvas->Disconnect(ID_CurrentPageChanged, EVT_CURRENT_PAGE_CHANGED, wxCommandEventHandler(ComicalBrowser::OnCurrentPageChanged), NULL, this);
-	}
 	theCanvas = canvas;
-	if (theCanvas) {
-		theCanvas->Connect(ID_CurrentPageChanged, EVT_CURRENT_PAGE_CHANGED, wxCommandEventHandler(ComicalBrowser::OnCurrentPageChanged), NULL, this);
-	}
 }
 
 void ComicalBrowser::ClearBrowser()

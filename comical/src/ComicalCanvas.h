@@ -28,25 +28,15 @@
 #ifndef _ComicalCanvas_h_
 #define _ComicalCanvas_h_
 
-#include <wx/bitmap.h>
-#include <wx/scrolwin.h>
-#include <wx/scrolbar.h>
-#include <wx/dcclient.h>
-#include <wx/dcmemory.h>
-#include <wx/stream.h>
-#include <wx/log.h>
-#include <wx/config.h>
-#include <wx/event.h>
-#include <wx/menu.h>
-#include <wx/pen.h>
-#include <wx/brush.h>
-#include <wx/utils.h>
-#include <wx/thread.h>
-
 #include "ComicBook.h"
 
+#include <wx/bitmap.h>
+#include <wx/event.h>
+#include <wx/menu.h>
+#include <wx/gdicmn.h>
+#include <wx/scrolwin.h>
+
 enum COMICAL_PAGETYPE {FULL_PAGE, LEFT_HALF, RIGHT_HALF};
-//enum COMICAL_POSITION {POSITION_LEFT, POSITION_RIGHT, POSITION_CENTER};
 
 class ComicalCanvas : public wxScrolledWindow
 {
@@ -63,6 +53,12 @@ class ComicalCanvas : public wxScrolledWindow
 	void SetComicBook(ComicBook *book);	
 	void ClearCanvas();
 	void ResetView();
+	
+	wxUint32 GetLeftNum() { return leftNum; }
+	wxUint32 GetRightNum() { return rightNum; }
+	bool IsLeftPageOk();
+	bool IsRightPageOk();
+	bool IsCenterPageOk();
 
   private:
 	void clearBitmap(wxBitmap *&bitmap);
@@ -96,8 +92,7 @@ class ComicalCanvas : public wxScrolledWindow
 	void PrevPageSlide();
 	void NextPageSlide();
 
-	void SendCurrentPageChangedEvent();
-	//void SendPageShownEvent(wxUint32 pagenumber, COMICAL_POSITION position);
+	void SendPageShownEvent();
 
     wxBitmap *leftPage, *rightPage, *centerPage;
     wxUint32 leftNum, rightNum;
@@ -120,7 +115,6 @@ class ComicalCanvas : public wxScrolledWindow
 
 enum
 {
-//ID_PageShown,
 ID_ContextOpen,
 ID_ContextOpenDir,
 //Navigation
@@ -130,7 +124,6 @@ ID_ContextPrevTurn,
 ID_ContextNextTurn,
 ID_ContextPrevSlide,
 ID_ContextNextSlide,
-ID_CurrentPageChanged,
 //Rotation
 ID_ContextRotate,
 ID_ContextLeftCW,
@@ -141,6 +134,6 @@ ID_ContextCCW,
 ID_ContextFull
 };
 
-//DECLARE_EVENT_TYPE(EVT_PAGE_SHOWN, -1)
+DECLARE_EVENT_TYPE(EVT_PAGE_SHOWN, -1)
 
 #endif

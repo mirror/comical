@@ -39,6 +39,8 @@
 #include <wx/log.h>
 #include <wx/utils.h>
 #include <wx/mimetype.h>
+#include <wx/event.h>
+#include <wx/scrolbar.h>
 
 #if !defined(__WXMSW__) && !defined(__WXPM__)
 #include "../Comical Icons/firstpage.xpm"
@@ -98,7 +100,7 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	menuZoom->AppendRadioItem(ID_FitV, wxT("Fit to Height"), wxT("Scale pages to fit the window's height."));
 	menuZoom->AppendRadioItem(ID_FitH, wxT("Fit to Width"), wxT("Scale pages to fit the window's width."));
 	menuZoom->AppendRadioItem(ID_Unzoomed, wxT("Original Size"), wxT("Show pages without resizing them."));
-	menuZoom->AppendRadioItem(ID_Custom, wxT("Custom Zoom"), wxT("Scale pages to a custom percentage of their original size."));
+	menuZoom->AppendRadioItem(ID_Custom, wxT("Custom Zoom..."), wxT("Scale pages to a custom percentage of their original size."));
 	menuZoom->AppendSeparator();
 	wxMenuItem *fitOnlyOversizeMenu = menuZoom->AppendCheckItem(ID_FitOnlyOversize, wxT("Fit Oversized Pages Only"), wxT("Check to see if a page will fit on screen before resizing it."));
 	menuView->Append(ID_S, wxT("&Zoom"), menuZoom);
@@ -190,6 +192,8 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	frameSizer->Add(theBrowser, 0, wxEXPAND, 0);
 	
 	theCanvas = new ComicalCanvas(this, wxDefaultPosition, wxSize(10, 10), mode, direction, scrollbarThickness);
+	theCanvas->Connect(EVT_PAGE_SHOWN, wxCommandEventHandler(ComicalFrame::OnPageShown), NULL, this);
+	theCanvas->Connect(ID_ContextFull, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(ComicalFrame::OnFull), NULL, this);
 	bookPanelSizer->Add(theCanvas, 1, wxEXPAND, 0);
 	theBrowser->SetComicalCanvas(theCanvas);
 
@@ -258,6 +262,8 @@ END_EVENT_TABLE()
 void ComicalFrame::OnClose(wxCloseEvent& event)
 {
 	clearComicBook();
+	theCanvas->ClearCanvas();
+	delete theCanvas;
 
 	wxRect frameDim = GetRect();
 	config->Write(wxT("CacheLength"), (int) cacheLen);
@@ -602,13 +608,77 @@ void ComicalFrame::OnDirection(wxCommandEvent& event)
 		theCanvas->ResetView();	
 }
 
+void ComicalFrame::OnPageShown(wxCommandEvent& event)
+{
+	wxUint32 leftNum = theCanvas->GetLeftNum();
+	wxUint32 rightNum = theCanvas->GetRightNum();
+	
+	if (mode == ONEPAGE || theBook->GetPageCount() == 1 || leftNum == rightNum) {
+		menuView->Enable(ID_RotateLeft, false);
+		menuView->Enable(ID_RotateRight, false);
+		menuView->Enable(ID_Rotate, true);
+		menuRotate->FindItemByPosition(theBook->Orientations[theBook->GetCurrentPage()])->Check();
+		toolBarNav->EnableTool(ID_CCWL, false);
+		toolBarNav->EnableTool(ID_CWL, false);
+		toolBarNav->EnableTool(ID_CCW, true);
+		toolBarNav->EnableTool(ID_CW, true);
+		
+		labelLeft->SetLabel(wxT(""));
+		labelRight->SetLabel(wxString::Format(wxT("%d of %d"), theBook->GetCurrentPage() + 1, theBook->GetPageCount()));
+	} else {
+		menuView->Enable(ID_Rotate, false);
+
+		if (theCanvas->IsRightPageOk()) {
+			menuView->Enable(ID_RotateRight, true);
+			menuRotateRight->FindItemByPosition(theBook->Orientations[rightNum])->Check();
+			toolBarNav->EnableTool(ID_CCW, true);
+			toolBarNav->EnableTool(ID_CW, true);
+			if (direction == COMICAL_LTR)
+				labelRight->SetLabel(wxString::Format(wxT("%d of %d"), rightNum + 1, theBook->GetPageCount()));
+			else // direction == COMICAL_RTL
+				labelLeft->SetLabel(wxString::Format(wxT("%d of %d"), rightNum + 1, theBook->GetPageCount()));
+		} else {
+			menuView->Enable(ID_RotateRight, false);
+			toolBarNav->EnableTool(ID_CCW, false);
+			toolBarNav->EnableTool(ID_CW, false);
+			if (direction == COMICAL_LTR)
+				labelRight->SetLabel(wxT(""));
+			else // direction == COMICAL_RTL
+				labelLeft->SetLabel(wxT(""));
+		}
+	
+		if (theCanvas->IsLeftPageOk()) {
+			menuView->Enable(ID_RotateLeft, true);
+			menuRotateLeft->FindItemByPosition(theBook->Orientations[leftNum])->Check();
+			toolBarNav->EnableTool(ID_CCWL, true);
+			toolBarNav->EnableTool(ID_CWL, true);
+			
+			if (direction == COMICAL_LTR)
+				labelLeft->SetLabel(wxString::Format(wxT("%d of %d"), leftNum + 1, theBook->GetPageCount()));
+			else // direction == COMICAL_RTL
+				labelRight->SetLabel(wxString::Format(wxT("%d of %d"), leftNum + 1, theBook->GetPageCount()));
+		} else {
+			menuView->Enable(ID_RotateLeft, false);
+			toolBarNav->EnableTool(ID_CCWL, false);
+			toolBarNav->EnableTool(ID_CWL, false);
+			if (direction == COMICAL_LTR)
+				labelLeft->SetLabel(wxT(""));
+			else // direction == COMICAL_RTL
+				labelRight->SetLabel(wxT(""));
+		}
+	}
+
+	toolBarNav->Realize();
+
+}
+
 void ComicalFrame::setComicBook(ComicBook *newBook)
 {
 	if (theBook)
 		clearComicBook();
 	theBook = newBook;
 	if (theBook) {
-		theBook->Connect(ID_PageError, EVT_PAGE_ERROR, wxCommandEventHandler(ComicalFrame::OnPageError), NULL, this);
+		theBook->Connect(EVT_PAGE_ERROR, wxCommandEventHandler(ComicalFrame::OnPageError), NULL, this);
 	}
 }
 
@@ -619,7 +689,7 @@ void ComicalFrame::clearComicBook()
 	if (theBrowser)
 		theBrowser->SetComicBook(NULL);
 	if (theBook) {
-		theBook->Disconnect(ID_PageError, EVT_PAGE_ERROR, wxCommandEventHandler(ComicalFrame::OnPageError), NULL, this);
+		theBook->Disconnect(EVT_PAGE_ERROR, wxCommandEventHandler(ComicalFrame::OnPageError), NULL, this);
 		theBook->Delete(); // delete the ComicBook thread
 		delete theBook; // clear out the rest of the ComicBook
 		theBook = NULL;
