@@ -1,4 +1,5 @@
 0.8 -
+Even faster than ever before, thanks to numerous cleanups and fixes
 Memory leak in ComicBook::Entry() fixed
 Only pages are shown in full-screen mode
 Google Local style scrolling: just drag to move the page!

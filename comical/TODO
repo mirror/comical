@@ -7,20 +7,21 @@ Investigate whether FitWithoutScrollbars sometimes returns the wrong result-
 	off by one error possible thanks to canvasWidth / 2 integer division?
 	properly taking neighboring pages into account?
 page navigation sometimes blocks on Mac OS X
+Investigate painting only the damaged rectangle instead of the whole canvas
 Open next book in series or directory
 Run through beautifier
 Broken pages should only be tried once
 make install target for Linux systems
 Windows installer (NSIS, InnoSetup)
-compile issues on some distributions - unicode related
+User-configurable keybindings, use KeyBinder
 const-correctness
 look for any remaining memory leaks
-User-configurable keybindings, use KeyBinder
 Box Zoom/Magnifying Glass - started, postponed for now
 Multi-document mode on Mac OS X (i.e., act like a native Mac app)
 Resume last comic book on open
 Bookmarks
 resizable ComicalBrowser
-Fat binary on MacOSX
+Use XCode instead of Makefiles to build unrar and unzip on Mac OS X
+Intel/PPC Fat binary on MacOSX
 OpenGL backend
 multi-volume RAR
