@@ -237,7 +237,7 @@
 				OTHER_LDFLAGS = "";
 				OTHER_REZFLAGS = "";
 				PREBINDING = NO;
-				PRODUCT_NAME = miniunzip;
+				PRODUCT_NAME = libminiunzip;
 				SECTORDER_FLAGS = "";
 				WARNING_CFLAGS = "-Wmost -Wno-four-char-constants -Wno-unknown-pragmas";
 			};
@@ -253,7 +253,7 @@
 			explicitFileType = "compiled.mach-o.dylib";
 			includeInIndex = 0;
 			isa = PBXFileReference;
-			path = miniunzip.dylib;
+			path = libminiunzip.dylib;
 			refType = 3;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
