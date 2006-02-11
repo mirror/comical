@@ -1,0 +1,336 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 39;
+	objects = {
+		D447E611099E49B500E8EE86 = {
+			children = (
+				D447E647099E4D9500E8EE86,
+				D447E61A099E49C000E8EE86,
+				D447E619099E49BB00E8EE86,
+				D447E626099E4A0E00E8EE86,
+			);
+			isa = PBXGroup;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D447E613099E49B500E8EE86 = {
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+			};
+			isa = PBXBuildStyle;
+			name = Development;
+		};
+		D447E614099E49B500E8EE86 = {
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+			};
+			isa = PBXBuildStyle;
+			name = Deployment;
+		};
+		D447E615099E49B500E8EE86 = {
+			buildSettings = {
+			};
+			buildStyles = (
+				D447E613099E49B500E8EE86,
+				D447E614099E49B500E8EE86,
+			);
+			hasScannedForEncodings = 0;
+			isa = PBXProject;
+			mainGroup = D447E611099E49B500E8EE86;
+			productRefGroup = D447E626099E4A0E00E8EE86;
+			projectDirPath = "";
+			targets = (
+				D447E624099E4A0E00E8EE86,
+				D447E62F099E4A4500E8EE86,
+			);
+		};
+		D447E619099E49BB00E8EE86 = {
+			children = (
+				D447E61F099E49F300E8EE86,
+				D447E620099E49F300E8EE86,
+			);
+			isa = PBXGroup;
+			name = Sources;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D447E61A099E49C000E8EE86 = {
+			children = (
+				D447E61C099E49E200E8EE86,
+				D447E61D099E49E200E8EE86,
+				D447E61E099E49E200E8EE86,
+			);
+			isa = PBXGroup;
+			name = Headers;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D447E61C099E49E200E8EE86 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			path = crypt.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D447E61D099E49E200E8EE86 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			path = ioapi.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D447E61E099E49E200E8EE86 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			path = unzip.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D447E61F099E49F300E8EE86 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.c;
+			path = ioapi.c;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D447E620099E49F300E8EE86 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.c;
+			path = unzip.c;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D447E621099E4A0E00E8EE86 = {
+			buildActionMask = 2147483647;
+			files = (
+				D447E631099E4AB000E8EE86,
+				D447E632099E4AB000E8EE86,
+				D447E633099E4AB000E8EE86,
+			);
+			isa = PBXHeadersBuildPhase;
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D447E622099E4A0E00E8EE86 = {
+			buildActionMask = 2147483647;
+			files = (
+				D447E634099E4AB800E8EE86,
+				D447E635099E4AB800E8EE86,
+			);
+			isa = PBXSourcesBuildPhase;
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D447E623099E4A0E00E8EE86 = {
+			buildActionMask = 2147483647;
+			files = (
+			);
+			isa = PBXFrameworksBuildPhase;
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D447E624099E4A0E00E8EE86 = {
+			buildPhases = (
+				D447E621099E4A0E00E8EE86,
+				D447E622099E4A0E00E8EE86,
+				D447E623099E4A0E00E8EE86,
+			);
+			buildRules = (
+			);
+			buildSettings = {
+				DYLIB_CURRENT_VERSION = 1.01e;
+				GCC_CW_ASM_SYNTAX = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_MODEL_CPU = "";
+				GCC_MODEL_TUNING = G3;
+				GCC_OPTIMIZATION_LEVEL = 2;
+				GCC_WARN_ALLOW_INCOMPLETE_PROTOCOL = NO;
+				INSTALL_PATH = /usr/local/lib;
+				LIBRARY_STYLE = STATIC;
+				MACOSX_DEPLOYMENT_TARGET = "";
+				OPTIMIZATION_CFLAGS = "";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = miniunzip;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = "-Wmost -Wno-four-char-constants -Wno-unknown-pragmas";
+			};
+			dependencies = (
+			);
+			isa = PBXNativeTarget;
+			name = "Static Library";
+			productName = miniunzip;
+			productReference = D447E625099E4A0E00E8EE86;
+			productType = "com.apple.product-type.library.static";
+		};
+		D447E625099E4A0E00E8EE86 = {
+			explicitFileType = archive.ar;
+			includeInIndex = 0;
+			isa = PBXFileReference;
+			path = libminiunzip.a;
+			refType = 3;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		D447E626099E4A0E00E8EE86 = {
+			children = (
+				D447E625099E4A0E00E8EE86,
+				D447E630099E4A4500E8EE86,
+			);
+			isa = PBXGroup;
+			name = Products;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D447E62C099E4A4500E8EE86 = {
+			buildActionMask = 2147483647;
+			files = (
+				D447E642099E4D2A00E8EE86,
+				D447E643099E4D2A00E8EE86,
+				D447E644099E4D2A00E8EE86,
+			);
+			isa = PBXHeadersBuildPhase;
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D447E62D099E4A4500E8EE86 = {
+			buildActionMask = 2147483647;
+			files = (
+				D447E645099E4D3000E8EE86,
+				D447E646099E4D3000E8EE86,
+			);
+			isa = PBXSourcesBuildPhase;
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D447E62E099E4A4500E8EE86 = {
+			buildActionMask = 2147483647;
+			files = (
+				D447E648099E4D9500E8EE86,
+			);
+			isa = PBXFrameworksBuildPhase;
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D447E62F099E4A4500E8EE86 = {
+			buildPhases = (
+				D447E62C099E4A4500E8EE86,
+				D447E62D099E4A4500E8EE86,
+				D447E62E099E4A4500E8EE86,
+			);
+			buildRules = (
+			);
+			buildSettings = {
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_MODEL_TUNING = G3;
+				GCC_OPTIMIZATION_LEVEL = 2;
+				GCC_WARN_ALLOW_INCOMPLETE_PROTOCOL = NO;
+				INSTALL_PATH = /usr/local/lib;
+				LIBRARY_STYLE = DYNAMIC;
+				OPTIMIZATION_CFLAGS = "";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = miniunzip;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = "-Wmost -Wno-four-char-constants -Wno-unknown-pragmas";
+			};
+			dependencies = (
+			);
+			isa = PBXNativeTarget;
+			name = "Shared Library";
+			productName = "Shared Library";
+			productReference = D447E630099E4A4500E8EE86;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+		D447E630099E4A4500E8EE86 = {
+			explicitFileType = "compiled.mach-o.dylib";
+			includeInIndex = 0;
+			isa = PBXFileReference;
+			path = miniunzip.dylib;
+			refType = 3;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		D447E631099E4AB000E8EE86 = {
+			fileRef = D447E61C099E49E200E8EE86;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D447E632099E4AB000E8EE86 = {
+			fileRef = D447E61D099E49E200E8EE86;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D447E633099E4AB000E8EE86 = {
+			fileRef = D447E61E099E49E200E8EE86;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D447E634099E4AB800E8EE86 = {
+			fileRef = D447E61F099E49F300E8EE86;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D447E635099E4AB800E8EE86 = {
+			fileRef = D447E620099E49F300E8EE86;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D447E642099E4D2A00E8EE86 = {
+			fileRef = D447E61C099E49E200E8EE86;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D447E643099E4D2A00E8EE86 = {
+			fileRef = D447E61D099E49E200E8EE86;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D447E644099E4D2A00E8EE86 = {
+			fileRef = D447E61E099E49E200E8EE86;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D447E645099E4D3000E8EE86 = {
+			fileRef = D447E61F099E49F300E8EE86;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D447E646099E4D3000E8EE86 = {
+			fileRef = D447E620099E49F300E8EE86;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D447E647099E4D9500E8EE86 = {
+			isa = PBXFileReference;
+			lastKnownFileType = "compiled.mach-o.dylib";
+			name = libz.dylib;
+			path = /usr/lib/libz.dylib;
+			refType = 0;
+			sourceTree = "<absolute>";
+		};
+		D447E648099E4D9500E8EE86 = {
+			fileRef = D447E647099E4D9500E8EE86;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+	};
+	rootObject = D447E615099E49B500E8EE86;
+}
