@@ -47,6 +47,9 @@ bool ComicalApp::OnInit()
 	wxImage::AddHandler(new wxTIFFHandler);
 	
 	wxConfig *config = new wxConfig(wxT("Comical"));
+
+	if (config->HasGroup(wxT("Comical"))) // old versions of Comical had an extra path element
+		config->DeleteGroup(wxT("Comical")); // this code will probably linger here forever, sadly, to catch upgraders
 	
 	wxInt32 width = (wxInt32) config->Read(wxT("FrameWidth"), 600l);
 	wxInt32 height = (wxInt32) config->Read(wxT("FrameHeight"), 400l);
