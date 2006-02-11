@@ -1,6 +1,7 @@
 Ordered by decreasing priority:
 
 Opening files from Finder fails on Mac OS X
+Would PNG icons be better than XPMs and ICOs?
 Investigate whether FitWithoutScrollbars sometimes returns the wrong result-
 	off by one error possible thanks to canvasWidth / 2 integer division?
 	properly taking neighboring pages into account?

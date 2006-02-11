@@ -61,12 +61,13 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	toolBarNav = NULL;
 	labelLeft = NULL;
 	labelRight = NULL;
+	
 	frameSizer = new wxBoxSizer(wxHORIZONTAL);
 	bookPanelSizer = new wxBoxSizer(wxVERTICAL);
 	toolbarSizer = new wxBoxSizer(wxHORIZONTAL);
 	
 	config = new wxConfig(wxT("Comical"));
-	wxConfigBase::Set(config); // Registers config globally	
+	wxConfigBase::Set(config); // Registers config globally
 	
 	// Get the thickness of scrollbars.  Knowing this, we can precalculate
 	// whether the current page(s) will need scrollbars.

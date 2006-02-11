@@ -11,6 +11,8 @@ Using wxSizers to layout window instead of doing it by hand
 Right-to-Left mode implemented
 Fit-only-if-Oversized implemented
 Using events to pass information between classes
+make install, install-strip, uninstall, distclean targets
+Makefile checks dependencies correctly now
 
 0.7 -
 Fit to Width and Fit to Height now better uses available space
