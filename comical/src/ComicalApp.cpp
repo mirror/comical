@@ -38,8 +38,8 @@ IMPLEMENT_APP(ComicalApp)
 
 bool ComicalApp::OnInit()
 {	
-	wxLogStderr *log = new wxLogStderr();
-	wxLog::SetActiveTarget(log);
+//	wxLogStderr *log = new wxLogStderr();
+//	wxLog::SetActiveTarget(log);
 	
 	wxImage::AddHandler(new wxJPEGHandler);
 	wxImage::AddHandler(new wxPNGHandler);
