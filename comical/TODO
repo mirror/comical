@@ -5,7 +5,6 @@ Would PNG icons be better than XPMs and ICOs?
 Investigate whether FitWithoutScrollbars sometimes returns the wrong result-
 	off by one error possible thanks to canvasWidth / 2 integer division?
 	properly taking neighboring pages into account?
-page navigation sometimes blocks on Mac OS X
 Investigate painting only the damaged rectangle instead of the whole canvas
 Open next book in series or directory
 Run through beautifier
@@ -19,7 +18,6 @@ Multi-document mode on Mac OS X (i.e., act like a native Mac app)
 Resume last comic book on open
 Bookmarks
 resizable ComicalBrowser
-Use XCode instead of Makefiles to build unrar and unzip on Mac OS X
 Intel/PPC Fat binary on MacOSX
 Helpfile
 OpenGL backend
