@@ -139,7 +139,7 @@ wxInputStream * ComicBookRAR::ExtractStream(wxUint32 pageindex)
 	closeRar(rarFile, &flags);
 	
 	if (PFCode != 0)
-		throw new ArchiveException(filename, ProcessFileError(PFCode, page));	
+		throw new ArchiveException(filename, ProcessFileError(PFCode, page));
 
 	return new wxMemoryInputStream(buffer, length);
 }
@@ -241,12 +241,14 @@ wxString ComicBookRAR::ProcessFileError(int Error, wxString compressedFile)
 
 int CALLBACK CallbackProc(wxUint32 msg, long UserData, long P1, long P2)
 {
+	wxUint8 **buffer;
+	
 	switch(msg) {
 
 	case UCM_CHANGEVOLUME:
 		break;
 	case UCM_PROCESSDATA:
-		wxUint8 **buffer = (wxUint8 **) UserData;
+		buffer = (wxUint8 **) UserData;
 		memcpy(*buffer, (wxUint8 *)P1, P2);
 		// advance the buffer ptr, original m_buffer ptr is untouched
 		*buffer += P2;
@@ -259,6 +261,7 @@ int CALLBACK CallbackProc(wxUint32 msg, long UserData, long P1, long P2)
 
 int CALLBACK TestPasswordCallbackProc(wxUint32 msg, long UserData, long P1, long P2)
 {
+	bool *passwordCorrect;
 	switch(msg) {
 
 	case UCM_CHANGEVOLUME:
@@ -266,7 +269,7 @@ int CALLBACK TestPasswordCallbackProc(wxUint32 msg, long UserData, long P1, long
 	case UCM_PROCESSDATA:
 		break;
 	case UCM_NEEDPASSWORD:
-		bool *passwordCorrect = (bool*) UserData;
+		passwordCorrect = (bool*) UserData;
 		*passwordCorrect = false;
 		break;
 	}
@@ -277,11 +280,12 @@ HANDLE ComicBookRAR::openRar(RAROpenArchiveDataEx *flags, RARHeaderDataEx *heade
 {
 	HANDLE rarFile;
 
-	memset(flags, 0, sizeof(flags));
+	memset(flags, 0, sizeof(*flags));
 #ifdef wxUSE_UNICODE
 #ifdef __WXOSX__
-	flags->ArcName = new char[filename.fn_str().Length() + 1];
-	strcpy(flags->ArcName, filename.fn_str().data());
+	const char *filenameData = filename.fn_str().data();
+	flags->ArcName = new char[strlen(filenameData) + 1];
+	strcpy(flags->ArcName, filenameData);
 #else
 	flags->ArcNameW = new wchar_t[filename.Length() + 1];
 	wcscpy(flags->ArcNameW, filename.c_str());
@@ -306,7 +310,7 @@ HANDLE ComicBookRAR::openRar(RAROpenArchiveDataEx *flags, RARHeaderDataEx *heade
 
 void ComicBookRAR::closeRar(HANDLE rarFile, RAROpenArchiveDataEx *flags)
 {
-	if (rarFile)  
+	if (rarFile)
 		RARCloseArchive(rarFile);
 
 #if defined(wxUSE_UNICODE) && !defined(__WXOSX__)

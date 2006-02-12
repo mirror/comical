@@ -508,6 +508,8 @@ void ComicalFrame::OnHomepage(wxCommandEvent &event)
 
 void ComicalFrame::OnZoom(wxCommandEvent& event)
 {
+	long newZoomLevel;
+	
 	switch (event.GetId())
 	{
 	case ID_Fit:
@@ -531,7 +533,7 @@ void ComicalFrame::OnZoom(wxCommandEvent& event)
 			theCanvas->EnableScrolling(true, true);	
 		break;
 	case ID_Custom:
-		long newZoomLevel = wxGetNumberFromUser(wxT("Set the zoom level (in %)"), wxT("Zoom"), wxT("Custom Zoom"), zoomLevel, 1, 200);
+		newZoomLevel = wxGetNumberFromUser(wxT("Set the zoom level (in %)"), wxT("Zoom"), wxT("Custom Zoom"), zoomLevel, 1, 200);
 		if (newZoomLevel < 0) {
 			menuZoom->FindItemByPosition(zoom)->Check(true);
 			return;

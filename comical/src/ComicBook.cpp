@@ -586,24 +586,28 @@ void * ComicBook::Entry()
 			for (wxUint32 j = 0; j < pageCount; j++) {
 				thumbnailLockers[j].Lock();
 				if (!thumbnails[j].Ok()) {
-					originalLockers[j].Lock();
-					if (!originals[j].Ok()) {
-						stream = ExtractStream(j);
-						if (stream->IsOk() && stream->GetSize() > 0) {
-							originals[j].LoadFile(*stream);
-							// Memory Input Streams don't take ownership of the buffer
-							mstream = dynamic_cast<wxMemoryInputStream*>(stream);
-							if (mstream)
-								delete[] (wxUint8 *) mstream->GetInputStreamBuffer()->GetBufferStart();
-						} else {
-							SendPageErrorEvent(j, wxString::Format(wxT("Failed to extract page %d."), j));
-							originals[j] = wxImage(1, 1);
-						}
+					try {
+						originalLockers[j].Lock();
 						if (!originals[j].Ok()) {
-							SendPageErrorEvent(j, wxString::Format(wxT("Failed to extract page %d."), j));
-							originals[j] = wxImage(1, 1);
+							stream = ExtractStream(j);
+							if (stream->IsOk() && stream->GetSize() > 0) {
+								originals[j].LoadFile(*stream);
+								// Memory Input Streams don't take ownership of the buffer
+								mstream = dynamic_cast<wxMemoryInputStream*>(stream);
+								if (mstream)
+									delete[] (wxUint8 *) mstream->GetInputStreamBuffer()->GetBufferStart();
+							} else {
+								SendPageErrorEvent(j, wxString::Format(wxT("Failed to extract page %d."), j));
+								originals[j] = wxImage(1, 1);
+							}
+							if (!originals[j].Ok()) {
+								SendPageErrorEvent(j, wxString::Format(wxT("Failed to extract page %d."), j));
+								originals[j] = wxImage(1, 1);
+							}
+							delete stream;
 						}
-						delete stream;
+					} catch (ArchiveException *ae) {
+						SendPageErrorEvent(j, wxString::Format(wxT("Failed to extract page %d."), j));
 					}
 					ScaleThumbnail(j);
 					originalLockers[j].Unlock();
