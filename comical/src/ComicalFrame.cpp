@@ -481,29 +481,7 @@ void ComicalFrame::OnPageError(wxCommandEvent &event)
 
 void ComicalFrame::OnHomepage(wxCommandEvent &event)
 {
-	wxFileType *ft = wxTheMimeTypesManager->GetFileTypeFromMimeType(wxT("text/html"));
-	if (!ft) {
-		wxLogError(wxT("Could not find a program to open HTML files."));
-		wxLog::FlushActive();
-		return;
-	}
-
-	wxString cmd;
-	bool open = ft->GetOpenCommand(&cmd, wxFileType::MessageParameters(wxT("http://comical.sourceforge.net/"), wxT("text/html")));
-	delete ft;
-
-	wxLogError(cmd);
-	
-	if (!open) {
-		wxLogError(wxT("Could not construct command to start web browser."));
-		wxLog::FlushActive();
-		return;
-	}
-
-	if (wxExecute(cmd) == 0) {
-		wxLogError(wxT("Could not launch web browser."));
-		wxLog::FlushActive();
-	}
+	wxLaunchDefaultBrowser(wxT("http://comical.sourceforge.net/"));
 }
 
 void ComicalFrame::OnZoom(wxCommandEvent& event)
