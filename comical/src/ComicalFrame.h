@@ -67,6 +67,7 @@ class ComicalFrame : public wxFrame
 	void OnPageError(wxCommandEvent& event);
 	void OnHomepage(wxCommandEvent& event);
 	void OnZoom(wxCommandEvent& event);
+	void OnSetCustom(wxCommandEvent& event);
 	void OnFilter(wxCommandEvent& event);
 	void OnFitOnlyOversize(wxCommandEvent& event);
 	void OnDirection(wxCommandEvent& event);
@@ -120,6 +121,7 @@ ID_FitH,
 ID_Unzoomed,
 ID_Custom,
 ID_FitOnlyOversize,
+ID_SetCustom,
 //Modes
 ID_Single,
 ID_Double,

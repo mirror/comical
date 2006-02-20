@@ -101,9 +101,10 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	menuZoom->AppendRadioItem(ID_FitV, wxT("Fit to Height"), wxT("Scale pages to fit the window's height."));
 	menuZoom->AppendRadioItem(ID_FitH, wxT("Fit to Width"), wxT("Scale pages to fit the window's width."));
 	menuZoom->AppendRadioItem(ID_Unzoomed, wxT("Original Size"), wxT("Show pages without resizing them."));
-	menuZoom->AppendRadioItem(ID_Custom, wxT("Custom Zoom..."), wxT("Scale pages to a custom percentage of their original size."));
+	menuZoom->AppendRadioItem(ID_Custom, wxT("Custom Zoom"), wxT("Scale pages to a custom percentage of their original size."));
 	menuZoom->AppendSeparator();
 	wxMenuItem *fitOnlyOversizeMenu = menuZoom->AppendCheckItem(ID_FitOnlyOversize, wxT("Fit Oversized Pages Only"), wxT("Check to see if a page will fit on screen before resizing it."));
+	menuZoom->Append(ID_SetCustom, wxT("Set Custom Zoom Level..."), wxT("Choose the percentage that the Custom Zoom mode will use."));
 	menuView->Append(ID_S, wxT("&Zoom"), menuZoom);
 	
 
@@ -251,6 +252,7 @@ BEGIN_EVENT_TABLE(ComicalFrame, wxFrame)
 	EVT_MENU_RANGE(ID_Single, ID_Double, ComicalFrame::OnMode)
 	EVT_MENU_RANGE(ID_Fit, ID_Custom, ComicalFrame::OnZoom)
 	EVT_MENU(ID_FitOnlyOversize, ComicalFrame::OnFitOnlyOversize)
+	EVT_MENU(ID_SetCustom, ComicalFrame::OnSetCustom)
 	EVT_MENU_RANGE(ID_Box, ID_Lanczos, ComicalFrame::OnFilter)
 	EVT_MENU_RANGE(ID_LeftToRight, ID_RightToLeft, ComicalFrame::OnDirection)
 //	EVT_MENU(ID_ZoomBox, ComicalFrame::OnZoomBox)
@@ -486,8 +488,6 @@ void ComicalFrame::OnHomepage(wxCommandEvent &event)
 
 void ComicalFrame::OnZoom(wxCommandEvent& event)
 {
-	long newZoomLevel;
-	
 	switch (event.GetId())
 	{
 	case ID_Fit:
@@ -511,24 +511,27 @@ void ComicalFrame::OnZoom(wxCommandEvent& event)
 			theCanvas->EnableScrolling(true, true);	
 		break;
 	case ID_Custom:
-		newZoomLevel = wxGetNumberFromUser(wxT("Set the zoom level (in %)"), wxT("Zoom"), wxT("Custom Zoom"), zoomLevel, 1, 200);
-		if (newZoomLevel < 0) {
-			menuZoom->FindItemByPosition(zoom)->Check(true);
-			return;
-		}
-		zoomLevel = newZoomLevel;
 		zoom = ZOOM_CUSTOM;
 		if (theCanvas)
 			theCanvas->EnableScrolling(true, true);	
-		if (theBook && theBook->SetZoom(newZoomLevel) && theBook->IsRunning())
-			theCanvas->ResetView();
-		return;
+		break;
 	default:
 		wxLogError(wxT("Zoom mode %d is undefined."), event.GetId()); // we shouldn't be here... honest!
 		return;
 	}
 
 	if (theBook && theBook->SetZoom(zoom) && theBook->IsRunning())
+		theCanvas->ResetView();
+}
+
+void ComicalFrame::OnSetCustom(wxCommandEvent& event)
+{
+	long newZoomLevel = wxGetNumberFromUser(wxT("Set the zoom level (in %)"), wxT("Zoom"), wxT("Custom Zoom"), zoomLevel, 1, 200);
+	if (newZoomLevel < 0) {
+		return;
+	}
+	zoomLevel = newZoomLevel;
+	if (theBook && theBook->SetZoomLevel(zoomLevel) && theBook->IsRunning() && theCanvas && zoom == ZOOM_CUSTOM)
 		theCanvas->ResetView();
 }
 

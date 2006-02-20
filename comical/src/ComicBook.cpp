@@ -153,21 +153,24 @@ bool ComicBook::SetZoom(COMICAL_ZOOM newZoom)
 		return FALSE;
 }
 
-/* Makes pages zoom to newZoomLevel%, and sets zoom to ZOOM_CUSTOM.
+/* Makes pages zoom to newZoomLevel%.
  * returns TRUE if parameters were different, FALSE if parameters were the same and no changes were made */
-bool ComicBook::SetZoom(long newZoomLevel)
+bool ComicBook::SetZoomLevel(long newZoomLevel)
 {
-	if(zoom != ZOOM_CUSTOM || zoomLevel != newZoomLevel) {
+	if(zoomLevel != newZoomLevel) {
 		wxUint32 i;
-		for (i = 0; i < pageCount; i++) {
-			resampleLockers[i].Lock();
-			if (resamples[i].Ok())
-				resamples[i].Destroy();
+		if (zoom == ZOOM_CUSTOM) {
+			for (i = 0; i < pageCount; i++) {
+				resampleLockers[i].Lock();
+				if (resamples[i].Ok())
+					resamples[i].Destroy();
+			}
 		}
-		zoom = ZOOM_CUSTOM;
 		zoomLevel = newZoomLevel;
-		for (i = 0; i < pageCount; i++)
-			resampleLockers[i].Unlock();
+		if (zoom == ZOOM_CUSTOM) {
+			for (i = 0; i < pageCount; i++)
+				resampleLockers[i].Unlock();
+		}
 		return TRUE;
 	} else
 		return FALSE;

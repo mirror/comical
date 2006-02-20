@@ -1,16 +1,17 @@
 Ordered by decreasing priority:
 
-Opening files from Finder fails on Mac OS X
+Switch to libunicows from MSLU on Windows
+Opening files from Finder fails on Mac OS X - fix with proper installer
 Would PNG icons be better than XPMs and ICOs?
 Investigate whether FitWithoutScrollbars sometimes returns the wrong result-
 	off by one error possible thanks to canvasWidth / 2 integer division?
 	properly taking neighboring pages into account?
 Investigate painting only the damaged rectangle instead of the whole canvas
 Open next book in series or directory
-Run through beautifier
 Broken pages should only be tried once
 Windows installer (NSIS, InnoSetup)
 User-configurable keybindings, use KeyBinder
+Run through beautifier
 const-correctness
 look for any remaining memory leaks
 Box Zoom/Magnifying Glass - started, postponed for now

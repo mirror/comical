@@ -61,8 +61,8 @@ public:
 	void RotatePage(wxUint32 pagenumber, COMICAL_ROTATE direction);
 	wxUint32 GetPageCount() { return pageCount; }
 	bool SetZoom(COMICAL_ZOOM zoom);
+	bool SetZoomLevel(long zoomLevel);
 	bool SetFitOnlyOversize(bool fitOnlyOversize);
-	bool SetZoom(long zoomLevel);
 	bool SetMode(COMICAL_MODE mode);
 	bool SetFilter(FREE_IMAGE_FILTER filter);
 	bool SetDirection(COMICAL_DIRECTION direction);
