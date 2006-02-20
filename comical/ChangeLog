@@ -13,6 +13,7 @@ Fit-only-if-Oversized implemented
 Using events to pass information between classes
 make install, install-strip, uninstall, distclean targets
 Makefile checks dependencies correctly now
+TIFF support taken out for simplicity, size
 
 0.7 -
 Fit to Width and Fit to Height now better uses available space

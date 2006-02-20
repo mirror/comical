@@ -13,7 +13,7 @@ Nifty Features:
 * Autodetects double pages scanned together and displays it accordingly.
 * Page rotation.
 * Full-Screen mode.
-* Displays JPG, GIF, PNG, and TIFF images.
+* Displays JPG, GIF, and PNG images.
 * Supports RAR(.cbr) and ZIP(.cbz) comic book archives
 * Supports all encrypted RAR archives as well as ZIP archives with pkzip 2.04g
 encryption.
@@ -32,10 +32,6 @@ FreeImage (http://freeimage.sourceforge.net/).
 
 JPEG support provided by:
 Independent JPEG Group (http://www.ijg.org/)
-
-TIFF support provided by:
-Copyright (c) 1988-1997 Sam Leffler
-Copyright (c) 1991-1997 Silicon Graphics, Inc.
 
 ZIP decompression provided by:
 Copyright (C) 1998-2005 Gilles Vollant.

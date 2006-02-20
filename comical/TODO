@@ -1,6 +1,5 @@
 Ordered by decreasing priority:
 
-Switch to libunicows from MSLU on Windows
 Opening files from Finder fails on Mac OS X - fix with proper installer
 Would PNG icons be better than XPMs and ICOs?
 Investigate whether FitWithoutScrollbars sometimes returns the wrong result-

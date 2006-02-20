@@ -36,7 +36,6 @@ ComicBookDir::ComicBookDir(wxString dir, wxUint32 cacheLen, COMICAL_ZOOM zoom, l
 	for (wxUint32 i = 0; i < count; i++) {
 		page = allFiles->Item(i);
 		if(page.Right(5).Upper() == wxT(".JPEG") || page.Right(4).Upper() == wxT(".JPG") ||
-				page.Right(5).Upper() == wxT(".TIFF") || page.Right(4).Upper() == wxT(".TIF") ||
 				page.Right(4).Upper() == wxT(".GIF") ||
 				page.Right(4).Upper() == wxT(".PNG"))
 			Filenames->Add(page);
