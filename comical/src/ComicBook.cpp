@@ -565,18 +565,20 @@ void * ComicBook::Entry()
 					SendPageErrorEvent(target, ae->Message);
 				}
 				ScaleImage(target);
-				resampleLockers[target].Unlock();
 				scalingHappened = true;
 				
 				thumbnailLockers[target].Lock();
 				if (!thumbnails[target].Ok())
 					ScaleThumbnail(target);
+
+				if (!resamples[target].Ok())
+					SendPageErrorEvent(target, wxString::Format(wxT("Could not scale page %d."), target));
+				else if (!thumbnails[target].Ok()) // let's only see one error if things go wrong
+					SendPageErrorEvent(target, wxString::Format(wxT("Could not create thumbnail for page %d."), target));
+
+				resampleLockers[target].Unlock();
 				thumbnailLockers[target].Unlock();
 				originalLockers[target].Unlock();
-				
-				if (!resamples[target].Ok() || !thumbnails[target].Ok())
-					SendPageErrorEvent(target, wxString::Format(wxT("Could not scale page %d."), target));
-
 				break;
 			}
 
