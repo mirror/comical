@@ -10,7 +10,6 @@ bindir = $(exec_prefix)/bin
 
 .SUFFIXES: .cpp .d .o .a
 
-ALL.CPP = $(wildcard src/*.cpp)
 ALL.D = $(patsubst %.cpp,%.d,$(wildcard src/*.cpp))
 ALL.O = $(patsubst %.cpp,%.o,$(wildcard src/*.cpp))
 
