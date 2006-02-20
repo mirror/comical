@@ -699,14 +699,15 @@ void ComicalCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 	PrepareDC(dc);
 	dc.SetTextForeground(wxTheColourDatabase->Find(wxT("WHITE")));
 	dc.SetTextBackground(GetBackgroundColour());
-
+	wxFont font(12, wxFONTFAMILY_ROMAN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL); 
+	dc.SetFont(font);
 	GetVirtualSize(&xCanvas, &yCanvas);
 	
 	if (mode == ONEPAGE) {
 		if (centerPage && centerPage->Ok())
 			dc.DrawBitmap(*centerPage, xCanvas/2 - centerPage->GetWidth()/2, 0, false);
 		else if (theBook) {
-			text = wxString::Format(wxT("Page %d loading"), theBook->GetCurrentPage() + 1);
+			text = wxString::Format(wxT("Page %d loading..."), theBook->GetCurrentPage() + 1);
 			dc.GetTextExtent(text, &textWidth, &textHeight);
 			textX = (xCanvas / 2) - (textWidth / 2);
 			if (textX < 0)
@@ -733,7 +734,7 @@ void ComicalCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 		if (trueLeftPage && trueLeftPage->Ok())
 			dc.DrawBitmap(*trueLeftPage, xCanvas/2 - trueLeftPage->GetWidth(), 0, false);
 		else if (theBook) {
-			text = wxString::Format(wxT("Page %d loading"), trueLeftNum + 1);
+			text = wxString::Format(wxT("Page %d loading..."), trueLeftNum + 1);
 			dc.GetTextExtent(text, &textWidth, &textHeight);
 			textX = (xCanvas / 4) - (textWidth / 2);
 			if (textX < 0)
@@ -747,7 +748,7 @@ void ComicalCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 		if (trueRightPage && trueRightPage->Ok())
 			dc.DrawBitmap(*trueRightPage, xCanvas/2, 0, false);
 		else if (theBook) {
-			text = wxString::Format(wxT("Page %d loading"), trueRightNum + 1);
+			text = wxString::Format(wxT("Page %d loading..."), trueRightNum + 1);
 			dc.GetTextExtent(text, &textWidth, &textHeight);
 			textX = ((3 * xCanvas) / 4) - (textWidth / 2);
 			if (textX < (xCanvas / 2))
@@ -790,7 +791,6 @@ void ComicalCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 	}
 
 	SetFocus(); // So we can grab keydown events
-
 }
 
 void ComicalCanvas::OnKeyDown(wxKeyEvent& event)
