@@ -1,0 +1,28 @@
+#
+# Makefile for minizip unzip library
+#  MinGW
+#
+
+CC = gcc
+CFLAGS = -Os
+
+##########################
+
+.SUFFIXES = .c .o .a
+
+ALL.O = $(patsubst %.c,%.o,$(wildcard *.c))
+
+all: libminiunzip.a
+
+%.o : %.c
+	$(CC) $(CFLAGS) -c -o $*.o $<
+	
+libminiunzip.a: $(ALL.O)
+	-if exist libminiunzip.a del libminiunzip.a
+	ar rcs libminiunzip.a $(ALL.O)
+
+clean:
+	-if exist libminiunzip.a del libminiunzip.a
+	-if exist *.o del *.o
+
+.PHONY : clean

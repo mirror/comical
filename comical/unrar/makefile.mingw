@@ -2,10 +2,10 @@
 # Makefile for Mingw - unrar
 #
 
-CXX=g++
-CXXFLAGS = -O2 -MD -mthreads -Wno-deprecated 
-DEFINES = -D_MSC_VER -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE 
-STRIP=strip
+CXX			= g++
+CXXFLAGS	= -Os -mthreads -Wno-deprecated 
+DEFINES		= -D_MSC_VER -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE 
+STRIP		= strip
 
 ##########################
 
@@ -27,6 +27,7 @@ OBJECTS=strlist.o strfn.o pathfn.o int64.o savepos.o global.o file.o filefn.o fi
 all:	unrar.exe
 
 clean:
+
 	-if exist *.o del *.o
 	-if exist *.d del *.d
 	-if exist *.bak del *.bak

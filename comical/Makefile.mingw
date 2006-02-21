@@ -1,8 +1,8 @@
-CC		= g++
-RC		= windres
-INCLUDE	= -Iunrar -Iunzip -IC:\wxWidgets-2.6.2\include -IC:\wxWidgets-2.6.2\lib\gcc_lib\mswu
-CPPFLAGS	= -O2 -MD -mthreads -Wall -pipe -DWIN32 -D__WXMSW__ -D_UNICODE -DwxUSE_UNICODE_MSLU=1 $(INCLUDE)
-LDFLAGS	= -mwindows -mthreads -Lunzip -Lunrar -Lc:\wxWidgets-2.6.2\lib\gcc_lib
+CC			= g++
+RC			= windres
+INCLUDE		= -Iunrar -Iunzip -IC:\wxWidgets-2.6.2\include -IC:\wxWidgets-2.6.2\lib\gcc_lib\mswu
+CPPFLAGS	= -Os -MD -mthreads -Wall -pipe -DWIN32 -D__WXMSW__ -D_UNICODE -DwxUSE_UNICODE_MSLU=1 $(INCLUDE)
+LDFLAGS		= -mwindows -mthreads -Lunzip -Lunrar -Lc:\wxWidgets-2.6.2\lib\gcc_lib
 LIBS		= -lunrar -lminiunzip -lwxmsw26u_core -lwxbase26u -lwxjpeg -lwxpng -lz
 WIN32_LIBS	= -lunicows -lkernel32 -luser32 -lgdi32 -lcomdlg32 -lshell32 -lcomctl32 -lole32 -loleaut32 -luuid -loleacc
 RESFLAGS	= --use-temp-file --define __WXMSW__ --define _UNICODE --include-dir C:/wxWidgets-2.6.2/include --include-dir C:/wxWidgets-2.6.2/lib/gcc_lib/mswu
