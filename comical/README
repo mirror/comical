@@ -8,18 +8,19 @@ in-your-face double page display!
 
 Nifty Features:
 * Single-Page or Double-Page display modes.
-* Several zoom modes - 100%, 75%, 50%, 25%, Fit, Fit-to-Width, and Fit-to-Height.
+* Several zoom modes - Fit, Fit-to-Width, Fit-to-Height, Original, and Custom.
 * Crisp image scaling with algorithms adapted from FreeImage 3.
 * Autodetects double pages scanned together and displays it accordingly.
 * Page rotation.
 * Full-Screen mode.
+* Left-to-Right or Right-to-Left browsing.
 * Displays JPG, GIF, and PNG images.
 * Supports RAR(.cbr) and ZIP(.cbz) comic book archives
 * Supports all encrypted RAR archives as well as ZIP archives with pkzip 2.04g
 encryption.
 
 What you need to compile from source:
-wxWidgets 2.4.2 or later; 2.6.2 or later recommended
+wxWidgets 2.6.0 or later
 gcc 3.3 or later
 
 Acknowledgements:
