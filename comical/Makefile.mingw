@@ -1,33 +1,42 @@
-CC = g++
-LD = g++
-RC = windres
-INCLUDE	= -Iunrar -IC:\wxWidgets-2.6.2\include -IC:\wxWidgets-2.6.2\lib\gcc_lib\mswu
-CFLAGS	= -O2 -MD -mthreads -Wall -pipe -DWIN32 -D__WXMSW__ -D_UNICODE $(INCLUDE)
-LDFLAGS	= -mwindows -mthreads -Lunrar -Lc:\wxWidgets-2.6.2\lib\gcc_lib
-LIBS	= -lunrar -lwxmsw26u_core -lwxbase26u -lwxtiff -lwxjpeg -lwxpng -lwxzlib
-PLATFORM_LIBS = -lkernel32 -luser32 -lgdi32 -lcomdlg32 -lshell32 -lcomctl32 -lole32 -loleaut32 -luuid -loleacc
-RESFLAGS = --use-temp-file --define __WXMSW__ --define _UNICODE --include-dir c:\PROGRA~1\UnrarDLL --include-dir C:/wxWidgets-2.6.2/include --include-dir C:/wxWidgets-2.6.2/lib/gcc_lib/mswu
-STRIP = strip
+CC		= g++
+RC		= windres
+INCLUDE	= -Iunrar -Iunzip -IC:\wxWidgets-2.6.2\include -IC:\wxWidgets-2.6.2\lib\gcc_lib\mswu
+CPPFLAGS	= -O2 -MD -mthreads -Wall -pipe -DWIN32 -D__WXMSW__ -D_UNICODE -DwxUSE_UNICODE_MSLU=1 $(INCLUDE)
+LDFLAGS	= -mwindows -mthreads -Lunzip -Lunrar -Lc:\wxWidgets-2.6.2\lib\gcc_lib
+LIBS		= -lunrar -lminiunzip -lwxmsw26u_core -lwxbase26u -lwxjpeg -lwxpng -lz
+WIN32_LIBS	= -lunicows -lkernel32 -luser32 -lgdi32 -lcomdlg32 -lshell32 -lcomctl32 -lole32 -loleaut32 -luuid -loleacc
+RESFLAGS	= --use-temp-file --define __WXMSW__ --define _UNICODE --include-dir C:/wxWidgets-2.6.2/include --include-dir C:/wxWidgets-2.6.2/lib/gcc_lib/mswu
+STRIP		= strip
 
-.SUFFIXES: .o .cpp .rc
+.SUFFIXES: .o .cpp .rc .exe
 
-.cpp.o:
-	$(CC) $(CFLAGS) -c -o $*.o $<
+ALL.O = $(patsubst %.cpp,%.o,$(wildcard src/*.cpp)) src/Comical.o
 
-.rc.o:
+all: Comical.exe
+
+%.o : %.cpp
+	$(CC) $(CPPFLAGS) -c -o $*.o $<
+
+%.o : %.rc
 	$(RC) $(RESFLAGS) -i$< -o$*.o
 
-COMICAL_OBJECTS = src/ComicBook.o src/ComicBookRAR.o src/ComicBookZIP.o src/ComicalApp.o src/ComicalCanvas.o src/Resize.o src/rarstrm.o src/Comical.o
-
-Comical.exe: $(COMICAL_OBJECTS) unrar/libunrar.a
-	$(CC) -o $@ $(COMICAL_OBJECTS) $(LDFLAGS) $(LIBS) $(PLATFORM_LIBS)
+Comical.exe: $(ALL.O) unrar/libunrar.a unzip/libminiunzip.a
+	$(CC) -o $@ $(ALL.O) $(LDFLAGS) $(LIBS) $(WIN32_LIBS)
 	$(STRIP) $@
 
 unrar/libunrar.a:
 	$(MAKE) lib -C unrar -f makefile.mingw
 
+unzip/libminiunzip.a:
+	$(MAKE) -C unzip -f Makefile.mingw
+	
 clean:
 	-if exist src\*.o del src\*.o
-	-if exist src\*.d del src\*.d
 	-if exist comical.exe del comical.exe
+	
+distclean:
+	$(MAKE) clean
 	$(MAKE) clean -C unrar -f makefile.mingw
+	$(MAKE) clean -C unzip -f Makefile.mingw
+
+.PHONY : clean distclean
