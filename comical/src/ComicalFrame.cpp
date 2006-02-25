@@ -316,7 +316,7 @@ void ComicalFrame::OnOpenDir(wxCommandEvent& event)
 		OpenDir(dir);
 }
 
-void ComicalFrame::OpenFile(wxString filename)
+void ComicalFrame::OpenFile(const wxString& filename)
 {
 	ComicBook *newBook;
 	
@@ -350,7 +350,7 @@ void ComicalFrame::OpenFile(wxString filename)
 	}
 }
 
-void ComicalFrame::OpenDir(wxString directory)
+void ComicalFrame::OpenDir(const wxString& directory)
 {
 	ComicBook *newBook;
 	if (!directory.empty()) {

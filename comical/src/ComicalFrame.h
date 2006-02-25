@@ -47,8 +47,8 @@ class ComicalFrame : public wxFrame
               const wxSize& size,
               long style = wxDEFAULT_FRAME_STYLE);
 
-    void OpenFile(wxString);
-    void OpenDir(wxString);
+    void OpenFile(const wxString&);
+    void OpenDir(const wxString&);
     void OnOpen(wxCommandEvent& event);
     void OnOpenDir(wxCommandEvent& event);
 

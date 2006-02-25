@@ -1,8 +1,8 @@
 /***************************************************************************
-                ComicalApp.h - ComicalApp class and gui functions
+                              ComicalManager.h
                              -------------------
-    begin                : Wed Oct 22 2003
-    copyright            : (C) 2003-2006 by James Athey
+    begin                : Sat Feb 25 2006
+    copyright            : (C) 2006 James Athey
     email                : jathey@comcast.net
  ***************************************************************************/
 
@@ -25,24 +25,21 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef _ComicalApp_h
-#define _ComicalApp_h
+#ifndef _ComicalManager_h
+#define _ComicalManager_h
 
-#include <wx/app.h>
-#include "ComicalManager.h"
+#include <wx/docview.h>
+#include "ComicalFrame.h"
 
-class ComicalApp : public wxApp {
-
+class ComicalManager : public wxDocManager
+{
 public:
 
-	virtual bool OnInit();
+	ComicalManager(ComicalFrame *frame);
+	wxDocument* CreateDocument(const wxString& path, long flags);
 
-protected:
-
-	wxDocManager* docManager;
-
+private:
+	ComicalFrame *frame;
 };
-
-DECLARE_APP(ComicalApp)
 
 #endif

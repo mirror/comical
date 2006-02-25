@@ -219,3 +219,5 @@ src/CurrentPageChangedEvent.h
 src/ComicalFrame.h
 src/ComicalFrame.cpp
 INSTALL
+src/ComicalManager.cpp
+src/ComicalManager.h

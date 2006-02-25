@@ -37,7 +37,7 @@
 IMPLEMENT_APP(ComicalApp)
 
 bool ComicalApp::OnInit()
-{	
+{
 //	wxLogStderr *log = new wxLogStderr();
 //	wxLog::SetActiveTarget(log);
 	
@@ -56,6 +56,7 @@ bool ComicalApp::OnInit()
 	wxInt32 y = (wxInt32) config->Read(wxT("FrameY"), 50l);
 	
 	ComicalFrame *frame = new ComicalFrame(wxT("Comical"), wxPoint(x, y), wxSize(width, height), wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE);
+	docManager = new ComicalManager(frame);
 
 #if !defined(__WXMAC__) && !defined(__WXCOCOA__)
 	frame->SetIcon(wxICON(Comical));
@@ -64,6 +65,7 @@ bool ComicalApp::OnInit()
 	frame->Show(true);
 	SetTopWindow(frame);
 	
+#if !defined(__WXMAC__) && !defined(__WXCOCOA__)
 	if (argc == 1)
 		frame->OnOpen(*(new wxCommandEvent()));
 	else if (wxFileExists(argv[1]))
@@ -74,6 +76,7 @@ bool ComicalApp::OnInit()
 		wxLogError(wxT("The file or directory \"") + wxString(argv[1]) + wxT("\" could not be found."));
 		wxLog::FlushActive();
 	}
+#endif
 
 	//delete log;
 	
