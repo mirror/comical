@@ -534,9 +534,12 @@ void * ComicBook::Entry()
 			if (TestDestroy())
 				goto thread_end;
 			target = curr + i;
-			if (target > high)
+			if (curr > 0) {	// ftw and fth scaling requires previous page to
+				target--;	// do FitWithoutScrollbars.
+				if (target > high)
+					target = curr - (++target - high);
+			} else if (target > high)
 				target = curr - (target - high);
-			
 			try {
 				originalLockers[target].Lock();
 				if (originals[target].Ok()) {
@@ -550,8 +553,7 @@ void * ComicBook::Entry()
 					mstream = dynamic_cast<wxMemoryInputStream*>(stream);
 					if (mstream)
 						delete[] (wxUint8 *) mstream->GetInputStreamBuffer()->GetBufferStart();
-				}
-				else {
+				} else {
 					SendPageErrorEvent(target, wxString::Format(wxT("Failed to extract page %d."), target));
 					originals[target] = wxImage(1, 1);
 				}
@@ -559,7 +561,7 @@ void * ComicBook::Entry()
 					SendPageErrorEvent(target, wxString::Format(wxT("Failed to extract page %d."), target));
 					originals[target] = wxImage(1, 1);
 				}
-				delete stream;
+				wxDELETE(stream);
 			} catch (ArchiveException *ae) {
 				SendPageErrorEvent(target, ae->Message);
 			}
@@ -627,7 +629,7 @@ void * ComicBook::Entry()
 							SendPageErrorEvent(j, wxString::Format(wxT("Failed to extract page %d."), j));
 							originals[j] = wxImage(1, 1);
 						}
-						delete stream;
+						wxDELETE(stream);
 					}
 				} catch (ArchiveException *ae) {
 					SendPageErrorEvent(j, wxString::Format(wxT("Failed to extract page %d."), j));

@@ -98,21 +98,13 @@ ComicalCanvas::~ComicalCanvas()
 	parent->Disconnect(ID_CWL, ID_WestLeft, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(ComicalCanvas::OnRotateLeft), NULL, this);
 }
 
-void ComicalCanvas::clearBitmap(wxBitmap *&bitmap)
-{
-	if (bitmap) {
-		delete bitmap;
-		bitmap = NULL;
-	}
-}
-
 void ComicalCanvas::clearBitmaps()
 {
 	wxMutexLocker lock(paintingMutex);
 	// Get the current scroll positions before we clear the bitmaps
-	clearBitmap(leftPage);
-	clearBitmap(centerPage);
-	clearBitmap(rightPage);
+	wxDELETE(leftPage);
+	wxDELETE(centerPage);
+	wxDELETE(rightPage);
 }
 
 void ComicalCanvas::createBitmaps()
@@ -856,18 +848,35 @@ void ComicalCanvas::OnRightClick(wxContextMenuEvent &event)
 {
 	if (contextMenu)
 		delete contextMenu;
+		
+	wxMenuItem *openMenu = new wxMenuItem(NULL, ID_ContextOpen, wxT("Open..."), wxT("Open a comic book."));
+	wxMenuItem *prevMenu = new wxMenuItem(NULL, ID_ContextPrevSlide, wxT("Previous Page"), wxT("Display the previous page."));
+	wxMenuItem *nextMenu = new wxMenuItem(NULL, ID_ContextNextSlide, wxT("Next Page"), wxT("Display the next page."));
+	wxMenuItem *prevTurnMenu = new wxMenuItem(NULL, ID_ContextPrevTurn, wxT("&Previous Page Turn"), wxT("Display the previous two pages."));
+	wxMenuItem *nextTurnMenu = new wxMenuItem(NULL, ID_ContextNextTurn, wxT("&Next Page Turn"), wxT("Display the next two pages."));
+	wxMenuItem *firstMenu = new wxMenuItem(NULL, ID_ContextFirst, wxT("&First Page"), wxT("Display the first page."));
+	wxMenuItem *lastMenu = new wxMenuItem(NULL, ID_ContextLast, wxT("&Last Page"), wxT("Display the last page."));
+
+	openMenu->SetBitmap(wxGetBitmapFromMemory(open));
+	prevMenu->SetBitmap(wxGetBitmapFromMemory(prev));
+	nextMenu->SetBitmap(wxGetBitmapFromMemory(next));
+	prevTurnMenu->SetBitmap(wxGetBitmapFromMemory(prevpage));
+	nextTurnMenu->SetBitmap(wxGetBitmapFromMemory(nextpage));
+	firstMenu->SetBitmap(wxGetBitmapFromMemory(firstpage));
+	lastMenu->SetBitmap(wxGetBitmapFromMemory(lastpage));
+
 	contextMenu = new wxMenu();
-	contextMenu->Append(ID_ContextOpen, wxT("Open..."), wxT("Open a comic book."));
+	contextMenu->Append(openMenu);
 	contextMenu->Append(ID_ContextOpenDir, wxT("Open Directory..."), wxT("Open a directory of images."));
 	contextMenu->AppendSeparator();
-	contextMenu->Append(ID_ContextPrevSlide, wxT("Previous Page"), wxT("Display the previous page."));
-	contextMenu->Append(ID_ContextNextSlide, wxT("Next Page"), wxT("Display the next page."));
+	contextMenu->Append(prevMenu);
+	contextMenu->Append(nextMenu);
 	contextMenu->AppendSeparator();
-	contextMenu->Append(ID_ContextPrevTurn, wxT("&Previous Page Turn"), wxT("Display the previous two pages."));
-	contextMenu->Append(ID_ContextNextTurn, wxT("&Next Page Turn"), wxT("Display the next two pages."));
+	contextMenu->Append(prevTurnMenu);
+	contextMenu->Append(nextTurnMenu);
 	contextMenu->AppendSeparator();
-	contextMenu->Append(ID_ContextFirst, wxT("&First Page"), wxT("Display the first page."));
-	contextMenu->Append(ID_ContextLast, wxT("&Last Page"), wxT("Display the last page."));
+	contextMenu->Append(firstMenu);
+	contextMenu->Append(lastMenu);
 	contextMenu->AppendSeparator();
 	
 	contextRotate = new wxMenu();
@@ -879,18 +888,28 @@ void ComicalCanvas::OnRightClick(wxContextMenuEvent &event)
 	wxPoint eventPos = event.GetPosition();
 	ScreenToClient(&(eventPos.x), &(eventPos.y));
 	
+	wxMenuItem *ccwMenu, *cwMenu;
 	if (mode == TWOPAGE &&
 			leftNum != rightNum &&
 			(eventPos.x + (viewX * unitX)) < (size.x / 2)) {
-		contextRotate->Append(ID_ContextLeftCCW, wxT("Rotate Counter-Clockwise"), wxT("Rotate 90 degrees counter-clockwise."));
-		contextRotate->Append(ID_ContextLeftCW, wxT("Rotate Clockwise"), wxT("Rotate 90 degrees clockwise."));
+		ccwMenu = new wxMenuItem(NULL, ID_ContextLeftCCW, wxT("Rotate Counter-Clockwise"), wxT("Rotate 90 degrees counter-clockwise."));
+		cwMenu = new wxMenuItem(NULL, ID_ContextLeftCW, wxT("Rotate Clockwise"), wxT("Rotate 90 degrees clockwise."));
 	} else {
-		contextRotate->Append(ID_ContextCCW, wxT("Rotate Counter-Clockwise"), wxT("Rotate 90 degrees counter-clockwise."));
-		contextRotate->Append(ID_ContextCW, wxT("Rotate Clockwise"), wxT("Rotate 90 degrees clockwise."));
+		ccwMenu = new wxMenuItem(NULL, ID_ContextCCW, wxT("Rotate Counter-Clockwise"), wxT("Rotate 90 degrees counter-clockwise."));
+		cwMenu = new wxMenuItem(NULL, ID_ContextCW, wxT("Rotate Clockwise"), wxT("Rotate 90 degrees clockwise."));
 	}
+	ccwMenu->SetBitmap(wxGetBitmapFromMemory(rot_ccw));
+	cwMenu->SetBitmap(wxGetBitmapFromMemory(rot_cw));
+	contextRotate->Append(ccwMenu);
+	contextRotate->Append(cwMenu);
+
 	contextMenu->Append(ID_ContextRotate, wxT("Rotate"), contextRotate);
 	contextMenu->AppendSeparator();
-	contextMenu->Append(ID_ContextFull, wxT("Full Screen"));
+
+	wxMenuItem *fsMenu = new wxMenuItem(NULL, ID_ContextFull, wxT("Full Screen"));
+	fsMenu->SetBitmap(wxGetBitmapFromMemory(fullscreen));
+	
+	contextMenu->Append(fsMenu);
 	
 	PopupMenu(contextMenu, eventPos);
 }

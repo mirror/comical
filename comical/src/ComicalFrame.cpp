@@ -41,24 +41,6 @@
 #include <wx/mimetype.h>
 #include <wx/event.h>
 #include <wx/scrolbar.h>
-#include <wx/mstream.h>
-
-// and the icons
-#include "firstpage.h"
-#include "prevpage.h"
-#include "prev.h"
-#include "next.h"
-#include "nextpage.h"
-#include "lastpage.h"
-#include "rot_cw.h"
-#include "rot_ccw.h"
-
-#define wxGetBitmapFromMemory(name) _wxGetBitmapFromMemory(name ## _png, sizeof(name ## _png))
-
-inline wxBitmap _wxGetBitmapFromMemory(const unsigned char *data, int length) {
-   wxMemoryInputStream is(data, length);
-   return wxBitmap(wxImage(is, wxBITMAP_TYPE_ANY, -1), -1);
-}
 
 ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSize& size, long style) : wxFrame(NULL, -1, title, pos, size, style)
 {
@@ -81,31 +63,44 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	scrollbarThickness = tempBar->GetSize().y;
 	tempBar->Destroy();
 
+	wxMenuItem *openMenu = new wxMenuItem(NULL, wxID_OPEN, wxT("&Open\tAlt-O"), wxT("Open a Comic Book."));
+	wxMenuItem *exitMenu = new wxMenuItem(NULL, wxID_EXIT, wxT("E&xit\tAlt-X"), wxT("Quit Comical."));
+
+	openMenu->SetBitmap(wxGetBitmapFromMemory(open));
+	exitMenu->SetBitmap(wxGetBitmapFromMemory(exit));
+	
 	menuFile = new wxMenu();
-	menuFile->Append(wxID_OPEN, wxT("&Open\tAlt-O"), wxT("Open a Comic Book."));
+	menuFile->Append(openMenu);
 	menuFile->Append(ID_OpenDir, wxT("Open &Directory"), wxT("Open a directory of images."));
 	menuFile->AppendSeparator();
-	menuFile->Append(wxID_EXIT, wxT("E&xit\tAlt-X"), wxT("Quit Comical."));
+	menuFile->Append(exitMenu);
+
+	wxMenuItem *prevMenu = new wxMenuItem(NULL, ID_PrevSlide, wxT("Previous Page"), wxT("Display the previous page."));
+	wxMenuItem *nextMenu = new wxMenuItem(NULL, ID_NextSlide, wxT("Next Page"), wxT("Display the next page."));
+	wxMenuItem *prevTurnMenu = new wxMenuItem(NULL, ID_PrevTurn, wxT("&Previous Page Turn"), wxT("Display the previous two pages."));
+	wxMenuItem *nextTurnMenu = new wxMenuItem(NULL, ID_NextTurn, wxT("&Next Page Turn"), wxT("Display the next two pages."));
+	wxMenuItem *firstMenu = new wxMenuItem(NULL, ID_First, wxT("&First Page"), wxT("Display the first page."));
+	wxMenuItem *lastMenu = new wxMenuItem(NULL, ID_Last, wxT("&Last Page"), wxT("Display the last page."));
+
+	prevMenu->SetBitmap(wxGetBitmapFromMemory(prev));
+	nextMenu->SetBitmap(wxGetBitmapFromMemory(next));
+	prevTurnMenu->SetBitmap(wxGetBitmapFromMemory(prevpage));
+	nextTurnMenu->SetBitmap(wxGetBitmapFromMemory(nextpage));
+	firstMenu->SetBitmap(wxGetBitmapFromMemory(firstpage));
+	lastMenu->SetBitmap(wxGetBitmapFromMemory(lastpage));
 
 	menuGo = new wxMenu();
-	wxMenuItem *prevMenu = menuGo->Append(ID_PrevSlide, wxT("Previous Page"), wxT("Display the previous page."));
-	prevMenu->SetBitmap(wxGetBitmapFromMemory(prev));
-	wxMenuItem *nextMenu = menuGo->Append(ID_NextSlide, wxT("Next Page"), wxT("Display the next page."));
-	nextMenu->SetBitmap(wxGetBitmapFromMemory(next));
+	menuGo->Append(prevMenu);
+	menuGo->Append(nextMenu);
 	menuGo->AppendSeparator();
-	wxMenuItem *prevTurnMenu = menuGo->Append(ID_PrevTurn, wxT("&Previous Page Turn"), wxT("Display the previous two pages."));
-	prevTurnMenu->SetBitmap(wxGetBitmapFromMemory(prevpage));
-	wxMenuItem *nextTurnMenu = menuGo->Append(ID_NextTurn, wxT("&Next Page Turn"), wxT("Display the next two pages."));
-	nextTurnMenu->SetBitmap(wxGetBitmapFromMemory(nextpage));
+	menuGo->Append(prevTurnMenu);
+	menuGo->Append(nextTurnMenu);
 	menuGo->AppendSeparator();
-	wxMenuItem *firstMenu = menuGo->Append(ID_First, wxT("&First Page"), wxT("Display the first page."));
-	firstMenu->SetBitmap(wxGetBitmapFromMemory(firstpage));
-	wxMenuItem *lastMenu = menuGo->Append(ID_Last, wxT("&Last Page"), wxT("Display the last page."));
-	lastMenu->SetBitmap(wxGetBitmapFromMemory(lastpage));
+	menuGo->Append(firstMenu);
+	menuGo->Append(lastMenu);
 	menuGo->Append(ID_GoTo, wxT("&Go to page..."), wxT("Jump to another page number."));
 	menuGo->AppendSeparator();
 	menuGo->Append(ID_Buffer, wxT("&Page Buffer Length..."), wxT("Set the number of pages Comical prefetches."));
-
 	menuView = new wxMenu();
 
 	menuZoom = new wxMenu();
@@ -159,8 +154,11 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	menuFilter->AppendRadioItem(ID_Lanczos, wxT("Lanczos 3"), wxT("Use the Box filter."));
 	menuView->Append(ID_S, wxT("&Image Filter"), menuFilter);
 
+	wxMenuItem *fsMenu = new wxMenuItem(NULL, ID_Full, wxT("Full &Screen\tAlt-Return"), wxT("Display Full Screen."));
+	fsMenu->SetBitmap(wxGetBitmapFromMemory(fullscreen));
+	
 	menuView->AppendSeparator();
-	menuView->Append(ID_Full, wxT("Full &Screen\tAlt-Return"), wxT("Display Full Screen."));
+	menuView->Append(fsMenu);
 	menuView->AppendSeparator();
 	wxMenuItem *browserMenu = menuView->AppendCheckItem(ID_Browser, wxT("Thumbnail Browser"), wxT("Show/Hide the thumbnail browser"));
 	wxMenuItem *toolbarMenu = menuView->AppendCheckItem(ID_Toolbar, wxT("Toolbar"), wxT("Show/Hide the toolbar"));

@@ -33,10 +33,24 @@
 #include <wx/toolbar.h>
 #include <wx/stattext.h>
 #include <wx/sizer.h>
+#include <wx/mstream.h>
 
 #include "ComicalBrowser.h"
 #include "ComicalCanvas.h"
 #include "ComicBook.h"
+
+// and the icons
+#include "firstpage.h"
+#include "prevpage.h"
+#include "prev.h"
+#include "next.h"
+#include "nextpage.h"
+#include "lastpage.h"
+#include "rot_cw.h"
+#include "rot_ccw.h"
+#include "open.h"
+#include "fullscreen.h"
+#include "exit.h"
 
 class ComicalFrame : public wxFrame
 {
@@ -99,6 +113,13 @@ class ComicalFrame : public wxFrame
 
 	DECLARE_EVENT_TABLE()
 };
+
+#define wxGetBitmapFromMemory(name) _wxGetBitmapFromMemory(name ## _png, sizeof(name ## _png))
+
+inline wxBitmap _wxGetBitmapFromMemory(const unsigned char *data, int length) {
+   wxMemoryInputStream is(data, length);
+   return wxBitmap(wxImage(is, wxBITMAP_TYPE_ANY, -1), -1);
+}
 
 enum
 {

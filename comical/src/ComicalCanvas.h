@@ -61,7 +61,6 @@ class ComicalCanvas : public wxScrolledWindow
 	bool IsCenterPageOk();
 
   private:
-	void clearBitmap(wxBitmap *&bitmap);
 	void clearBitmaps();
 	void createBitmaps();
 	void setPage(wxInt32 pagenumber);
