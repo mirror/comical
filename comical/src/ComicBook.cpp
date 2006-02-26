@@ -394,7 +394,7 @@ bool ComicBook::FitWithoutScrollbars(wxUint32 pagenumber, float *scalingFactor)
 			// scaling factor if height is maximized
 			*scalingFactor = float(canvasHeight) / float(size.y);
 			// which will fit best?
-			if ((*scalingFactor * size.x) > usableWidthScrollbar)
+			if (wxInt32(*scalingFactor * float(size.x)) > usableWidthScrollbar)
 				return true;
 			else
 				return false;
@@ -493,15 +493,15 @@ bool ComicBook::IsOversize(wxUint32 pagenumber)
 
 void * ComicBook::Entry()
 {
-	wxUint32 i;
-	wxInt32 low, high, target, curr;
+	wxUint32 i, target, high, curr;
+	wxInt32 low;
 	bool scalingHappened;
 	wxInputStream *stream;
 	wxMemoryInputStream *mstream;
 
 	while (!TestDestroy()) {
 		scalingHappened = false;
-		curr = wxInt32(currentPage); // in case this value changes midloop
+		curr = currentPage; // in case this value changes midloop
 		
 		// The caching algorithm.  First calculates next highest
 		// priority page, then checks to see if that page needs
@@ -521,7 +521,7 @@ void * ComicBook::Entry()
 			low = curr - low;
 
 			/* Keep the window within 0 and pageCount. */
-			if (high >= wxInt32(pageCount)) {
+			if (high >= pageCount) {
 				low -= (high - pageCount) + 1;
 				high = pageCount - 1;
 			} else if (low < 0) {
@@ -532,57 +532,71 @@ void * ComicBook::Entry()
 
 		for (i = 0; i < cacheLen && i < pageCount; i++) {
 			if (TestDestroy())
-				break;
+				goto thread_end;
+			target = curr + i;
+			if (target > high)
+				target = curr - (target - high);
+			
+			try {
+				originalLockers[target].Lock();
+				if (originals[target].Ok()) {
+					originalLockers[target].Unlock();
+					continue;
+				}
+				stream = ExtractStream(target);
+				if (stream->IsOk() && stream->GetSize() > 0) {
+					originals[target].LoadFile(*stream);
+					// Memory Input Streams don't take ownership of the buffer
+					mstream = dynamic_cast<wxMemoryInputStream*>(stream);
+					if (mstream)
+						delete[] (wxUint8 *) mstream->GetInputStreamBuffer()->GetBufferStart();
+				}
+				else {
+					SendPageErrorEvent(target, wxString::Format(wxT("Failed to extract page %d."), target));
+					originals[target] = wxImage(1, 1);
+				}
+				if (!originals[target].Ok()) {
+					SendPageErrorEvent(target, wxString::Format(wxT("Failed to extract page %d."), target));
+					originals[target] = wxImage(1, 1);
+				}
+				delete stream;
+			} catch (ArchiveException *ae) {
+				SendPageErrorEvent(target, ae->Message);
+			}
+				
+			thumbnailLockers[target].Lock();
+			if (!thumbnails[target].Ok())
+				ScaleThumbnail(target);
+			if (!thumbnails[target].Ok()) // let's only see one error if things go wrong
+				SendPageErrorEvent(target, wxString::Format(wxT("Could not create thumbnail for page %d."), target));
+
+			thumbnailLockers[target].Unlock();
+			originalLockers[target].Unlock();
+			break; // extraction happened, we should try a rescale now
+		}
+		
+		for (i = 0; i < cacheLen && i < pageCount; i++) {
+			if (TestDestroy())
+				goto thread_end;
 			target = curr + i;
 			if (target > high)
 				target = curr - (target - high);
 			
 			resampleLockers[target].Lock();
 			
-			if (!resamples[target].Ok()) {
-				try {
-					originalLockers[target].Lock();
-					if (!originals[target].Ok()) {
-						stream = ExtractStream(target);
-						if (stream->IsOk() && stream->GetSize() > 0) {
-							originals[target].LoadFile(*stream);
-							// Memory Input Streams don't take ownership of the buffer
-							mstream = dynamic_cast<wxMemoryInputStream*>(stream);
-							if (mstream)
-								delete[] (wxUint8 *) mstream->GetInputStreamBuffer()->GetBufferStart();
-						}
-						else {
-							SendPageErrorEvent(target, wxString::Format(wxT("Failed to extract page %d."), target));
-							originals[target] = wxImage(1, 1);
-						}
-						if (!originals[target].Ok()) {
-							SendPageErrorEvent(target, wxString::Format(wxT("Failed to extract page %d."), target));
-							originals[target] = wxImage(1, 1);
-						}
-						delete stream;
-					}
-				} catch (ArchiveException *ae) {
-					SendPageErrorEvent(target, ae->Message);
-				}
-				ScaleImage(target);
-				scalingHappened = true;
-				
-				thumbnailLockers[target].Lock();
-				if (!thumbnails[target].Ok())
-					ScaleThumbnail(target);
-
-				if (!resamples[target].Ok())
-					SendPageErrorEvent(target, wxString::Format(wxT("Could not scale page %d."), target));
-				else if (!thumbnails[target].Ok()) // let's only see one error if things go wrong
-					SendPageErrorEvent(target, wxString::Format(wxT("Could not create thumbnail for page %d."), target));
-
+			if (resamples[target].Ok() || !originals[target].Ok() ||
+					// Only try scaling if the neighbors are extracted.  Otherwise,
+					// we can't test whether the neighbors will fit without scrollbars.
+					(target > 0 && !originals[target - 1].Ok()) ||
+					(target < (pageCount - 1) && !originals[target + 1].Ok())) {
 				resampleLockers[target].Unlock();
-				thumbnailLockers[target].Unlock();
-				originalLockers[target].Unlock();
-				break;
+				continue;
 			}
-
-			resampleLockers[target].Unlock(); // the break above will put execution BELOW the following brace
+			
+			ScaleImage(target);
+			scalingHappened = true;
+			resampleLockers[target].Unlock();
+			break;
 		}
 		
 		if (!scalingHappened) {
@@ -590,36 +604,38 @@ void * ComicBook::Entry()
 			// thumbnail, if needed.
 			for (wxUint32 j = 0; j < pageCount; j++) {
 				thumbnailLockers[j].Lock();
-				if (!thumbnails[j].Ok()) {
-					try {
-						originalLockers[j].Lock();
-						if (!originals[j].Ok()) {
-							stream = ExtractStream(j);
-							if (stream->IsOk() && stream->GetSize() > 0) {
-								originals[j].LoadFile(*stream);
-								// Memory Input Streams don't take ownership of the buffer
-								mstream = dynamic_cast<wxMemoryInputStream*>(stream);
-								if (mstream)
-									delete[] (wxUint8 *) mstream->GetInputStreamBuffer()->GetBufferStart();
-							} else {
-								SendPageErrorEvent(j, wxString::Format(wxT("Failed to extract page %d."), j));
-								originals[j] = wxImage(1, 1);
-							}
-							if (!originals[j].Ok()) {
-								SendPageErrorEvent(j, wxString::Format(wxT("Failed to extract page %d."), j));
-								originals[j] = wxImage(1, 1);
-							}
-							delete stream;
-						}
-					} catch (ArchiveException *ae) {
-						SendPageErrorEvent(j, wxString::Format(wxT("Failed to extract page %d."), j));
-					}
-					ScaleThumbnail(j);
-					originalLockers[j].Unlock();
+				
+				if (thumbnails[j].Ok()) {
 					thumbnailLockers[j].Unlock();
-					break;
+					continue;
 				}
+				try {
+					originalLockers[j].Lock();
+					if (!originals[j].Ok()) {
+						stream = ExtractStream(j);
+						if (stream->IsOk() && stream->GetSize() > 0) {
+							originals[j].LoadFile(*stream);
+							// Memory Input Streams don't take ownership of the buffer
+							mstream = dynamic_cast<wxMemoryInputStream*>(stream);
+							if (mstream)
+								delete[] (wxUint8 *) mstream->GetInputStreamBuffer()->GetBufferStart();
+						} else {
+							SendPageErrorEvent(j, wxString::Format(wxT("Failed to extract page %d."), j));
+							originals[j] = wxImage(1, 1);
+						}
+						if (!originals[j].Ok()) {
+							SendPageErrorEvent(j, wxString::Format(wxT("Failed to extract page %d."), j));
+							originals[j] = wxImage(1, 1);
+						}
+						delete stream;
+					}
+				} catch (ArchiveException *ae) {
+					SendPageErrorEvent(j, wxString::Format(wxT("Failed to extract page %d."), j));
+				}
+				ScaleThumbnail(j);
+				originalLockers[j].Unlock();
 				thumbnailLockers[j].Unlock();
+				break;
 			}
 		}
 
@@ -639,7 +655,7 @@ void * ComicBook::Entry()
 					originalLockers[i].Unlock();
 				}
 				
-				for (i = pageCount - 1; wxInt32(i) > high; i--) {
+				for (i = pageCount - 1; i > high; i--) {
 
 					resampleLockers[i].Lock();
 					if(resamples[i].Ok())
@@ -657,6 +673,7 @@ void * ComicBook::Entry()
 		Yield();
 		Sleep(20);
 	}
+	thread_end:
 	return 0;
 }
 
@@ -712,7 +729,7 @@ void ComicBook::ScaleImage(wxUint32 pagenumber)
 					if (!FitWithoutScrollbars(pagenumber - 1))
 						goto fith_nofit;
 				}
-				if (pagenumber < pageCount - 1) {
+				if (pagenumber < (pageCount - 1)) {
 					if (!FitWithoutScrollbars(pagenumber + 1))
 						goto fith_nofit;
 				}
@@ -724,7 +741,7 @@ void ComicBook::ScaleImage(wxUint32 pagenumber)
 			if (rImage >= 1.0f || mode == ONEPAGE) {
 				scalingFactor = float(canvasWidth - scrollbarThickness) / float(xImage);
 			} else {
-				scalingFactor = float ((canvasWidth - scrollbarThickness) / 2) / float(xImage);
+				scalingFactor = float((canvasWidth - scrollbarThickness) / 2) / float(xImage);
 			}
 		}
 		break;

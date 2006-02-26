@@ -81,7 +81,7 @@ BEGIN_EVENT_TABLE(ComicalCanvas, wxScrolledWindow)
 	EVT_MENU(ID_ContextLeftCCW, ComicalCanvas::OnRotateLeft)
 	EVT_MENU(ID_ContextCW, ComicalCanvas::OnRotate)
 	EVT_MENU(ID_ContextCCW, ComicalCanvas::OnRotate)
-	EVT_SIZE(ComicalCanvas::OnSize)
+	EVT_SIZE(ComicalCanvas::OnResize)
 END_EVENT_TABLE()
 
 ComicalCanvas::~ComicalCanvas()
@@ -1006,7 +1006,7 @@ void ComicalCanvas::SendPageShownEvent()
 	GetEventHandler()->AddPendingEvent(event);
 }
 
-void ComicalCanvas::OnSize(wxSizeEvent &event)
+void ComicalCanvas::OnResize(wxSizeEvent &event)
 {
 	if (!theBook)
 		return;

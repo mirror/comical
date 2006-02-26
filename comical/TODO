@@ -1,40 +1,33 @@
 Requirements for 1.0:
 
-Helpfile
-Opening files from Finder fails on Mac OS X - fix with proper installer
-Windows installer (NSIS, InnoSetup)
-User-configurable keybindings, use KeyBinder
-Icons in menus
-Check that broken pages are only tried once
-Open next book in series or directory
-Box Zoom/Magnifying Glass - started, postponed for now
-Investigate painting only the damaged rectangle instead of the whole canvas
-Info file display
+* Helpfile
+* Opening files from Finder fails on Mac OS X - fix with proper installer
+* Windows installer (NSIS, InnoSetup)
+* User-configurable keybindings, use KeyBinder
+* Icons in menus
+* Check that broken pages are only tried once
+* Open next book in series or directory
+* Box Zoom/Magnifying Glass - started, postponed for now
+* Investigate painting only the damaged rectangle instead of the whole canvas
+* Info file display
 
 Nice-to-have features:
 
-Bookmarks, resume last comic book on open
-Multi-document mode on Mac OS X (i.e., act like a native Mac app)
-resizable ComicalBrowser
-Intel/PPC Fat binary on MacOSX
-multi-volume RAR
-run source code through beautifier
-const-correctness
-look for any remaining memory leaks
+* Bookmarks, resume last comic book on open
+* Multi-document mode on Mac OS X (i.e., act like a native Mac app)
+* resizable ComicalBrowser
+* Intel/PPC Fat binary on MacOSX
+* run source code through beautifier
+* const-correctness
+* look for any remaining memory leaks
+* multi-volume RAR
 
 Long-term whiz-bang features:
 
-OpenGL backend
-New comic book creation wizard
+* OpenGL backend
+* New comic book creation wizard
 	Could be good vehicle to encourage new file format
-New file format
+* New file format
 	JPEG2000 support?
 	bzip2 / 7zip / zzip archives?
-proper wxDocManager/wxDocument/wxView implementation
-
-
-Bugs:
-
-Does FitWithoutScrollbars sometimes return the wrong result?
-	off by one error possible thanks to canvasWidth / 2 integer division?
-	properly taking neighboring pages into account?
+* proper wxDocManager/wxDocument/wxView implementation

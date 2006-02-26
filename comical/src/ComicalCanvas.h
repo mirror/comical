@@ -83,7 +83,7 @@ class ComicalCanvas : public wxScrolledWindow
 	void OnRotateLeft(wxCommandEvent& event);
 	void OnRotate(wxCommandEvent& event);
 	void OnFull(wxCommandEvent& event);
-	void OnSize(wxSizeEvent& event);
+	void OnResize(wxSizeEvent& event);
 	void OnPageReady(wxCommandEvent& event);
 	
 	void LastPage();
