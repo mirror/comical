@@ -221,3 +221,5 @@ src/ComicalFrame.cpp
 INSTALL
 src/ComicalManager.cpp
 src/ComicalManager.h
+Comical Icons/png2header.cpp
+src/bin2h.c

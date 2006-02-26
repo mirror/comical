@@ -31,3 +31,6 @@ Long-term whiz-bang features:
 	JPEG2000 support?
 	bzip2 / 7zip / zzip archives?
 * proper wxDocManager/wxDocument/wxView implementation
+
+Bugs:
+* When landscape page is shown, make both sets of rotation buttons work

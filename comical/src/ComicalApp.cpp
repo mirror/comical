@@ -46,6 +46,7 @@ bool ComicalApp::OnInit()
 	wxImage::AddHandler(new wxGIFHandler);
 	
 	wxConfig *config = new wxConfig(wxT("Comical"));
+	wxConfigBase::Set(config); // Registers config globally
 
 	if (config->HasGroup(wxT("Comical"))) // old versions of Comical had an extra path element
 		config->DeleteGroup(wxT("Comical")); // this code will probably linger here forever, sadly, to catch upgraders

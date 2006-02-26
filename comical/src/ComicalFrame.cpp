@@ -41,17 +41,24 @@
 #include <wx/mimetype.h>
 #include <wx/event.h>
 #include <wx/scrolbar.h>
+#include <wx/mstream.h>
 
-#if !defined(__WXMSW__) && !defined(__WXPM__)
-#include "../Comical Icons/firstpage.xpm"
-#include "../Comical Icons/prevpage.xpm"
-#include "../Comical Icons/prev.xpm"
-#include "../Comical Icons/next.xpm"
-#include "../Comical Icons/nextpage.xpm"
-#include "../Comical Icons/lastpage.xpm"
-#include "../Comical Icons/rot_cw.xpm"
-#include "../Comical Icons/rot_ccw.xpm"
-#endif
+// and the icons
+#include "firstpage.h"
+#include "prevpage.h"
+#include "prev.h"
+#include "next.h"
+#include "nextpage.h"
+#include "lastpage.h"
+#include "rot_cw.h"
+#include "rot_ccw.h"
+
+#define wxGetBitmapFromMemory(name) _wxGetBitmapFromMemory(name ## _png, sizeof(name ## _png))
+
+inline wxBitmap _wxGetBitmapFromMemory(const unsigned char *data, int length) {
+   wxMemoryInputStream is(data, length);
+   return wxBitmap(wxImage(is, wxBITMAP_TYPE_ANY, -1), -1);
+}
 
 ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSize& size, long style) : wxFrame(NULL, -1, title, pos, size, style)
 {
@@ -66,8 +73,7 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	bookPanelSizer = new wxBoxSizer(wxVERTICAL);
 	toolbarSizer = new wxBoxSizer(wxHORIZONTAL);
 	
-	config = new wxConfig(wxT("Comical"));
-	wxConfigBase::Set(config); // Registers config globally
+	config = wxConfig::Get();
 	
 	// Get the thickness of scrollbars.  Knowing this, we can precalculate
 	// whether the current page(s) will need scrollbars.
@@ -82,14 +88,20 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	menuFile->Append(wxID_EXIT, wxT("E&xit\tAlt-X"), wxT("Quit Comical."));
 
 	menuGo = new wxMenu();
-	menuGo->Append(ID_PrevSlide, wxT("Previous Page"), wxT("Display the previous page."));
-	menuGo->Append(ID_NextSlide, wxT("Next Page"), wxT("Display the next page."));
+	wxMenuItem *prevMenu = menuGo->Append(ID_PrevSlide, wxT("Previous Page"), wxT("Display the previous page."));
+	prevMenu->SetBitmap(wxGetBitmapFromMemory(prev));
+	wxMenuItem *nextMenu = menuGo->Append(ID_NextSlide, wxT("Next Page"), wxT("Display the next page."));
+	nextMenu->SetBitmap(wxGetBitmapFromMemory(next));
 	menuGo->AppendSeparator();
 	wxMenuItem *prevTurnMenu = menuGo->Append(ID_PrevTurn, wxT("&Previous Page Turn"), wxT("Display the previous two pages."));
+	prevTurnMenu->SetBitmap(wxGetBitmapFromMemory(prevpage));
 	wxMenuItem *nextTurnMenu = menuGo->Append(ID_NextTurn, wxT("&Next Page Turn"), wxT("Display the next two pages."));
+	nextTurnMenu->SetBitmap(wxGetBitmapFromMemory(nextpage));
 	menuGo->AppendSeparator();
-	menuGo->Append(ID_First, wxT("&First Page"), wxT("Display the first page."));
-	menuGo->Append(ID_Last, wxT("&Last Page"), wxT("Display the last page."));
+	wxMenuItem *firstMenu = menuGo->Append(ID_First, wxT("&First Page"), wxT("Display the first page."));
+	firstMenu->SetBitmap(wxGetBitmapFromMemory(firstpage));
+	wxMenuItem *lastMenu = menuGo->Append(ID_Last, wxT("&Last Page"), wxT("Display the last page."));
+	lastMenu->SetBitmap(wxGetBitmapFromMemory(lastpage));
 	menuGo->Append(ID_GoTo, wxT("&Go to page..."), wxT("Jump to another page number."));
 	menuGo->AppendSeparator();
 	menuGo->Append(ID_Buffer, wxT("&Page Buffer Length..."), wxT("Set the number of pages Comical prefetches."));
@@ -107,7 +119,6 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	menuZoom->Append(ID_SetCustom, wxT("Set Custom Zoom Level..."), wxT("Choose the percentage that the Custom Zoom mode will use."));
 	menuView->Append(ID_S, wxT("&Zoom"), menuZoom);
 	
-
 	menuRotate = new wxMenu();
 	menuRotate->AppendRadioItem(ID_North, wxT("Normal"), wxT("No rotation."));
 	menuRotate->AppendRadioItem(ID_East, wxT("90 Clockwise"), wxT("Rotate 90 degrees clockwise."));
@@ -201,21 +212,21 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 
 	toolBarNav = new wxToolBar(this, -1, wxDefaultPosition, wxDefaultSize, wxNO_BORDER | wxTB_HORIZONTAL | wxTB_FLAT);
 	toolBarNav->SetToolBitmapSize(wxSize(16, 16));
-	toolBarNav->AddTool(ID_CCWL, wxT("Rotate Counter-Clockwise (left page)"), wxBITMAP(rot_ccw), wxT("Rotate Counter-Clockwise (left page)"));
-	toolBarNav->AddTool(ID_CWL, wxT("Rotate Clockwise (left page)"), wxBITMAP(rot_cw), wxT("Rotate Clockwise (left page)"));
+	toolBarNav->AddTool(ID_CCWL, wxT("Rotate Counter-Clockwise (left page)"), wxGetBitmapFromMemory(rot_ccw), wxT("Rotate Counter-Clockwise (left page)"));
+	toolBarNav->AddTool(ID_CWL, wxT("Rotate Clockwise (left page)"), wxGetBitmapFromMemory(rot_cw), wxT("Rotate Clockwise (left page)"));
 	toolBarNav->AddSeparator();
-	toolBarNav->AddTool(ID_First, wxT("First Page"), wxBITMAP(firstpage), wxT("First Page"));
-	toolBarNav->AddTool(ID_PrevTurn, wxT("Previous Page Turn"), wxBITMAP(prevpage), wxT("Previous Page Turn"));
-	toolBarNav->AddTool(ID_PrevSlide, wxT("Previous Page"), wxBITMAP(prev), wxT("Previous Page"));
+	toolBarNav->AddTool(ID_First, wxT("First Page"), wxGetBitmapFromMemory(firstpage), wxT("First Page"));
+	toolBarNav->AddTool(ID_PrevTurn, wxT("Previous Page Turn"), wxGetBitmapFromMemory(prevpage), wxT("Previous Page Turn"));
+	toolBarNav->AddTool(ID_PrevSlide, wxT("Previous Page"), wxGetBitmapFromMemory(prev), wxT("Previous Page"));
 //	toolBarNav->AddSeparator();
-//	toolBarNav->AddTool(ID_ZoomBox, wxT("Zoom"), wxBITMAP(rot_cw), wxT("Zoom"), wxITEM_CHECK); // Zoom Box disabled for now
+//	toolBarNav->AddTool(ID_ZoomBox, wxT("Zoom"), wxGetBitmapFromMemory(rot_cw), wxT("Zoom"), wxITEM_CHECK); // Zoom Box disabled for now
 //	toolBarNav->AddSeparator();
-	toolBarNav->AddTool(ID_NextSlide, wxT("Next Page"), wxBITMAP(next), wxT("Next Page"));
-	toolBarNav->AddTool(ID_NextTurn, wxT("Next Page Turn"), wxBITMAP(nextpage), wxT("Next Page Turn"));
-	toolBarNav->AddTool(ID_Last, wxT("Last Page"), wxBITMAP(lastpage), wxT("Last Page"));
+	toolBarNav->AddTool(ID_NextSlide, wxT("Next Page"), wxGetBitmapFromMemory(next), wxT("Next Page"));
+	toolBarNav->AddTool(ID_NextTurn, wxT("Next Page Turn"), wxGetBitmapFromMemory(nextpage), wxT("Next Page Turn"));
+	toolBarNav->AddTool(ID_Last, wxT("Last Page"), wxGetBitmapFromMemory(lastpage), wxT("Last Page"));
 	toolBarNav->AddSeparator();
-	toolBarNav->AddTool(ID_CCW, wxT("Rotate Counter-Clockwise"), wxBITMAP(rot_ccw), wxT("Rotate Counter-Clockwise"));
-	toolBarNav->AddTool(ID_CW, wxT("Rotate Clockwise"), wxBITMAP(rot_cw), wxT("Rotate Clockwise"));
+	toolBarNav->AddTool(ID_CCW, wxT("Rotate Counter-Clockwise"), wxGetBitmapFromMemory(rot_ccw), wxT("Rotate Counter-Clockwise"));
+	toolBarNav->AddTool(ID_CW, wxT("Rotate Clockwise"), wxGetBitmapFromMemory(rot_cw), wxT("Rotate Clockwise"));
 	toolBarNav->Enable(false);
 	toolBarNav->Fit();
 	toolBarNav->Realize();
@@ -227,11 +238,11 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	labelLeft->SetFont(font);
 	labelRight->SetFont(font);
 	
-	toolbarSizer->Add(labelLeft, 1, wxALIGN_LEFT, 0);
+	toolbarSizer->Add(labelLeft, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 	toolbarSizer->AddSpacer(10);
 	toolbarSizer->Add(toolBarNav, 0, wxALIGN_CENTER, 0);
 	toolbarSizer->AddSpacer(10);
-	toolbarSizer->Add(labelRight, 1, wxALIGN_RIGHT, 0);
+	toolbarSizer->Add(labelRight, 1, wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 0);
 	toolbarSizer->Layout();
 	bookPanelSizer->Add(toolbarSizer, 0, wxEXPAND, 0);
 	frameSizer->Add(bookPanelSizer, 1, wxEXPAND);

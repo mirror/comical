@@ -81,7 +81,7 @@ class ComicalFrame : public wxFrame
 	wxMenu *menuFile, *menuGo, *menuView, *menuHelp, *menuZoom, *menuMode, *menuFilter, *menuDirection, *menuRotate, *menuRotateLeft, *menuRotateRight;
 	wxStaticText *labelLeft, *labelRight;
 
-    wxConfig *config;
+    wxConfigBase *config;
 	wxBoxSizer *frameSizer, *bookPanelSizer, *toolbarSizer;	
 	bool browserActive, toolbarActive;
 	ComicalCanvas *theCanvas;
