@@ -60,7 +60,7 @@ bool ComicalApp::OnInit()
 	docManager = new ComicalManager(frame);
 
 #if !defined(__WXMAC__) && !defined(__WXCOCOA__)
-	frame->SetIcon(wxICON(Comical));
+	frame->SetIcon(wxICON(comical));
 #endif
 
 	frame->Show(true);

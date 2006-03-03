@@ -1,14 +1,11 @@
 Requirements for 1.0:
 
 * Helpfile
-* Opening files from Finder fails on Mac OS X - fix with proper installer
 * Windows installer (NSIS, InnoSetup)
-* User-configurable keybindings, use KeyBinder
-* Icons in menus
+* User-configurable keybindings: custom, or use KeyBinder?
 * Check that broken pages are only tried once
 * Open next book in series or directory
 * Box Zoom/Magnifying Glass - started, postponed for now
-* Investigate painting only the damaged rectangle instead of the whole canvas
 * Info file display
 
 Nice-to-have features:
@@ -24,6 +21,7 @@ Nice-to-have features:
 
 Long-term whiz-bang features:
 
+* Investigate painting only the damaged rectangle instead of the whole canvas
 * OpenGL backend
 * New comic book creation wizard
 	Could be good vehicle to encourage new file format
@@ -34,3 +32,8 @@ Long-term whiz-bang features:
 
 Bugs:
 * When landscape page is shown, make both sets of rotation buttons work
+
+Ideas:
+* Store image dimensions somewhere even after originals[pagenumber] has been
+destroyed?
+
