@@ -8,18 +8,18 @@ Requirements for 1.0:
 * Box Zoom/Magnifying Glass - started, postponed for now
 * Info file display
 * Better code annotation and documentation
+* Switch to Subversion
 
 Nice-to-have features:
 
 * Bookmarks, resume last comic book on open
-* Multi-document mode on Mac OS X (i.e., act like a native Mac app)
 * resizable ComicalBrowser
-* Intel/PPC Fat binary on MacOSX
+* Intel/PPC Fat binary on MacOSX, requires latest XCode and Tiger
 * run source code through beautifier
 * const-correctness
 * look for any remaining memory leaks
-* multi-volume RAR
 * the switch to PNG seems to have made startup slower
+* Multi-document mode on Mac OS X (i.e., act like a native Mac app)
 
 Long-term whiz-bang features:
 
@@ -31,9 +31,11 @@ Long-term whiz-bang features:
 	JPEG2000 support?
 	bzip2 / 7zip / zzip archives?
 * proper wxDocManager/wxDocument/wxView implementation
+* multi-volume RAR
 
 Bugs:
 * When landscape page is shown, make both sets of rotation buttons work
+* Automatically generate PNG headers on MacOS X in XCode
 
 Ideas:
 * Store image dimensions somewhere even after originals[pagenumber] has been

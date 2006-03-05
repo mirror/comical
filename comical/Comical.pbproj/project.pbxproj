@@ -102,6 +102,7 @@
 				D447E92F099E84BD00E8EE86,
 				D447E604099E48CC00E8EE86,
 				D447E603099E48C500E8EE86,
+				D41E080D09B21072009DBF7A,
 				20286C2CFDCF999611CA2CEA,
 				20286C32FDCF999611CA2CEA,
 				195DF8C9FE9D4F0611CA2CBB,
@@ -155,8 +156,388 @@
 //D42
 //D43
 //D44
+		D41E07FF09B11393009DBF7A = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = ComicalManager.h;
+			path = src/ComicalManager.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D41E080009B11393009DBF7A = {
+			fileRef = D41E07FF09B11393009DBF7A;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D41E080109B113AD009DBF7A = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.cpp.cpp;
+			name = ComicalManager.cpp;
+			path = src/ComicalManager.cpp;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D41E080209B113AD009DBF7A = {
+			fileRef = D41E080109B113AD009DBF7A;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D41E080D09B21072009DBF7A = {
+			children = (
+				D422424A09B9205900A515DD,
+				D422424B09B9205900A515DD,
+				D422424C09B9205900A515DD,
+				D41E081E09B214EA009DBF7A,
+				D41E081F09B214EA009DBF7A,
+				D41E082009B214EA009DBF7A,
+				D41E082109B214EA009DBF7A,
+				D41E082209B214EA009DBF7A,
+				D41E082309B214EA009DBF7A,
+				D41E082409B214EA009DBF7A,
+				D41E082509B214EA009DBF7A,
+			);
+			isa = PBXGroup;
+			name = PNGs;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D41E081909B210EA009DBF7A = {
+			compilerSpec = com.apple.compilers.proxy.script;
+			filePatterns = "*.png";
+			fileType = pattern.proxy;
+			isEditable = 1;
+			isa = PBXBuildRule;
+			outputFiles = (
+				"$(INPUT_FILE_DIR)/$(INPUT_FILE_BASE).h",
+			);
+			script = "echo \"#ifndef $(INPUT_FILE_BASE)_png_h_\" > $(INPUT_FILE_DIR)/$(INPUT_FILE_BASE).h\necho \"#define $(INPUT_FILE_BASE)_png_h_\\n\" >> $(INPUT_FILE_DIR)/$(INPUT_FILE_BASE).h\necho \"unsigned char $(INPUT_FILE_BASE)_png[] = {\" >> $(INPUT_FILE_DIR)/$(INPUT_FILE_BASE).h\nhexdump -e \"13/1 \\\"0x%02X, \\\" \\\"\\n\\\"\" src/firstpage.png | sed 's/0x  ,//g' >> $(INPUT_FILE_DIR)/$(INPUT_FILE_BASE).h\necho \"};\\n\\n#endif\" >> $(INPUT_FILE_DIR)/$(INPUT_FILE_BASE).h";
+		};
+		D41E081E09B214EA009DBF7A = {
+			explicitFileType = image.png;
+			isa = PBXFileReference;
+			name = firstpage.png;
+			path = src/firstpage.png;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D41E081F09B214EA009DBF7A = {
+			isa = PBXFileReference;
+			lastKnownFileType = image.png;
+			name = lastpage.png;
+			path = src/lastpage.png;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D41E082009B214EA009DBF7A = {
+			isa = PBXFileReference;
+			lastKnownFileType = image.png;
+			name = next.png;
+			path = src/next.png;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D41E082109B214EA009DBF7A = {
+			isa = PBXFileReference;
+			lastKnownFileType = image.png;
+			name = nextpage.png;
+			path = src/nextpage.png;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D41E082209B214EA009DBF7A = {
+			isa = PBXFileReference;
+			lastKnownFileType = image.png;
+			name = prev.png;
+			path = src/prev.png;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D41E082309B214EA009DBF7A = {
+			isa = PBXFileReference;
+			lastKnownFileType = image.png;
+			name = prevpage.png;
+			path = src/prevpage.png;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D41E082409B214EA009DBF7A = {
+			isa = PBXFileReference;
+			lastKnownFileType = image.png;
+			name = rot_ccw.png;
+			path = src/rot_ccw.png;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D41E082509B214EA009DBF7A = {
+			isa = PBXFileReference;
+			lastKnownFileType = image.png;
+			name = rot_cw.png;
+			path = src/rot_cw.png;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D41E082609B214EA009DBF7A = {
+			fileRef = D41E081E09B214EA009DBF7A;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D41E082709B214EA009DBF7A = {
+			fileRef = D41E081F09B214EA009DBF7A;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D41E082809B214EA009DBF7A = {
+			fileRef = D41E082009B214EA009DBF7A;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D41E082909B214EA009DBF7A = {
+			fileRef = D41E082109B214EA009DBF7A;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D41E082A09B214EA009DBF7A = {
+			fileRef = D41E082209B214EA009DBF7A;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D41E082B09B214EA009DBF7A = {
+			fileRef = D41E082309B214EA009DBF7A;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D41E082C09B214EA009DBF7A = {
+			fileRef = D41E082409B214EA009DBF7A;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D41E082D09B214EA009DBF7A = {
+			fileRef = D41E082509B214EA009DBF7A;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D422424A09B9205900A515DD = {
+			isa = PBXFileReference;
+			lastKnownFileType = image.png;
+			name = exit.png;
+			path = src/exit.png;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D422424B09B9205900A515DD = {
+			isa = PBXFileReference;
+			lastKnownFileType = image.png;
+			name = fullscreen.png;
+			path = src/fullscreen.png;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D422424C09B9205900A515DD = {
+			isa = PBXFileReference;
+			lastKnownFileType = image.png;
+			name = open.png;
+			path = src/open.png;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D422424D09B9205900A515DD = {
+			fileRef = D422424A09B9205900A515DD;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D422424E09B9205900A515DD = {
+			fileRef = D422424B09B9205900A515DD;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D422424F09B9205900A515DD = {
+			fileRef = D422424C09B9205900A515DD;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D422428009BA940100A515DD = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = exit.h;
+			path = src/exit.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D422428109BA940100A515DD = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = firstpage.h;
+			path = src/firstpage.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D422428209BA940100A515DD = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = fullscreen.h;
+			path = src/fullscreen.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D422428309BA940100A515DD = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = lastpage.h;
+			path = src/lastpage.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D422428509BA940100A515DD = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = next.h;
+			path = src/next.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D422428609BA940100A515DD = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = nextpage.h;
+			path = src/nextpage.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D422428709BA940100A515DD = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = open.h;
+			path = src/open.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D422428809BA940100A515DD = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = prev.h;
+			path = src/prev.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D422428909BA940100A515DD = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = prevpage.h;
+			path = src/prevpage.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D422428A09BA940100A515DD = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = rot_ccw.h;
+			path = src/rot_ccw.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D422428B09BA940100A515DD = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = rot_cw.h;
+			path = src/rot_cw.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		D422428C09BA940100A515DD = {
+			fileRef = D422428009BA940100A515DD;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D422428D09BA940100A515DD = {
+			fileRef = D422428109BA940100A515DD;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D422428E09BA940100A515DD = {
+			fileRef = D422428209BA940100A515DD;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D422428F09BA940100A515DD = {
+			fileRef = D422428309BA940100A515DD;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D422429109BA940100A515DD = {
+			fileRef = D422428509BA940100A515DD;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D422429209BA940100A515DD = {
+			fileRef = D422428609BA940100A515DD;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D422429309BA940100A515DD = {
+			fileRef = D422428709BA940100A515DD;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D422429409BA940100A515DD = {
+			fileRef = D422428809BA940100A515DD;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D422429509BA940100A515DD = {
+			fileRef = D422428909BA940100A515DD;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D422429609BA940100A515DD = {
+			fileRef = D422428A09BA940100A515DD;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		D422429709BA940100A515DD = {
+			fileRef = D422428B09BA940100A515DD;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
 		D447E603099E48C500E8EE86 = {
 			children = (
+				D41E080109B113AD009DBF7A,
 				F70D16A4056C429001B74F27,
 				D487109809203E8800F112CF,
 				F70D16A6056C429001B74F27,
@@ -174,6 +555,18 @@
 		};
 		D447E604099E48CC00E8EE86 = {
 			children = (
+				D422428009BA940100A515DD,
+				D422428109BA940100A515DD,
+				D422428209BA940100A515DD,
+				D422428309BA940100A515DD,
+				D422428509BA940100A515DD,
+				D422428609BA940100A515DD,
+				D422428709BA940100A515DD,
+				D422428809BA940100A515DD,
+				D422428909BA940100A515DD,
+				D422428A09BA940100A515DD,
+				D422428B09BA940100A515DD,
+				D41E07FF09B11393009DBF7A,
 				F70D16A5056C429001B74F27,
 				D487109909203E8800F112CF,
 				F70D16A7056C429001B74F27,
@@ -200,6 +593,7 @@
 				D447E85F099E780500E8EE86,
 			);
 			buildRules = (
+				D41E081909B210EA009DBF7A,
 			);
 			buildSettings = {
 				FRAMEWORK_SEARCH_PATHS = "";
@@ -247,6 +641,18 @@
 				D447E842099E780500E8EE86,
 				D447E843099E780500E8EE86,
 				D447E844099E780500E8EE86,
+				D41E080009B11393009DBF7A,
+				D422428C09BA940100A515DD,
+				D422428D09BA940100A515DD,
+				D422428E09BA940100A515DD,
+				D422428F09BA940100A515DD,
+				D422429109BA940100A515DD,
+				D422429209BA940100A515DD,
+				D422429309BA940100A515DD,
+				D422429409BA940100A515DD,
+				D422429509BA940100A515DD,
+				D422429609BA940100A515DD,
+				D422429709BA940100A515DD,
 			);
 			isa = PBXHeadersBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -348,6 +754,17 @@
 		D447E849099E780500E8EE86 = {
 			buildActionMask = 2147483647;
 			files = (
+				D41E082609B214EA009DBF7A,
+				D41E082709B214EA009DBF7A,
+				D41E082809B214EA009DBF7A,
+				D41E082909B214EA009DBF7A,
+				D41E082A09B214EA009DBF7A,
+				D41E082B09B214EA009DBF7A,
+				D41E082C09B214EA009DBF7A,
+				D41E082D09B214EA009DBF7A,
+				D422424D09B9205900A515DD,
+				D422424E09B9205900A515DD,
+				D422424F09B9205900A515DD,
 				D447E84A099E780500E8EE86,
 				D447E84B099E780500E8EE86,
 				D447E84C099E780500E8EE86,
@@ -357,6 +774,7 @@
 				D447E850099E780500E8EE86,
 				D447E851099E780500E8EE86,
 				D447E852099E780500E8EE86,
+				D41E080209B113AD009DBF7A,
 			);
 			isa = PBXSourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
