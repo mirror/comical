@@ -9,6 +9,7 @@ Requirements for 1.0:
 * Info file display
 * Better code annotation and documentation
 * Switch to Subversion
+* Store image dimensions permanently, read JPEG / PNG headers
 
 Nice-to-have features:
 
@@ -36,7 +37,3 @@ Long-term whiz-bang features:
 Bugs:
 * When landscape page is shown, make both sets of rotation buttons work
 * Automatically generate PNG headers on MacOS X in XCode
-
-Ideas:
-* Store image dimensions somewhere even after originals[pagenumber] has been
-destroyed?
