@@ -7,6 +7,7 @@ Requirements for 1.0:
 * Open next book in series or directory
 * Box Zoom/Magnifying Glass - started, postponed for now
 * Info file display
+* Better code annotation and documentation
 
 Nice-to-have features:
 
@@ -18,6 +19,7 @@ Nice-to-have features:
 * const-correctness
 * look for any remaining memory leaks
 * multi-volume RAR
+* the switch to PNG seems to have made startup slower
 
 Long-term whiz-bang features:
 
@@ -36,4 +38,3 @@ Bugs:
 Ideas:
 * Store image dimensions somewhere even after originals[pagenumber] has been
 destroyed?
-

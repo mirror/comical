@@ -15,6 +15,10 @@ make install, install-strip, uninstall, distclean targets
 Makefile checks dependencies correctly now
 TIFF support taken out for simplicity, size
 Linux and Windows icons improved
+Scaling takes neighboring pages into account
+Matching rotation icons
+Icons in menus
+Using PNGs instead of XPMs and ICOs for icons
 
 0.7 -
 Fit to Width and Fit to Height now better uses available space

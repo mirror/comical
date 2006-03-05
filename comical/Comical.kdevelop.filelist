@@ -223,3 +223,4 @@ src/ComicalManager.cpp
 src/ComicalManager.h
 Comical Icons/png2header.cpp
 src/bin2h.c
+src/Makefile
