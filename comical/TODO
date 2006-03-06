@@ -1,15 +1,15 @@
 Requirements for 1.0:
 
 * Helpfile
-* Windows installer (NSIS, InnoSetup)
-* User-configurable keybindings: custom, or use KeyBinder?
+* User-configurable keybindings, use KeyBinder
 * Check that broken pages are only tried once
 * Open next book in series or directory
 * Box Zoom/Magnifying Glass - started, postponed for now
 * Info file display
 * Better code annotation and documentation
 * Switch to Subversion
-* Store image dimensions permanently, read JPEG / PNG headers
+* Store image dimensions permanently
+	prefetch image headers to get dimensions
 
 Nice-to-have features:
 
