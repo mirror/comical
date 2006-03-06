@@ -35,7 +35,7 @@ Name: desktopicon; Description: {cm:CreateDesktopIcon}; GroupDescription: {cm:Ad
 Source: Comical.exe; DestDir: {app}; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 Source: unicows.dll; DestDir: {app}; Attribs: readonly; Flags: ignoreversion
-Source: Changelog.txt; DestDir: {app}
+Source: ChangeLog.txt; DestDir: {app}
 Source: Readme.txt; DestDir: {app}; Flags: isreadme
 Source: TODO.txt; DestDir: {app}
 Source: COPYING.txt; DestDir: {app}
