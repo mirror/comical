@@ -1,3 +1,7 @@
+0.9 -
+Double-click on pages to navigate in that direction
+Fixed context-menu rotation bug when direction was right-to-left
+
 0.8 -
 Even faster than ever before, thanks to numerous cleanups and fixes
 Memory leak in ComicBook::Entry() fixed
