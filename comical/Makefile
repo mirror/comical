@@ -12,10 +12,10 @@ OBJS = $(patsubst %.cpp,%.o,$(wildcard src/*.cpp))
 
 all: comical
 
-comical: $(OBJS) unrar/libunrar.a unzip/libminiunzip.a
+comical: sources unrar/libunrar.a unzip/libminiunzip.a
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)
 
-$(OBJS):
+sources:
 	$(MAKE) -C src
 
 unrar/libunrar.a:
@@ -43,4 +43,4 @@ distclean:
 	$(MAKE) clean -C unzip
 	rm -f $(DEPS) bin2h src/bin2h.o
 
-.PHONY : install install-strip uninstall clean distclean
+.PHONY : source install install-strip uninstall clean distclean
