@@ -7,7 +7,6 @@ Requirements for 1.0:
 * Box Zoom/Magnifying Glass - started, postponed for now
 * Info file display
 * Better code annotation and documentation
-* Switch to Subversion
 * Store image dimensions permanently
 	prefetch image headers to get dimensions
 
