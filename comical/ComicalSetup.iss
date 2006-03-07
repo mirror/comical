@@ -41,6 +41,7 @@ Source: TODO.txt; DestDir: {app}
 Source: COPYING.txt; DestDir: {app}
 Source: Comical Icons\cbr.ico; DestDir: {app}
 Source: Comical Icons\cbz.ico; DestDir: {app}
+Source: mingwm10.dll; DestDir: {app}
 
 [INI]
 Filename: {app}\{#MyAppUrlName}; Section: InternetShortcut; Key: URL; String: {#MyAppURL}
