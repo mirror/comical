@@ -76,6 +76,7 @@ class ComicalCanvas : public wxScrolledWindow
 	void OnLeftDown(wxMouseEvent &event);
 	void OnLeftUp(wxMouseEvent &event);
 	void OnMouseMove(wxMouseEvent &event);
+	void OnLeftDClick(wxMouseEvent &event);
 	void OnRightClick(wxContextMenuEvent &event);
 	void OnOpen(wxCommandEvent& event);
 	void OnOpenDir(wxCommandEvent& event);

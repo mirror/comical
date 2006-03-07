@@ -68,6 +68,7 @@ BEGIN_EVENT_TABLE(ComicalCanvas, wxScrolledWindow)
 	EVT_LEFT_DOWN(ComicalCanvas::OnLeftDown)
 	EVT_LEFT_UP(ComicalCanvas::OnLeftUp)
 	EVT_MOTION(ComicalCanvas::OnMouseMove)
+	EVT_LEFT_DCLICK(ComicalCanvas::OnLeftDClick)
 	EVT_CONTEXT_MENU(ComicalCanvas::OnRightClick)
 	EVT_MENU(ID_ContextOpen, ComicalCanvas::OnOpen)
 	EVT_MENU(ID_ContextOpenDir, ComicalCanvas::OnOpenDir)
@@ -844,6 +845,21 @@ void ComicalCanvas::setPage(wxInt32 pagenumber)
 	}
 }
 
+void ComicalCanvas::OnLeftDClick(wxMouseEvent &event)
+{
+	int viewX, viewY, unitX, unitY;
+	GetViewStart(&viewX, &viewY);
+	GetScrollPixelsPerUnit(&unitX, &unitY);
+	wxSize size = GetVirtualSize();
+	wxPoint eventPos = event.GetPosition();
+	if (mode == TWOPAGE &&
+			((direction == COMICAL_LTR && (eventPos.x + (viewX * unitX)) < (size.x / 2)) ||
+			(direction == COMICAL_RTL && (eventPos.x + (viewX * unitX)) >= (size.x / 2))))
+		PrevPageSlide();
+	else 
+		NextPageSlide();
+}
+
 void ComicalCanvas::OnRightClick(wxContextMenuEvent &event)
 {
 	if (contextMenu)
@@ -891,7 +907,8 @@ void ComicalCanvas::OnRightClick(wxContextMenuEvent &event)
 	wxMenuItem *ccwMenu, *cwMenu;
 	if (mode == TWOPAGE &&
 			leftNum != rightNum &&
-			(eventPos.x + (viewX * unitX)) < (size.x / 2)) {
+			((direction == COMICAL_LTR && (eventPos.x + (viewX * unitX)) < (size.x / 2)) ||
+			(direction == COMICAL_RTL && (eventPos.x + (viewX * unitX)) >= (size.x / 2)))) {
 		ccwMenu = new wxMenuItem(NULL, ID_ContextLeftCCW, wxT("Rotate Counter-Clockwise"), wxT("Rotate 90 degrees counter-clockwise."));
 		cwMenu = new wxMenuItem(NULL, ID_ContextLeftCW, wxT("Rotate Clockwise"), wxT("Rotate 90 degrees clockwise."));
 	} else {
