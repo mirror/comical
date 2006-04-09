@@ -42,7 +42,8 @@ ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, 
 	int RHCode = 0, PFCode = 0;
 	struct RARHeaderDataEx header;
 	struct RAROpenArchiveDataEx flags;
-	wxString page, new_password;
+	wxString path, new_password;
+	ComicPage *page;
 	
 	open_rar:
 	
@@ -63,18 +64,19 @@ ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, 
 
 	while ((RHCode = RARReadHeaderEx(rarFile, &header)) == 0) {
 #ifdef wxUSE_UNICODE
-		page = wxString(header.FileNameW);
+		path = wxString(header.FileNameW);
 #else
-		page = wxString(header.FileName);
+		path = wxString(header.FileName);
 #endif
-		if(page.Right(5).Upper() == wxT(".JPEG") || page.Right(4).Upper() == wxT(".JPG") ||
-		page.Right(4).Upper() == wxT(".GIF") ||
-		page.Right(4).Upper() == wxT(".PNG"))
-			Filenames->Add(page);
+		page = new ComicPage(this, path);
+		if (page->ExtractDimensions())
+			Pages->Add(page);
+		else
+			delete page;
 		
 		if ((PFCode = RARProcessFile(rarFile, RAR_SKIP, NULL, NULL)) != 0) {
 			closeRar(rarFile, &flags);
-			throw ArchiveException(filename, ProcessFileError(PFCode, page));
+			throw ArchiveException(filename, ProcessFileError(PFCode, path));
 		}
 	}
 
@@ -95,7 +97,61 @@ wxInputStream * ComicBookRAR::ExtractStream(wxUint32 pageindex)
 	struct RARHeaderDataEx header;
 	struct RAROpenArchiveDataEx flags;
 	
-	wxString page = Filenames->Item(pageindex);
+	wxString page = Pages->Item(pageindex).Filename;
+	size_t length = 0;
+	
+	rarFile = openRar(&flags, &header, RAR_OM_EXTRACT);
+
+	if (password)
+		RARSetPassword(rarFile, password);
+
+	while ((RHCode = RARReadHeaderEx(rarFile, &header)) == 0) {
+#ifdef wxUSE_UNICODE
+		if (page.IsSameAs(wxString(header.FileNameW))) {
+#else // ASCII
+		if (page.IsSameAs(header.FileName)) {
+#endif
+			length = header.UnpSize;
+			break;	
+		} else {
+			if ((PFCode = RARProcessFile(rarFile, RAR_SKIP, NULL, NULL)) != 0) {
+				closeRar(rarFile, &flags);
+				throw ArchiveException(filename, ProcessFileError(PFCode, page));
+			}
+		}
+	}
+	
+	if (length == 0) { // archived file not found
+		closeRar(rarFile, &flags);
+		throw new ArchiveException(filename, page + wxT(" not found in this archive."));
+	}
+	if (RHCode) {
+		closeRar(rarFile, &flags);
+		throw new ArchiveException(filename, OpenArchiveError(PFCode));
+	}
+
+	wxUint8 *buffer = new wxUint8[length];
+	wxUint8 *callBackBuffer = buffer;
+
+	RARSetCallback(rarFile, CallbackProc, (long) &callBackBuffer);
+
+	PFCode = RARProcessFile(rarFile, RAR_TEST, NULL, NULL);
+
+	closeRar(rarFile, &flags);
+	
+	if (PFCode != 0)
+		throw new ArchiveException(filename, ProcessFileError(PFCode, page));
+
+	return new wxMemoryInputStream(buffer, length);
+}
+
+wxInputStream * ComicBookRAR::ExtractStream(wxString page)
+{
+	HANDLE rarFile;
+	int RHCode = 0, PFCode = 0;
+	struct RARHeaderDataEx header;
+	struct RAROpenArchiveDataEx flags;
+	
 	size_t length = 0;
 	
 	rarFile = openRar(&flags, &header, RAR_OM_EXTRACT);
@@ -151,7 +207,7 @@ bool ComicBookRAR::TestPassword()
 	struct RAROpenArchiveDataEx flags;
 	bool passwordCorrect = true;
 	
-	wxString page = Filenames->Item(0); // test using the first page
+	wxString page = Pages->Item(0).Filename; // test using the first page
 	
 	rarFile = openRar(&flags, &header, RAR_OM_EXTRACT);
 

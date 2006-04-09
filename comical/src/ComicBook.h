@@ -42,11 +42,10 @@
 #include <wx/event.h>
 
 #include "Resize.h"
+#include "enums.h"
 
-enum COMICAL_MODE {ONEPAGE, TWOPAGE};
-enum COMICAL_ZOOM {ZOOM_FIT, ZOOM_HEIGHT, ZOOM_WIDTH, ZOOM_FULL, ZOOM_CUSTOM};
-enum COMICAL_ROTATE {NORTH = 0, EAST, SOUTH, WEST};
-enum COMICAL_DIRECTION {COMICAL_LTR, COMICAL_RTL};
+class ComicBook; // forward declaration, mutually dependent classes
+#include "ComicPage.h"
 
 class ComicBook : public wxThread {
 
@@ -75,7 +74,6 @@ public:
 	wxBitmap *GetPageRightHalf(wxUint32 pagenumber);
 	wxBitmap *GetThumbnail(wxUint32 pagenumber);
 	bool IsPageLandscape(wxUint32 pagenumber);
-	wxArrayString *Filenames;
 	bool IsPageReady(wxUint32 pagenumber);
 	bool IsThumbReady(wxUint32 pagenumber);
 	
@@ -98,20 +96,21 @@ public:
 	bool Disconnect(int id, int lastId = wxID_ANY, wxEventType eventType = wxEVT_NULL, wxObjectEventFunction function = NULL, wxObject* userData = NULL, wxEvtHandler* eventSink = NULL)
 		{ return evtHandler->Disconnect(id, lastId, eventType, function, userData, eventSink); }
 
-	COMICAL_ROTATE *Orientations;
-	
-protected:
-	virtual wxInputStream * ExtractStream(wxUint32 pageindex) = 0;
+	ArrayPage *Pages;
 
+	virtual wxInputStream * ExtractStream(wxUint32 pageindex) = 0;
+	virtual wxInputStream * ExtractStream(wxString) = 0;
+
+protected:
 	wxString filename;
-	
 	char* password;
 	virtual bool TestPassword() { return true; }
-	void SetPassword(const char* new_password);
 	
+	void SetPassword(const char* new_password);
 	void postCtor();
 
 private:
+	void LoadOriginal(wxUint32 pagenumber);
 	void ScaleImage(wxUint32 pagenumber);
 	void ScaleThumbnail(wxUint32 pagenumber);
 	// Returns true if the page can fit well in the current zoom mode, i.e., if
@@ -128,14 +127,6 @@ private:
 	void SendCurrentPageChangedEvent();
 	void SendPageErrorEvent(wxUint32 pagenumber, wxString message);
 
-	wxImage *originals;
-	wxImage *resamples;
-	wxImage *thumbnails;
-	
-	wxMutex *originalLockers;
-	wxMutex *resampleLockers;
-	wxMutex *thumbnailLockers;
-	
 	wxEvtHandler *evtHandler;
 
 	wxUint32 pageCount;

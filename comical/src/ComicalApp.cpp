@@ -44,6 +44,7 @@ bool ComicalApp::OnInit()
 	wxImage::AddHandler(new wxJPEGHandler);
 	wxImage::AddHandler(new wxPNGHandler);
 	wxImage::AddHandler(new wxGIFHandler);
+	wxImage::AddHandler(new wxTIFFHandler);
 	
 	wxConfig *config = new wxConfig(wxT("Comical"));
 	wxConfigBase::Set(config); // Registers config globally

@@ -36,7 +36,7 @@
 #include <wx/gdicmn.h>
 #include <wx/scrolwin.h>
 
-enum COMICAL_PAGETYPE {FULL_PAGE, LEFT_HALF, RIGHT_HALF};
+#include "enums.h"
 
 class ComicalCanvas : public wxScrolledWindow
 {

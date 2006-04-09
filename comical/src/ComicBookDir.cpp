@@ -27,18 +27,22 @@
 
 #include "ComicBookDir.h"
 
+#include <wx/file.h>
+
 ComicBookDir::ComicBookDir(wxString dir, wxUint32 cacheLen, COMICAL_ZOOM zoom, long zoomLevel, bool fitOnlyOversize, COMICAL_MODE mode, FREE_IMAGE_FILTER filter, COMICAL_DIRECTION direction, wxInt32 scrollbarThickness) : ComicBook(dir, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness)
 {
 	wxArrayString *allFiles = new wxArrayString();
+	wxString path;
 	size_t count = wxDir::GetAllFiles(dir, allFiles, wxEmptyString, wxDIR_FILES | wxDIR_DIRS);
-	wxString page;
+	ComicPage *page;
 	
 	for (wxUint32 i = 0; i < count; i++) {
-		page = allFiles->Item(i);
-		if(page.Right(5).Upper() == wxT(".JPEG") || page.Right(4).Upper() == wxT(".JPG") ||
-				page.Right(4).Upper() == wxT(".GIF") ||
-				page.Right(4).Upper() == wxT(".PNG"))
-			Filenames->Add(page);
+		path = allFiles->Item(i);
+		page = new ComicPage(this, path);
+		if (page->ExtractDimensions())
+			Pages->Add(page);
+		else
+			delete page;
 	}
 	
 	delete allFiles;
@@ -49,5 +53,10 @@ ComicBookDir::ComicBookDir(wxString dir, wxUint32 cacheLen, COMICAL_ZOOM zoom, l
 
 wxInputStream * ComicBookDir::ExtractStream(wxUint32 pageindex)
 {
-	return new wxFileInputStream(Filenames->Item(pageindex));
+	return new wxFileInputStream(Pages->Item(pageindex).Filename);
+}
+
+wxInputStream * ComicBookDir::ExtractStream(wxString path)
+{
+	return new wxFileInputStream(path);
 }

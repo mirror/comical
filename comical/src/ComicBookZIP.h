@@ -38,6 +38,7 @@ public:
 
 protected:
 	wxInputStream * ExtractStream(wxUint32 pageindex);
+	wxInputStream * ExtractStream(wxString path);
 	bool TestPassword();
 
 private:
