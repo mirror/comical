@@ -1,7 +1,5 @@
 #include "rar.hpp"
 
-static void GetFirstNewVolName(const char *ArcName,char *VolName,
-  Int64 VolSize,Int64 TotalSize);
 
 
 
@@ -24,15 +22,43 @@ bool MergeArchive(Archive &Arc,ComprDataIO *DataIO,bool ShowFileName,char Comman
   Arc.Close();
 
   char NextName[NM];
+  wchar NextNameW[NM];
+  *NextNameW=0;
   strcpy(NextName,Arc.FileName);
   NextVolumeName(NextName,(Arc.NewMhd.Flags & MHD_NEWNUMBERING)==0 || Arc.OldFormat);
+
+  if (*Arc.FileNameW!=0)
+  {
+    // Copy incremented trailing low ASCII volume name part to Unicode name.
+    // It is simpler than also implementing Unicode version of NextVolumeName.
+
+    strcpyw(NextNameW,Arc.FileNameW);
+    char *NumPtr=GetVolNumPart(NextName);
+
+    // moving to first digit in volume number
+    while (NumPtr>NextName && isdigit(*NumPtr) && isdigit(*(NumPtr-1)))
+      NumPtr--;
+
+    // also copy the first character before volume number,
+    // because it can be changed when going from .r99 to .s00
+    if (NumPtr>NextName)
+      NumPtr--;
+
+    int CharsToCopy=strlen(NextName)-(NumPtr-NextName);
+    int DestPos=strlenw(NextNameW)-CharsToCopy;
+    if (DestPos>0)
+    {
+      CharToWide(NumPtr,NextNameW+DestPos,ASIZE(NextNameW)-DestPos-1);
+      NextNameW[ASIZE(NextNameW)-1]=0;
+    }
+  }
 
 #if !defined(SFX_MODULE) && !defined(RARDLL)
   bool RecoveryDone=false;
 #endif
   bool FailedOpen=false,OldSchemeTested=false;
 
-  while (!Arc.Open(NextName))
+  while (!Arc.Open(NextName,NextNameW))
   {
     if (!OldSchemeTested)
     {
@@ -43,6 +69,7 @@ bool MergeArchive(Archive &Arc,ComprDataIO *DataIO,bool ShowFileName,char Comman
       if (Arc.Open(AltNextName))
       {
         strcpy(NextName,AltNextName);
+        *NextNameW=0;
         break;
       }
     }
@@ -56,13 +83,13 @@ bool MergeArchive(Archive &Arc,ComprDataIO *DataIO,bool ShowFileName,char Comman
     }
     if (Cmd->ChangeVolProc!=NULL)
     {
-//#ifdef _WIN_32
-//      _EBX=_ESP;
-//#endif
+#if defined(_WIN_32) && !defined(_MSC_VER) && !defined(__MINGW32__)
+      _EBX=_ESP;
+#endif
       int RetCode=Cmd->ChangeVolProc(NextName,RAR_VOL_ASK);
-//#ifdef _WIN_32
-//      _ESP=_EBX;
-//#endif
+#if defined(_WIN_32) && !defined(_MSC_VER) && !defined(__MINGW32__)
+      _ESP=_EBX;
+#endif
       if (RetCode==0)
       {
         Cmd->DllError=ERAR_EOPEN;
@@ -85,7 +112,6 @@ bool MergeArchive(Archive &Arc,ComprDataIO *DataIO,bool ShowFileName,char Comman
 #ifndef GUI
     if (!Cmd->VolumePause && !IsRemovable(NextName))
     {
-      Log(Arc.FileName,St(MAbsNextVol),NextName);
       FailedOpen=true;
       break;
     }
@@ -97,10 +123,14 @@ bool MergeArchive(Archive &Arc,ComprDataIO *DataIO,bool ShowFileName,char Comman
       FailedOpen=true;
       break;
     }
+    *NextNameW=0;
 #endif
   }
   if (FailedOpen)
   {
+#if !defined(SILENT) && !defined(_WIN_CE)
+      Log(Arc.FileName,St(MAbsNextVol),NextName);
+#endif
     Arc.Open(Arc.FileName,Arc.FileNameW);
     Arc.Seek(PosBeforeClose,SEEK_SET);
     return(false);
@@ -112,13 +142,13 @@ bool MergeArchive(Archive &Arc,ComprDataIO *DataIO,bool ShowFileName,char Comman
     return(false);
   if (Cmd->ChangeVolProc!=NULL)
   {
-//#ifdef _WIN_32
-//    _EBX=_ESP;
-//#endif
+#if defined(_WIN_32) && !defined(_MSC_VER) && !defined(__MINGW32__)
+    _EBX=_ESP;
+#endif
     int RetCode=Cmd->ChangeVolProc(NextName,RAR_VOL_NOTIFY);
-//#ifdef _WIN_32
-//    _ESP=_EBX;
-//#endif
+#if defined(_WIN_32) && !defined(_MSC_VER) && !defined(__MINGW32__)
+    _ESP=_EBX;
+#endif
     if (RetCode==0)
       return(false);
   }
@@ -138,7 +168,20 @@ bool MergeArchive(Archive &Arc,ComprDataIO *DataIO,bool ShowFileName,char Comman
 #ifndef GUI
   if (ShowFileName)
   {
-    mprintf(St(MExtrPoints),IntNameToExt(Arc.NewLhd.FileName));
+    char OutName[NM];
+    IntToExt(Arc.NewLhd.FileName,OutName);
+#ifdef UNICODE_SUPPORTED
+    bool WideName=(Arc.NewLhd.Flags & LHD_UNICODE) && UnicodeEnabled();
+    if (WideName)
+    {
+      wchar NameW[NM];
+      ConvertPath(Arc.NewLhd.FileNameW,NameW);
+      char Name[NM];
+      if (WideToChar(NameW,Name) && IsNameUsable(Name))
+        strcpy(OutName,Name);
+    }
+#endif
+    mprintf(St(MExtrPoints),OutName);
     if (!Cmd->DisablePercentage)
       mprintf("     ");
   }

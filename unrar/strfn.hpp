@@ -15,10 +15,20 @@ char* RemoveLF(char *Str);
 unsigned int loctolower(byte ch);
 unsigned int loctoupper(byte ch);
 
+char* strncpyz(char *dest, const char *src, size_t maxlen);
+wchar* strncpyzw(wchar *dest, const wchar *src, size_t maxlen);
+
+int etoupper(int ch);
+
 
 
 bool LowAscii(const char *Str);
 bool LowAscii(const wchar *Str);
 
+
+int stricompc(const char *Str1,const char *Str2);
+#ifndef SFX_MODULE
+int stricompcw(const wchar *Str1,const wchar *Str2);
+#endif
 
 #endif

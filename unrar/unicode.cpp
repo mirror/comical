@@ -15,8 +15,20 @@ bool WideToChar(const wchar *Src,char *Dest,int DestSize)
   WideToUtf(Src,Dest,DestSize);
 #else
 #ifdef MBFUNCTIONS
-  if (wcstombs(Dest,Src,DestSize)==-1)
+
+  if (wcstombs(Dest,Src,DestSize)==(size_t)-1)
     RetCode=false;
+
+  if ((!RetCode || *Dest==0 && *Src!=0) && DestSize>NM && strlenw(Src)<NM)
+  {
+    /* Workaround for strange Linux Unicode functions bug.
+       Some of wcstombs and mbstowcs implementations in some situations
+       (we are yet to find out what it depends on) can return an empty
+       string and success code if buffer size value is too large.
+    */
+    return(WideToChar(Src,Dest,NM));
+  }
+
 #else
   if (UnicodeEnabled())
   {
@@ -53,8 +65,19 @@ bool CharToWide(const char *Src,wchar *Dest,int DestSize)
   UtfToWide(Src,Dest,DestSize);
 #else
 #ifdef MBFUNCTIONS
-  if (mbstowcs(Dest,Src,DestSize)==-1)
+
+  if (mbstowcs(Dest,Src,DestSize)==(size_t)-1)
     RetCode=false;
+
+  if ((!RetCode || *Dest==0 && *Src!=0) && DestSize>NM && strlen(Src)<NM)
+  {
+    /* Workaround for strange Linux Unicode functions bug.
+       Some of wcstombs and mbstowcs implementations in some situations
+       (we are yet to find out what it depends on) can return an empty
+       string and success code if buffer size value is too large.
+    */
+    return(CharToWide(Src,Dest,NM));
+  }
 #else
   if (UnicodeEnabled())
   {
@@ -102,7 +125,6 @@ wchar* RawToWide(const byte *Src,wchar *Dest,int DestSize)
 }
 
 
-#ifdef _APPLE
 void WideToUtf(const wchar *Src,char *Dest,int DestSize)
 {
   DestSize--;
@@ -124,13 +146,19 @@ void WideToUtf(const wchar *Src,char *Dest,int DestSize)
           *(Dest++)=(0x80|((c>>6)&0x3f));
           *(Dest++)=(0x80|(c&0x3f));
         }
+        else
+          if (c < 0x200000 && (DestSize-=3)>=0)
+          {
+            *(Dest++)=(0xf0|(c>>18));
+            *(Dest++)=(0x80|((c>>12)&0x3f));
+            *(Dest++)=(0x80|((c>>6)&0x3f));
+            *(Dest++)=(0x80|(c&0x3f));
+          }
   }
   *Dest=0;
 }
-#endif
 
 
-#ifdef _APPLE
 void UtfToWide(const char *Src,wchar *Dest,int DestSize)
 {
   DestSize--;
@@ -156,14 +184,29 @@ void UtfToWide(const char *Src,wchar *Dest,int DestSize)
           Src+=2;
         }
         else
-          break;
+          if ((c>>3)==30)
+          {
+            if ((Src[0]&0xc0)!=0x80 || (Src[1]&0xc0)!=0x80 || (Src[2]&0xc0)!=0x80)
+              break;
+            d=((c&7)<<18)|((Src[0]&0x3f)<<12)|((Src[1]&0x3f)<<6)|(Src[2]&0x3f);
+            Src+=3;
+          }
+          else
+            break;
     if (--DestSize<0)
       break;
-    *(Dest++)=d;
+    if (d>0xffff)
+    {
+      if (--DestSize<0 || d>0x10ffff)
+        break;
+      *(Dest++)=((d-0x10000)>>10)+0xd800;
+      *(Dest++)=(d&0x3ff)+0xdc00;
+    }
+    else
+      *(Dest++)=d;
   }
   *Dest=0;
 }
-#endif
 
 
 bool UnicodeEnabled()

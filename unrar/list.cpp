@@ -64,7 +64,10 @@ void ListArchive(CommandData *Cmd)
         }
         while(Arc.ReadHeader()>0)
         {
-          switch(Arc.GetHeaderType())
+          int HeaderType=Arc.GetHeaderType();
+          if (HeaderType==ENDARC_HEAD)
+            break;
+          switch(HeaderType)
           {
             case FILE_HEAD:
               IntToExt(Arc.NewLhd.FileName,Arc.NewLhd.FileName);
@@ -115,7 +118,7 @@ void ListArchive(CommandData *Cmd)
             itoa(TotalPackSize,PackSizeText);
         
             mprintf("\n%5lu %16s %8s %3d%%",FileCount,UnpSizeText,
-                    PackSizeText,ToPercent(TotalPackSize,TotalUnpSize));
+                    PackSizeText,ToPercentUnlim(TotalPackSize,TotalUnpSize));
             SumFileCount+=FileCount;
             SumUnpSize+=TotalUnpSize;
             SumPackSize+=TotalPackSize;
@@ -159,7 +162,7 @@ void ListArchive(CommandData *Cmd)
     itoa(SumUnpSize,UnpSizeText);
     itoa(SumPackSize,PackSizeText);
     mprintf("\n%5lu %16s %8s %3d%%\n",SumFileCount,UnpSizeText,
-            PackSizeText,ToPercent(SumPackSize,SumUnpSize));
+            PackSizeText,ToPercentUnlim(SumPackSize,SumUnpSize));
   }
 }
 
@@ -228,7 +231,7 @@ void ListFileHeader(FileHeader &hd,bool Verbose,bool Technical,bool &TitleShown,
       if (hd.Flags & LHD_SPLIT_AFTER)
         mprintf(" -->");
       else
-        mprintf("%3d%%",ToPercent(hd.FullPackSize,hd.FullUnpSize));
+        mprintf("%3d%%",ToPercentUnlim(hd.FullPackSize,hd.FullUnpSize));
 
   char DateStr[50];
   hd.mtime.GetText(DateStr,false);
@@ -352,11 +355,11 @@ void ListOldSubHeader(Archive &Arc)
 
 void ListNewSubHeader(CommandData *Cmd,Archive &Arc,bool Technical)
 {
-  if (Technical && Arc.SubHead.CmpName(SUBHEAD_TYPE_CMT) &&
+  if (Arc.SubHead.CmpName(SUBHEAD_TYPE_CMT) &&
       (Arc.SubHead.Flags & LHD_SPLIT_BEFORE)==0 && !Cmd->DisableComment)
   {
     Array<byte> CmtData;
-    int ReadSize=Arc.ReadCommentData(CmtData);
+    int ReadSize=Arc.ReadCommentData(&CmtData,NULL);
     if (ReadSize!=0)
     {
       mprintf(St(MFileComment));

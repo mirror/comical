@@ -21,7 +21,7 @@
 
 #define  PACK_VER               29
 #define  PACK_CRYPT_VER         29
-#define  UNP_VER                29
+#define  UNP_VER                36
 #define  CRYPT_VER              29
 #define  AV_VER                 20
 #define  PROTECT_VER            20
@@ -36,6 +36,7 @@
 #define  MHD_PROTECT        0x0040
 #define  MHD_PASSWORD       0x0080
 #define  MHD_FIRSTVOLUME    0x0100
+#define  MHD_ENCRYPTVER     0x0200
 
 #define  LHD_SPLIT_BEFORE   0x0001
 #define  LHD_SPLIT_AFTER    0x0002
@@ -63,7 +64,7 @@
 #define  SKIP_IF_UNKNOWN    0x4000
 #define  LONG_BLOCK         0x8000
 
-#define  EARC_NEXT_VOLUME   0x0001
+#define  EARC_NEXT_VOLUME   0x0001 // not last volume
 #define  EARC_DATACRC       0x0002
 #define  EARC_REVSPACE      0x0004
 #define  EARC_VOLNUMBER     0x0008
@@ -151,10 +152,11 @@ struct BlockHeader:BaseBlock
 };
 
 
-struct MainHeader:BlockHeader
+struct MainHeader:BaseBlock
 {
   ushort HighPosAV;
   uint PosAV;
+  byte EncryptVer;
 };
 
 

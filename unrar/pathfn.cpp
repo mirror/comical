@@ -32,20 +32,25 @@ char* PointToLastChar(const char *Path)
 char* ConvertPath(const char *SrcPath,char *DestPath)
 {
   const char *DestPtr=SrcPath;
+
+  /* prevents \..\ in any part of path string */
   for (const char *s=DestPtr;*s!=0;s++)
     if (IsPathDiv(s[0]) && s[1]=='.' && s[2]=='.' && IsPathDiv(s[3]))
       DestPtr=s+4;
+
+  /* removes any sequence of . and \ in the beginning of path string */
   while (*DestPtr)
   {
     const char *s=DestPtr;
     if (s[0] && IsDriveDiv(s[1]))
       s+=2;
-    if (s[0]=='\\' && s[1]=='\\')
-    {
-      const char *Slash=strchr(s+2,'\\');
-      if (Slash!=NULL && (Slash=strchr(Slash+1,'\\'))!=NULL)
-        s=Slash+1;
-    }
+    else
+      if (s[0]=='\\' && s[1]=='\\')
+      {
+        const char *Slash=strchr(s+2,'\\');
+        if (Slash!=NULL && (Slash=strchr(Slash+1,'\\'))!=NULL)
+          s=Slash+1;
+      }
     for (const char *t=s;*t!=0;t++)
       if (IsPathDiv(*t))
         s=t+1;
@@ -56,10 +61,15 @@ char* ConvertPath(const char *SrcPath,char *DestPath)
       break;
     DestPtr=s;
   }
+
+  /* code above does not remove last "..", doing here */
+  if (DestPtr[0]=='.' && DestPtr[1]=='.' && DestPtr[2]==0)
+    DestPtr+=2;
+
   if (DestPath!=NULL)
   {
     char TmpStr[NM];
-    strncpy(TmpStr,DestPtr,sizeof(TmpStr)-1);
+    strncpyz(TmpStr,DestPtr,ASIZE(TmpStr));
     strcpy(DestPath,TmpStr);
   }
   return((char *)DestPtr);
@@ -226,7 +236,7 @@ bool IsDriveDiv(int Ch)
 int GetPathDisk(const char *Path)
 {
   if (IsDiskLetter(Path))
-    return(toupper(*Path)-'A');
+    return(etoupper(*Path)-'A');
   else
     return(-1);
 }
@@ -248,23 +258,26 @@ void AddEndSlash(wchar *Path)
 }
 
 
-void GetFilePath(const char *FullName,char *Path)
+// returns file path including the trailing path separator symbol
+void GetFilePath(const char *FullName,char *Path,int MaxLength)
 {
-  int PathLength=PointToName(FullName)-FullName;
+  int PathLength=Min(MaxLength-1,PointToName(FullName)-FullName);
   strncpy(Path,FullName,PathLength);
   Path[PathLength]=0;
 }
 
 
-void GetFilePath(const wchar *FullName,wchar *Path)
+// returns file path including the trailing path separator symbol
+void GetFilePath(const wchar *FullName,wchar *Path,int MaxLength)
 {
-  const wchar *PathPtr=/*(*FullName && IsDriveDiv(FullName[1])) ? FullName+2:*/FullName;
-  int PathLength=PointToName(FullName)-FullName;
-  strncpyw(Path,PathPtr,PathLength);
+  int PathLength=Min(MaxLength-1,PointToName(FullName)-FullName);
+  strncpyw(Path,FullName,PathLength);
   Path[PathLength]=0;
 }
 
 
+// removes name and returns file path without the trailing
+// path separator symbol
 void RemoveNameFromPath(char *Path)
 {
   char *Name=PointToName(Path);
@@ -275,12 +288,39 @@ void RemoveNameFromPath(char *Path)
 
 
 #ifndef SFX_MODULE
+// removes name and returns file path without the trailing
+// path separator symbol
 void RemoveNameFromPath(wchar *Path)
 {
   wchar *Name=PointToName(Path);
   if (Name>=Path+2 && (!IsDriveDiv(Path[1]) || Name>=Path+4))
     Name--;
   *Name=0;
+}
+#endif
+
+
+#if defined(_WIN_32) && !defined(_WIN_CE) && !defined(SFX_MODULE)
+void GetAppDataPath(char *Path)
+{
+  LPMALLOC g_pMalloc;
+  SHGetMalloc(&g_pMalloc);
+  LPITEMIDLIST ppidl;
+  *Path=0;
+  bool Success=false;
+  if (SHGetSpecialFolderLocation(NULL,CSIDL_APPDATA,&ppidl)==NOERROR &&
+      SHGetPathFromIDList(ppidl,Path) && *Path!=0)
+  {
+    AddEndSlash(Path);
+    strcat(Path,"WinRAR");
+    Success=FileExist(Path) || MakeDir(Path,NULL,0)==MKDIR_SUCCESS;
+  }
+  if (!Success)
+  {
+    GetModuleFileName(NULL,Path,NM);
+    RemoveNameFromPath(Path);
+  }
+  g_pMalloc->Free(ppidl);
 }
 #endif
 
@@ -311,12 +351,12 @@ bool EnumConfigPaths(char *Path,int Number)
     char *EnvStr=getenv("HOME");
     if (EnvStr==NULL)
       return(false);
-    strncpy(Path,EnvStr,NM);
+    strncpy(Path,EnvStr,NM-1);
     Path[NM-1]=0;
     return(true);
   }
   static const char *AltPath[]={
-    "/etc","/usr/lib","/usr/local/lib","/usr/local/etc"
+    "/etc","/etc/rar","/usr/lib","/usr/local/lib","/usr/local/etc"
   };
   Number--;
   if (Number<0 || Number>=sizeof(AltPath)/sizeof(AltPath[0]))
@@ -324,11 +364,18 @@ bool EnumConfigPaths(char *Path,int Number)
   strcpy(Path,AltPath[Number]);
   return(true);
 #elif defined(_WIN_32)
-  if (Number!=0)
+
+  if (Number<0 || Number>1)
     return(false);
-  GetModuleFileName(NULL,Path,NM);
-  RemoveNameFromPath(Path);
+  if (Number==0)
+    GetAppDataPath(Path);
+  else
+  {
+    GetModuleFileName(NULL,Path,NM);
+    RemoveNameFromPath(Path);
+  }
   return(true);
+
 #else
   return(false);
 #endif
@@ -350,6 +397,7 @@ void GetConfigName(const char *Name,char *FullName,bool CheckExist)
 #endif
 
 
+// returns a pointer to rightmost digit of volume number
 char* GetVolNumPart(char *ArcName)
 {
   char *ChPtr=ArcName+strlen(ArcName)-1;
@@ -427,6 +475,9 @@ bool IsNameUsable(const char *Name)
 #ifndef _UNIX
   if (Name[0] && Name[1] && strchr(Name+2,':')!=NULL)
     return(false);
+  for (const char *s=Name;*s!=0;s=charnext(s))
+    if (*s<32)
+      return(false);
 #endif
   return(*Name!=0 && strpbrk(Name,"?*<>|\"")==NULL);
 }
@@ -494,10 +545,32 @@ char* DosSlashToUnix(char *SrcName,char *DestName,uint MaxLength)
 }
 
 
+wchar* UnixSlashToDos(wchar *SrcName,wchar *DestName,uint MaxLength)
+{
+  if (DestName!=NULL && DestName!=SrcName)
+    if (strlenw(SrcName)>=MaxLength)
+    {
+      *DestName=0;
+      return(DestName);
+    }
+    else
+      strcpyw(DestName,SrcName);
+  for (wchar *s=SrcName;*s!=0;s++)
+  {
+    if (*s=='/')
+      if (DestName==NULL)
+        *s='\\';
+      else
+        DestName[s-SrcName]='\\';
+  }
+  return(DestName==NULL ? SrcName:DestName);
+}
+
+
 bool IsFullPath(const char *Path)
 {
   char PathOnly[NM];
-  GetFilePath(Path,PathOnly);
+  GetFilePath(Path,PathOnly,ASIZE(PathOnly));
   if (IsWildcard(PathOnly))
     return(true);
 #if defined(_WIN_32) || defined(_EMX)
@@ -511,7 +584,7 @@ bool IsFullPath(const char *Path)
 
 bool IsDiskLetter(const char *Path)
 {
-  char Letter=toupper(Path[0]);
+  char Letter=etoupper(Path[0]);
   return(Letter>='A' && Letter<='Z' && IsDriveDiv(Path[1]));
 }
 

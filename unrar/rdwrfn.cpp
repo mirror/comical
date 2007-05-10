@@ -118,13 +118,13 @@ void ComprDataIO::UnpWrite(byte *Addr,uint Count)
       ErrHandler.Exit(USER_BREAK);
     if (Cmd->ProcessDataProc!=NULL)
     {
-//#ifdef _WIN_32
-//      _EBX=_ESP;
-//#endif
+#if defined(_WIN_32) && !defined(_MSC_VER) && !defined(__MINGW32__)
+      _EBX=_ESP;
+#endif
       int RetCode=Cmd->ProcessDataProc(Addr,Count);
-//#ifdef _WIN_32
-//      _ESP=_EBX;
-//#endif
+#if defined(_WIN_32) && !defined(_MSC_VER) && !defined(__MINGW32__)
+      _ESP=_EBX;
+#endif
       if (RetCode==0)
         ErrHandler.Exit(USER_BREAK);
     }
@@ -211,20 +211,20 @@ void ComprDataIO::GetUnpackedData(byte **Data,uint *Size)
 }
 
 
-void ComprDataIO::SetEncryption(int Method,char *Password,byte *Salt,bool Encrypt)
+void ComprDataIO::SetEncryption(int Method,char *Password,byte *Salt,bool Encrypt,bool HandsOffHash)
 {
   if (Encrypt)
   {
     Encryption=*Password ? Method:0;
 #ifndef NOCRYPT
-    Crypt.SetCryptKeys(Password,Salt,Encrypt);
+    Crypt.SetCryptKeys(Password,Salt,Encrypt,false,HandsOffHash);
 #endif
   }
   else
   {
     Decryption=*Password ? Method:0;
 #ifndef NOCRYPT
-    Decrypt.SetCryptKeys(Password,Salt,Encrypt,Method<29);
+    Decrypt.SetCryptKeys(Password,Salt,Encrypt,Method<29,HandsOffHash);
 #endif
   }
 }

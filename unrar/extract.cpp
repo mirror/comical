@@ -28,8 +28,22 @@ void CmdExtract::DoExtract(CommandData *Cmd)
   Cmd->ArcNames->Rewind();
   while (Cmd->GetArcName(ArcName,ArcNameW,sizeof(ArcName)))
   {
-    while (ExtractArchive(Cmd)==EXTRACT_ARC_REPEAT)
-      ;
+    while (true)
+    {
+      char PrevCmdPassword[MAXPASSWORD];
+      strcpy(PrevCmdPassword,Cmd->Password);
+
+      EXTRACT_ARC_CODE Code=ExtractArchive(Cmd);
+
+/*
+      restore Cmd->Password which could be changed in IsArchive() call
+      for next header encrypted archive
+*/
+      strcpy(Cmd->Password,PrevCmdPassword);
+
+      if (Code!=EXTRACT_ARC_REPEAT)
+        break;
+    }
     if (FindFile::FastFind(ArcName,ArcNameW,&FD))
       DataIO.ProcessedArcSize+=FD.Size;
   }
@@ -141,6 +155,7 @@ EXTRACT_ARC_CODE CmdExtract::ExtractArchive(CommandData *Cmd)
       else
         break;
   }
+
   return(EXTRACT_ARC_NEXT);
 }
 
@@ -342,7 +357,7 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,int HeaderSize
 
   if (ExactMatch || (SkipSolid=Arc.Solid)!=0)
   {
-    if (Arc.NewLhd.Flags & LHD_PASSWORD)
+    if ((Arc.NewLhd.Flags & LHD_PASSWORD)!=0)
 #ifndef RARDLL
       if (*Password==0)
 #endif
@@ -395,7 +410,7 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,int HeaderSize
 #ifndef SFX_MODULE
     if (Cmd->AppendArcNameToPath)
     {
-      strcat(DestFileName,PointToName(Arc.FileName));
+      strcat(DestFileName,PointToName(Arc.FirstVolumeName));
       SetExt(DestFileName,NULL);
       AddEndSlash(DestFileName);
     }
@@ -428,7 +443,10 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,int HeaderSize
     else
       strcat(DestFileName,ExtrName);
 
-    if (AbsPaths && DestFileName[1]=='_' && IsPathDiv(DestFileName[2]))
+    char DiskLetter=etoupper(DestFileName[0]);
+
+    if (AbsPaths && DestFileName[1]=='_' && IsPathDiv(DestFileName[2]) &&
+        DiskLetter>='A' && DiskLetter<='Z')
       DestFileName[1]=':';
 
 #ifndef SFX_MODULE
@@ -451,10 +469,10 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,int HeaderSize
       if (Cmd->AppendArcNameToPath)
       {
         wchar FileNameW[NM];
-        if (*Arc.FileNameW!=0)
-          strcpyw(FileNameW,Arc.FileNameW);
+        if (*Arc.FirstVolumeNameW!=0)
+          strcpyw(FileNameW,Arc.FirstVolumeNameW);
         else
-          CharToWide(Arc.FileName,FileNameW);
+          CharToWide(Arc.FirstVolumeName,FileNameW);
         strcatw(DestFileNameW,PointToName(FileNameW));
         SetExt(DestFileNameW,NULL);
         AddEndSlash(DestFileNameW);
@@ -487,7 +505,8 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,int HeaderSize
     else
       *DestFileNameW=0;
 
-    ExtrFile=!SkipSolid && !EmptyName && (Arc.NewLhd.Flags & LHD_SPLIT_BEFORE)==0/* && *ExtrName*/;
+    ExtrFile=!SkipSolid && !EmptyName && (Arc.NewLhd.Flags & LHD_SPLIT_BEFORE)==0;
+
     if ((Cmd->FreshFiles || Cmd->UpdateFiles) && (Command=='E' || Command=='X'))
     {
       struct FindData FD;
@@ -501,17 +520,27 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,int HeaderSize
           ExtrFile=false;
     }
 
+    // skip encrypted file if no password is specified
+    if ((Arc.NewLhd.Flags & LHD_PASSWORD)!=0 && *Password==0)
+    {
+      ErrHandler.SetErrorCode(WARNING);
+#ifdef RARDLL
+      Cmd->DllError=ERAR_MISSING_PASSWORD;
+#endif
+      ExtrFile=false;
+    }
+
 #ifdef RARDLL
     if (*Cmd->DllDestName)
     {
-      strncpy(DestFileName,Cmd->DllDestName,sizeof(DestFileName));
+      strncpyz(DestFileName,Cmd->DllDestName,ASIZE(DestFileName));
       *DestFileNameW=0;
       if (Cmd->DllOpMode!=RAR_EXTRACT)
         ExtrFile=false;
     }
     if (*Cmd->DllDestNameW)
     {
-      strncpyw(DestFileNameW,Cmd->DllDestNameW,sizeof(DestFileNameW)/sizeof(DestFileNameW[0]));
+      strncpyzw(DestFileNameW,Cmd->DllDestNameW,ASIZE(DestFileNameW));
       DestNameW=DestFileNameW;
       if (Cmd->DllOpMode!=RAR_EXTRACT)
         ExtrFile=false;
@@ -519,7 +548,8 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,int HeaderSize
 #endif
 
 #ifdef SFX_MODULE
-    if (Arc.NewLhd.UnpVer!=UNP_VER && Arc.NewLhd.Method!=0x30)
+    if ((Arc.NewLhd.UnpVer!=UNP_VER && Arc.NewLhd.UnpVer!=29) &&
+        Arc.NewLhd.Method!=0x30)
 #else
     if (Arc.NewLhd.UnpVer<13 || Arc.NewLhd.UnpVer>UNP_VER)
 #endif
@@ -635,10 +665,18 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,int HeaderSize
               if (!IsNameUsable(DestFileName))
               {
                 Log(Arc.FileName,St(MCorrectingName));
+                char OrigName[sizeof(DestFileName)];
+                strncpyz(OrigName,DestFileName,ASIZE(OrigName));
+
                 MakeNameUsable(DestFileName,true);
                 CreatePath(DestFileName,NULL,true);
                 if (FileCreate(Cmd,&CurFile,DestFileName,NULL,Cmd->Overwrite,&UserReject,Arc.NewLhd.FullUnpSize,Arc.NewLhd.FileTime))
+                {
+#ifndef SFX_MODULE
+                  Log(Arc.FileName,St(MRenaming),OrigName,DestFileName);
+#endif
                   ExtrFile=true;
+                }
                 else
                   ErrHandler.CreateErrorMsg(Arc.FileName,DestFileName);
               }
@@ -694,7 +732,8 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,int HeaderSize
       DataIO.PackedCRC=0xffffffff;
       DataIO.SetEncryption(
         (Arc.NewLhd.Flags & LHD_PASSWORD) ? Arc.NewLhd.UnpVer:0,Password,
-        (Arc.NewLhd.Flags & LHD_SALT) ? Arc.NewLhd.Salt:NULL,false);
+        (Arc.NewLhd.Flags & LHD_SALT) ? Arc.NewLhd.Salt:NULL,false,
+        Arc.NewLhd.UnpVer>=36);
       DataIO.SetPackedSizeToRead(Arc.NewLhd.FullPackSize);
       DataIO.SetFiles(&Arc,&CurFile);
       DataIO.SetTestMode(TestMode);
@@ -742,7 +781,7 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,int HeaderSize
         }
         else
         {
-          char *BadArcName=(Arc.NewLhd.Flags & LHD_SPLIT_BEFORE) ? NULL:Arc.FileName;
+          char *BadArcName=/*(Arc.NewLhd.Flags & LHD_SPLIT_BEFORE) ? NULL:*/Arc.FileName;
           if (Arc.NewLhd.Flags & LHD_PASSWORD)
           {
             Log(BadArcName,St(MEncrBadCRC),ArcFileName);
@@ -770,6 +809,10 @@ bool CmdExtract::ExtractCurrentFile(CommandData *Cmd,Archive &Arc,int HeaderSize
 #if defined(_WIN_32) || defined(_EMX)
         if (Cmd->ClearArc)
           Arc.NewLhd.FileAttr&=~FA_ARCH;
+/*
+        else
+          Arc.NewLhd.FileAttr|=FA_ARCH; //set archive bit for unpacked files (file is not backed up)
+*/
 #endif
         if (!BrokenFile || Cmd->KeepBroken)
         {

@@ -37,6 +37,7 @@ HANDLE PASCAL RAROpenArchiveEx(struct RAROpenArchiveDataEx *r)
   {
     r->OpenResult=0;
     DataSet *Data=new DataSet;
+    Data->Cmd.DllError=0;
     Data->OpenMode=r->OpenMode;
     Data->Cmd.FileArgs->AddString("*");
 
@@ -52,19 +53,19 @@ HANDLE PASCAL RAROpenArchiveEx(struct RAROpenArchiveDataEx *r)
     Data->Cmd.VersionControl=1;
     if (!Data->Arc.Open(r->ArcName,r->ArcNameW))
     {
-      delete Data;
       r->OpenResult=ERAR_EOPEN;
+      delete Data;
       return(NULL);
     }
     if (!Data->Arc.IsArchive(false))
     {
+      r->OpenResult=Data->Cmd.DllError!=0 ? Data->Cmd.DllError:ERAR_BAD_ARCHIVE;
       delete Data;
-      r->OpenResult=ERAR_BAD_ARCHIVE;
       return(NULL);
     }
     r->Flags=Data->Arc.NewMhd.Flags;
     Array<byte> CmtData;
-    if (r->CmtBufSize!=0 && Data->Arc.GetComment(CmtData))
+    if (r->CmtBufSize!=0 && Data->Arc.GetComment(&CmtData,NULL))
     {
       r->Flags|=2;
       int Size=CmtData.Size()+1;
@@ -109,6 +110,7 @@ int PASCAL RARReadHeader(HANDLE hArcData,struct RARHeaderData *D)
           (Data->Arc.EndArcHead.Flags & EARC_NEXT_VOLUME))
         if (MergeArchive(Data->Arc,NULL,false,'L'))
         {
+          Data->Extract.SignatureFound=false;
           Data->Arc.Seek(Data->Arc.CurBlockPos,SEEK_SET);
           return(RARReadHeader(hArcData,D));
         }
@@ -124,8 +126,8 @@ int PASCAL RARReadHeader(HANDLE hArcData,struct RARHeaderData *D)
       else
         return(Code);
     }
-    strncpy(D->ArcName,Data->Arc.FileName,sizeof(D->ArcName));
-    strncpy(D->FileName,Data->Arc.NewLhd.FileName,sizeof(D->FileName));
+    strncpyz(D->ArcName,Data->Arc.FileName,ASIZE(D->ArcName));
+    strncpyz(D->FileName,Data->Arc.NewLhd.FileName,ASIZE(D->FileName));
     D->Flags=Data->Arc.NewLhd.Flags;
     D->PackSize=Data->Arc.NewLhd.PackSize;
     D->UnpSize=Data->Arc.NewLhd.UnpSize;
@@ -157,6 +159,7 @@ int PASCAL RARReadHeaderEx(HANDLE hArcData,struct RARHeaderDataEx *D)
           (Data->Arc.EndArcHead.Flags & EARC_NEXT_VOLUME))
         if (MergeArchive(Data->Arc,NULL,false,'L'))
         {
+          Data->Extract.SignatureFound=false;
           Data->Arc.Seek(Data->Arc.CurBlockPos,SEEK_SET);
           return(RARReadHeaderEx(hArcData,D));
         }
@@ -172,12 +175,12 @@ int PASCAL RARReadHeaderEx(HANDLE hArcData,struct RARHeaderDataEx *D)
       else
         return(Code);
     }
-    strncpy(D->ArcName,Data->Arc.FileName,sizeof(D->ArcName));
+    strncpyz(D->ArcName,Data->Arc.FileName,ASIZE(D->ArcName));
     if (*Data->Arc.FileNameW)
       strncpyw(D->ArcNameW,Data->Arc.FileNameW,sizeof(D->ArcNameW));
     else
       CharToWide(Data->Arc.FileName,D->ArcNameW);
-    strncpy(D->FileName,Data->Arc.NewLhd.FileName,sizeof(D->FileName));
+    strncpyz(D->FileName,Data->Arc.NewLhd.FileName,ASIZE(D->FileName));
     if (*Data->Arc.NewLhd.FileNameW)
       strncpyw(D->FileNameW,Data->Arc.NewLhd.FileNameW,sizeof(D->FileNameW));
     else
@@ -225,6 +228,7 @@ int PASCAL ProcessFile(HANDLE hArcData,int Operation,char *DestPath,char *DestNa
           (Data->Arc.NewLhd.Flags & LHD_SPLIT_AFTER)!=0)
         if (MergeArchive(Data->Arc,NULL,false,'L'))
         {
+          Data->Extract.SignatureFound=false;
           Data->Arc.Seek(Data->Arc.CurBlockPos,SEEK_SET);
           return(0);
         }
@@ -326,7 +330,7 @@ void PASCAL RARSetProcessDataProc(HANDLE hArcData,PROCESSDATAPROC ProcessDataPro
 void PASCAL RARSetPassword(HANDLE hArcData,char *Password)
 {
   DataSet *Data=(DataSet *)hArcData;
-  strncpy(Data->Cmd.Password,Password,sizeof(Data->Cmd.Password));
+  strncpyz(Data->Cmd.Password,Password,ASIZE(Data->Cmd.Password));
 }
 
 
