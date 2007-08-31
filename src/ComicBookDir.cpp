@@ -28,6 +28,7 @@
 #include "ComicBookDir.h"
 
 #include <wx/file.h>
+#include <wx/log.h>
 
 ComicBookDir::ComicBookDir(wxString dir, wxUint32 cacheLen, COMICAL_ZOOM zoom, long zoomLevel, bool fitOnlyOversize, COMICAL_MODE mode, FREE_IMAGE_FILTER filter, COMICAL_DIRECTION direction, wxInt32 scrollbarThickness) : ComicBook(dir, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness)
 {
@@ -35,19 +36,22 @@ ComicBookDir::ComicBookDir(wxString dir, wxUint32 cacheLen, COMICAL_ZOOM zoom, l
 	wxString path;
 	size_t count = wxDir::GetAllFiles(dir, allFiles, wxEmptyString, wxDIR_FILES | wxDIR_DIRS);
 	ComicPage *page;
+	wxInputStream *stream;
 	
 	for (wxUint32 i = 0; i < count; i++) {
 		path = allFiles->Item(i);
-		page = new ComicPage(this, path);
-		if (page->ExtractDimensions())
+		page = new ComicPage(path);
+		stream = ExtractStream(path);
+		if (page->ExtractDimensions(stream))
 			Pages->Add(page);
 		else
 			delete page;
+		wxDELETE(stream);
 	}
 	
 	delete allFiles;
 	
-	postCtor();	
+	postCtor();
 	Create(); // create the wxThread
 }
 

@@ -41,6 +41,18 @@
 #include <wx/mimetype.h>
 #include <wx/event.h>
 #include <wx/scrolbar.h>
+#include <wx/artprov.h>
+
+// and the icons
+#include "firstpage.h"
+#include "prevpage.h"
+#include "prev.h"
+#include "next.h"
+#include "nextpage.h"
+#include "lastpage.h"
+#include "rot_cw.h"
+#include "rot_ccw.h"
+#include "fullscreen.h"
 
 ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSize& size, long style) : wxFrame(NULL, -1, title, pos, size, style)
 {
@@ -63,24 +75,29 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	scrollbarThickness = tempBar->GetSize().y;
 	tempBar->Destroy();
 
-	wxMenuItem *openMenu = new wxMenuItem(NULL, wxID_OPEN, wxT("&Open\tAlt-O"), wxT("Open a Comic Book."));
-	wxMenuItem *exitMenu = new wxMenuItem(NULL, wxID_EXIT, wxT("E&xit\tAlt-X"), wxT("Quit Comical."));
-
-	openMenu->SetBitmap(wxGetBitmapFromMemory(open));
-	exitMenu->SetBitmap(wxGetBitmapFromMemory(exit));
-	
 	menuFile = new wxMenu();
+
+	wxMenuItem *openMenu = new wxMenuItem(menuFile, wxID_OPEN, wxT("&Open\tAlt-O"), wxT("Open a Comic Book."));
+	wxMenuItem *exitMenu = new wxMenuItem(menuFile, wxID_EXIT, wxT("E&xit\tAlt-X"), wxT("Quit Comical."));
+
+	wxBitmap openIcon = wxArtProvider::GetBitmap(wxART_FILE_OPEN, wxART_MENU, wxDefaultSize);
+	wxBitmap exitIcon = wxArtProvider::GetBitmap(wxART_QUIT, wxART_MENU, wxDefaultSize);
+	openMenu->SetBitmap(openIcon);
+	exitMenu->SetBitmap(exitIcon);
+	
 	menuFile->Append(openMenu);
 	menuFile->Append(ID_OpenDir, wxT("Open &Directory"), wxT("Open a directory of images."));
 	menuFile->AppendSeparator();
 	menuFile->Append(exitMenu);
 
-	wxMenuItem *prevMenu = new wxMenuItem(NULL, ID_PrevSlide, wxT("Previous Page"), wxT("Display the previous page."));
-	wxMenuItem *nextMenu = new wxMenuItem(NULL, ID_NextSlide, wxT("Next Page"), wxT("Display the next page."));
-	wxMenuItem *prevTurnMenu = new wxMenuItem(NULL, ID_PrevTurn, wxT("&Previous Page Turn"), wxT("Display the previous two pages."));
-	wxMenuItem *nextTurnMenu = new wxMenuItem(NULL, ID_NextTurn, wxT("&Next Page Turn"), wxT("Display the next two pages."));
-	wxMenuItem *firstMenu = new wxMenuItem(NULL, ID_First, wxT("&First Page"), wxT("Display the first page."));
-	wxMenuItem *lastMenu = new wxMenuItem(NULL, ID_Last, wxT("&Last Page"), wxT("Display the last page."));
+	menuGo = new wxMenu();
+
+	wxMenuItem *prevMenu = new wxMenuItem(menuGo, ID_PrevSlide, wxT("Previous Page"), wxT("Display the previous page."));
+	wxMenuItem *nextMenu = new wxMenuItem(menuGo, ID_NextSlide, wxT("Next Page"), wxT("Display the next page."));
+	wxMenuItem *prevTurnMenu = new wxMenuItem(menuGo, ID_PrevTurn, wxT("&Previous Page Turn"), wxT("Display the previous two pages."));
+	wxMenuItem *nextTurnMenu = new wxMenuItem(menuGo, ID_NextTurn, wxT("&Next Page Turn"), wxT("Display the next two pages."));
+	wxMenuItem *firstMenu = new wxMenuItem(menuGo, ID_First, wxT("&First Page"), wxT("Display the first page."));
+	wxMenuItem *lastMenu = new wxMenuItem(menuGo, ID_Last, wxT("&Last Page"), wxT("Display the last page."));
 
 	prevMenu->SetBitmap(wxGetBitmapFromMemory(prev));
 	nextMenu->SetBitmap(wxGetBitmapFromMemory(next));
@@ -89,7 +106,6 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	firstMenu->SetBitmap(wxGetBitmapFromMemory(firstpage));
 	lastMenu->SetBitmap(wxGetBitmapFromMemory(lastpage));
 
-	menuGo = new wxMenu();
 	menuGo->Append(prevMenu);
 	menuGo->Append(nextMenu);
 	menuGo->AppendSeparator();
@@ -154,7 +170,7 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	menuFilter->AppendRadioItem(ID_Lanczos, wxT("Lanczos 3"), wxT("Use the Box filter."));
 	menuView->Append(ID_S, wxT("&Image Filter"), menuFilter);
 
-	wxMenuItem *fsMenu = new wxMenuItem(NULL, ID_Full, wxT("Full &Screen\tAlt-Return"), wxT("Display Full Screen."));
+	wxMenuItem *fsMenu = new wxMenuItem(menuView, ID_Full, wxT("Full &Screen\tAlt-Return"), wxT("Display Full Screen."));
 	fsMenu->SetBitmap(wxGetBitmapFromMemory(fullscreen));
 	
 	menuView->AppendSeparator();
@@ -329,81 +345,87 @@ void ComicalFrame::OpenFile(const wxString& filename)
 {
 	ComicBook *newBook;
 	
-	if (!filename.empty()) {
-		clearComicBook();
-		try {
-			if (filename.Right(4).Upper() == wxT(".CBR") || filename.Right(4).Upper() == wxT(".RAR"))
-				newBook = new ComicBookRAR(filename, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness);
-			else if (filename.Right(4).Upper() == wxT(".CBZ") || filename.Right(4).Upper() == wxT(".ZIP"))
-				newBook = new ComicBookZIP(filename, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness);
-			else {
-				wxLogError(wxT("Cannot open ") + filename);
-				wxLog::FlushActive();
-				return;
-			}
-			
-			if (newBook->GetPageCount() == 0) {
-				wxLogError(wxT("The archive \"") + filename + wxT("\" does not contain any pages."));
-				wxLog::FlushActive();
-				return;
-			}
-			setComicBook(newBook);
-			startBook();
-			SetTitle(wxT("Comical - " + filename));
-			config->Write(wxT("CWD"), wxPathOnly(filename));
-		} catch (ArchiveException &ae) {
-			clearComicBook();
-			wxLogError(ae.Message);
+	if (filename.empty())
+		return;
+		
+	clearComicBook();
+	try {
+		if (filename.Right(4).Upper() == wxT(".CBR") || filename.Right(4).Upper() == wxT(".RAR"))
+			newBook = new ComicBookRAR(filename, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness);
+		else if (filename.Right(4).Upper() == wxT(".CBZ") || filename.Right(4).Upper() == wxT(".ZIP"))
+			newBook = new ComicBookZIP(filename, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness);
+		else {
+			wxLogError(wxT("Cannot open ") + filename);
 			wxLog::FlushActive();
+			return;
 		}
+		
+		if (newBook->GetPageCount() == 0) {
+			wxLogError(wxT("The archive \"") + filename + wxT("\" does not contain any pages."));
+			wxLog::FlushActive();
+			return;
+		}
+		setComicBook(newBook);
+		startBook();
+		SetTitle(wxT("Comical - " + filename));
+		config->Write(wxT("CWD"), wxPathOnly(filename));
+	} catch (ArchiveException &ae) {
+		clearComicBook();
+		wxLogError(ae.Message);
+		wxLog::FlushActive();
 	}
 }
 
 void ComicalFrame::OpenDir(const wxString& directory)
 {
 	ComicBook *newBook;
-	if (!directory.empty()) {
-		clearComicBook();
-		try {
-			newBook = new ComicBookDir(directory, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness);
-			setComicBook(newBook);
-			startBook();
-			SetTitle(wxT("Comical - " + directory));
-			config->Write(wxT("CWD"), directory);
-		} catch (ArchiveException &ae) {
-			wxLogError(ae.Message);
-			wxLog::FlushActive();
-		}
+	
+	if (directory.empty())
+		return;
+		
+	clearComicBook();
+	try {
+		newBook = new ComicBookDir(directory, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness);
+		setComicBook(newBook);
+		startBook();
+		SetTitle(wxT("Comical - " + directory));
+		config->Write(wxT("CWD"), directory);
+	} catch (ArchiveException &ae) {
+		wxLogError(ae.Message);
+		wxLog::FlushActive();
 	}
 }
 
 void ComicalFrame::startBook()
 {
-	if (theBook) {
-		theCanvas->SetComicBook(theBook);
-		theBrowser->SetComicBook(theBook);
-		theBrowser->SetItemCount(theBook->GetPageCount());
+	if (!theBook)
+		return;
 
-		toolBarNav->Enable(true);
-	
-		theBook->Run(); // start the thread
-	
-		theCanvas->FirstPage();
-		theCanvas->Scroll(-1, 0); // scroll to the top for the first page
-	}
+	theCanvas->SetComicBook(theBook);
+	theBrowser->SetComicBook(theBook);
+	theBrowser->SetItemCount(theBook->GetPageCount());
+
+	toolBarNav->Enable(true);
+
+	theBook->Run(); // start the thread
+
+	theCanvas->FirstPage();
+	theCanvas->Scroll(-1, 0); // scroll to the top for the first page
 }
 
 void ComicalFrame::OnGoTo(wxCommandEvent& event)
 {
 	wxString message ;
 	long pagenumber;
-	if (theBook != NULL) {
-		message = wxT("Enter a page number from 1 to ");
-		message += wxString::Format(wxT("%d"), theBook->GetPageCount());
-		pagenumber = wxGetNumberFromUser(message, wxT("Page"), wxT("Go To Page"), theBook->GetCurrentPage() + 1, 1, theBook->GetPageCount(), this);
-		if (pagenumber != -1)
-			theCanvas->GoToPage(pagenumber - 1);
-	}
+	
+	if (!theBook)
+		return;
+		
+	message = wxT("Enter a page number from 1 to ");
+	message += wxString::Format(wxT("%d"), theBook->GetPageCount());
+	pagenumber = wxGetNumberFromUser(message, wxT("Page"), wxT("Go To Page"), theBook->GetCurrentPage() + 1, 1, theBook->GetPageCount(), this);
+	if (pagenumber != -1)
+		theCanvas->GoToPage(pagenumber - 1);
 
 }
 
@@ -411,12 +433,14 @@ void ComicalFrame::OnBuffer(wxCommandEvent& event)
 {
 	wxString message;
 	long buffer;
-	if (theBook != NULL) {
-		message = wxT("Set the number of pages you would like Comical to prefetch.");
-		buffer = wxGetNumberFromUser(message, wxT("Buffer Length"), wxT("Set Buffer Length"), theBook->GetCacheLen(), 3, 20, this);
-		if (buffer != -1)
-			theBook->SetCacheLen(buffer);
-	}
+	
+	if (!theBook)
+		return;
+		
+	message = wxT("Set the number of pages you would like Comical to prefetch.");
+	buffer = wxGetNumberFromUser(message, wxT("Buffer Length"), wxT("Set Buffer Length"), theBook->GetCacheLen(), 3, 20, this);
+	if (buffer != -1)
+		theBook->SetCacheLen(buffer);
 }
 
 void ComicalFrame::OnFull(wxCommandEvent& event)
@@ -610,7 +634,7 @@ void ComicalFrame::OnPageShown(wxCommandEvent& event)
 		menuView->Enable(ID_RotateLeft, false);
 		menuView->Enable(ID_RotateRight, false);
 		menuView->Enable(ID_Rotate, true);
-		menuRotate->FindItemByPosition(theBook->Orientations[theBook->GetCurrentPage()])->Check();
+		menuRotate->FindItemByPosition(theBook->GetPageOrientation(theBook->GetCurrentPage()))->Check();
 		toolBarNav->EnableTool(ID_CCWL, false);
 		toolBarNav->EnableTool(ID_CWL, false);
 		toolBarNav->EnableTool(ID_CCW, true);
@@ -623,7 +647,7 @@ void ComicalFrame::OnPageShown(wxCommandEvent& event)
 
 		if (theCanvas->IsRightPageOk()) {
 			menuView->Enable(ID_RotateRight, true);
-			menuRotateRight->FindItemByPosition(theBook->Orientations[rightNum])->Check();
+			menuRotateRight->FindItemByPosition(theBook->GetPageOrientation(rightNum))->Check();
 			toolBarNav->EnableTool(ID_CCW, true);
 			toolBarNav->EnableTool(ID_CW, true);
 			if (direction == COMICAL_LTR)
@@ -642,7 +666,7 @@ void ComicalFrame::OnPageShown(wxCommandEvent& event)
 	
 		if (theCanvas->IsLeftPageOk()) {
 			menuView->Enable(ID_RotateLeft, true);
-			menuRotateLeft->FindItemByPosition(theBook->Orientations[leftNum])->Check();
+			menuRotateLeft->FindItemByPosition(theBook->GetPageOrientation(leftNum))->Check();
 			toolBarNav->EnableTool(ID_CCWL, true);
 			toolBarNav->EnableTool(ID_CWL, true);
 			

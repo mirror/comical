@@ -44,6 +44,7 @@ ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, 
 	struct RAROpenArchiveDataEx flags;
 	wxString path, new_password;
 	ComicPage *page;
+	wxInputStream *stream;
 	
 	open_rar:
 	
@@ -68,12 +69,18 @@ ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, 
 #else
 		path = wxString(header.FileName);
 #endif
-		page = new ComicPage(this, path);
-		if (page->ExtractDimensions())
+		page = new ComicPage(path);
+		stream = ExtractStream(path);
+		if (page->ExtractDimensions(stream))
 			Pages->Add(page);
 		else
 			delete page;
-		
+		// Memory Input Streams don't take ownership of the buffer
+		wxMemoryInputStream *mstream = dynamic_cast<wxMemoryInputStream*>(stream);
+		if (mstream)
+			delete[] (wxUint8 *) mstream->GetInputStreamBuffer()->GetBufferStart();
+		wxDELETE(stream);
+
 		if ((PFCode = RARProcessFile(rarFile, RAR_SKIP, NULL, NULL)) != 0) {
 			closeRar(rarFile, &flags);
 			throw ArchiveException(filename, ProcessFileError(PFCode, path));

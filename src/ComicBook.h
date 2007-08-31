@@ -44,7 +44,6 @@
 #include "Resize.h"
 #include "enums.h"
 
-class ComicBook; // forward declaration, mutually dependent classes
 #include "ComicPage.h"
 
 class ComicBook : public wxThread {
@@ -58,7 +57,7 @@ public:
 	virtual void * Entry();
 
 	void RotatePage(wxUint32 pagenumber, COMICAL_ROTATE direction);
-	wxUint32 GetPageCount() { return pageCount; }
+	wxUint32 GetPageCount() { return Pages->GetCount(); }
 	bool SetZoom(COMICAL_ZOOM zoom);
 	bool SetZoomLevel(long zoomLevel);
 	bool SetFitOnlyOversize(bool fitOnlyOversize);
@@ -73,6 +72,7 @@ public:
 	wxBitmap *GetPageLeftHalf(wxUint32 pagenumber);
 	wxBitmap *GetPageRightHalf(wxUint32 pagenumber);
 	wxBitmap *GetThumbnail(wxUint32 pagenumber);
+	COMICAL_ROTATE GetPageOrientation(wxUint32 pagenumber);
 	bool IsPageLandscape(wxUint32 pagenumber);
 	bool IsPageReady(wxUint32 pagenumber);
 	bool IsThumbReady(wxUint32 pagenumber);
@@ -129,8 +129,6 @@ private:
 
 	wxEvtHandler *evtHandler;
 
-	wxUint32 pageCount;
-	
 	/* Used to prefetch nearby pages and discard distant pages. 
 	 * when mode = TWOPAGE, currentPage is the pagenumber of the page on the left.
 	 * when mode = ONEPAGE, currentPage is the pagenumber of the displayed page. */

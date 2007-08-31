@@ -1,5 +1,5 @@
 INCLUDE = -I../unrar -I../unzip
-CFLAGS = -O2 -Wall -pipe
+CFLAGS = -O2 -Wundef -Wno-ctor-dtor-privacy -fno-strict-aliasing -pipe
 CPPFLAGS = `wx-config --cxxflags` $(CFLAGS) -D_UNIX $(INCLUDE)
 
 .SUFFIXES: .cpp .png .h .d .o

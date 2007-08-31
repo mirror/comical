@@ -42,6 +42,7 @@ ComicBookZIP::ComicBookZIP(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, 
 	ZipFile = unzOpen(filename.ToAscii());
 	fileInfo = (unz_file_info*) malloc(sizeof(unz_file_info_s));
 	ComicPage *page;
+	wxInputStream *stream;
 
 	if (ZipFile) {
 		if ((retcode = unzGoToFirstFile(ZipFile)) != UNZ_OK) {
@@ -55,11 +56,17 @@ ComicBookZIP::ComicBookZIP(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, 
 	do {
 		unzGetCurrentFileInfo(ZipFile, fileInfo, namebuf, 1024, NULL, 0, NULL, 0);
 		path = wxString::FromAscii(namebuf);
-		page = new ComicPage(this, path);
-		if (page->ExtractDimensions())
+		page = new ComicPage(path);
+		stream = ExtractStream(path);
+		if (page->ExtractDimensions(stream))
 			Pages->Add(page);
 		else
 			delete page;
+		// Memory Input Streams don't take ownership of the buffer
+		wxMemoryInputStream *mstream = dynamic_cast<wxMemoryInputStream*>(stream);
+		if (mstream)
+			delete[] (wxUint8 *) mstream->GetInputStreamBuffer()->GetBufferStart();
+		wxDELETE(stream);
 	} while (unzGoToNextFile(ZipFile) == UNZ_OK);
 
 	free(fileInfo);

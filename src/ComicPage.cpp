@@ -17,30 +17,24 @@
 
 WX_DEFINE_OBJARRAY(ArrayPage);
 
-ComicPage::ComicPage(ComicBook *theBook, wxString &filename) : Filename(filename)
+ComicPage::ComicPage(wxString &filename) : Filename(filename), Width(0), Height(0), orientation(NORTH)
 {
-	book = theBook;
-	Orientation = NORTH;
-	Width = 0;
-	Height = 0;
+	OriginalLock = new wxMutex();
+	ResampleLock = new wxMutex();
+	ThumbnailLock = new wxMutex();
 }
 
 ComicPage::~ComicPage()
 {
-	if (Original.Ok())
-		Original.Destroy();
-	if (Resample.Ok())
-		Resample.Destroy();
-	if (Thumbnail.Ok())
-		Thumbnail.Destroy();
+	DestroyAll();
 }
 
 void ComicPage::Rotate(COMICAL_ROTATE direction)
 {
-	if (Orientation != direction) {
-		wxMutexLocker rlock(ResampleLock);
-		wxMutexLocker tlock(ThumbnailLock);
-		Orientation = direction;
+	if (orientation != direction) {
+		wxMutexLocker rlock(*ResampleLock);
+		wxMutexLocker tlock(*ThumbnailLock);
+		orientation = direction;
 		Resample.Destroy();
 		Thumbnail.Destroy();
 	}
@@ -49,7 +43,7 @@ void ComicPage::Rotate(COMICAL_ROTATE direction)
 #define STREAM_READ(stream, buffer, length) if(!(stream->Read(buffer, length).LastRead())) goto error;
 #define STREAM_SEEK(stream, pos, mode) if(stream->SeekI(pos, mode) == wxInvalidOffset) goto error;
 
-bool ComicPage::ExtractDimensions()
+bool ComicPage::ExtractDimensions(wxInputStream *stream)
 {
 	wxUint8 buffer[8];
 	wxUint8 jpegHeader[] = { 0xFF, 0xD8 };
@@ -60,16 +54,10 @@ bool ComicPage::ExtractDimensions()
 	wxUint8 pngHeader[] = { '\211', 'P', 'N', 'G', '\r', '\n', '\032', '\n' };
 	wxUint16 width16, height16, length;
 
-	wxInputStream *stream;
-	try {
-		stream = book->ExtractStream(Filename);
-	} catch (ArchiveException *ae) {
-		return false;
-	}
 	if (!stream->IsOk() || !stream->CanRead())
 		goto error;
 	if(Filename.Right(5).Upper() == wxT(".JPEG") || Filename.Right(4).Upper() == wxT(".JPG")) {
-		char c;
+		unsigned char c;
 		STREAM_READ(stream, buffer, 2)
 		if (memcmp(buffer, jpegHeader, 2))
 			goto error;
@@ -81,7 +69,7 @@ bool ComicPage::ExtractDimensions()
 			while ((c = stream->GetC()) == 0xFF)
 				if (!stream->LastRead()) goto error;
 			
-			if (c >= 0xC0 || c <= 0xCF)
+			if (c >= 0xC0 && c <= 0xCF)
 				break;
 			
 			// Skip this marker
@@ -189,19 +177,91 @@ bool ComicPage::ExtractDimensions()
 			goto error;
 	} else {
 		error:
-		// Memory Input Streams don't take ownership of the buffer
-		wxMemoryInputStream *mstream = dynamic_cast<wxMemoryInputStream*>(stream);
-		if (mstream)
-			delete[] (wxUint8 *) mstream->GetInputStreamBuffer()->GetBufferStart();
-		wxDELETE(stream);
 		return false;
 	}
-
-	// Memory Input Streams don't take ownership of the buffer
-	wxMemoryInputStream *mstream = dynamic_cast<wxMemoryInputStream*>(stream);
-	if (mstream)
-		delete[] (wxUint8 *) mstream->GetInputStreamBuffer()->GetBufferStart();
-	wxDELETE(stream);
 	return true;
 	
+}
+
+void ComicPage::DestroyAll()
+{
+	DestroyOriginal();
+	DestroyResample();
+	DestroyThumbnail();
+}
+
+void ComicPage::DestroyOriginal()
+{
+	wxMutexLocker lock(*OriginalLock);
+	if (Original.Ok())
+		Original.Destroy();
+}
+
+void ComicPage::DestroyResample()
+{
+	wxMutexLocker lock(*ResampleLock);
+	if (Resample.Ok())
+		Resample.Destroy();
+}
+
+void ComicPage::DestroyThumbnail()
+{
+	wxMutexLocker lock(*ThumbnailLock);
+	if (Thumbnail.Ok())
+		Thumbnail.Destroy();
+}
+
+wxBitmap * ComicPage::GetPage()
+{
+	wxMutexLocker lock(*ResampleLock);
+	if (Resample.Ok())
+		return NULL;
+	return new wxBitmap(Resample);
+}
+
+wxBitmap * ComicPage::GetPageLeftHalf()
+{
+	wxMutexLocker lock(*ResampleLock);
+	if (!Resample.Ok())
+		return NULL;
+	wxInt32 rWidth = Resample.GetWidth();
+	wxInt32 rHeight = Resample.GetHeight();
+	return new wxBitmap(Resample.GetSubImage(wxRect(0, 0, rWidth / 2, rHeight)));
+}
+
+wxBitmap * ComicPage::GetPageRightHalf()
+{
+	wxMutexLocker lock(*ResampleLock);
+	if (!Resample.Ok())
+		return NULL;
+	wxInt32 rWidth = Resample.GetWidth();
+	wxInt32 rHeight = Resample.GetHeight();
+	wxInt32 offset = rWidth / 2;
+	wxInt32 remainder = rWidth % 2;
+	return new wxBitmap(Resample.GetSubImage(wxRect(offset, 0, offset + remainder, rHeight)));
+}
+
+wxBitmap * ComicPage::GetThumbnail()
+{
+	wxMutexLocker lock(*ThumbnailLock);
+	if (!Thumbnail.Ok())
+		return NULL;
+	return new wxBitmap(Thumbnail);
+}
+
+bool ComicPage::IsLandscape()
+{
+	float rWidth, rHeight;
+	if (orientation == NORTH || orientation == SOUTH) {
+		rWidth = Width;
+		rHeight = Height;
+	} else {
+		rHeight = Width;
+		rWidth = Height;
+	}
+	
+	if ((rWidth / rHeight) > 1.0f)
+		return true;
+	else
+		return false;
 }

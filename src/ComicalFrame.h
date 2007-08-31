@@ -39,19 +39,6 @@
 #include "ComicalCanvas.h"
 #include "ComicBook.h"
 
-// and the icons
-#include "firstpage.h"
-#include "prevpage.h"
-#include "prev.h"
-#include "next.h"
-#include "nextpage.h"
-#include "lastpage.h"
-#include "rot_cw.h"
-#include "rot_ccw.h"
-#include "open.h"
-#include "fullscreen.h"
-#include "exit.h"
-
 class ComicalFrame : public wxFrame
 {
   public:
