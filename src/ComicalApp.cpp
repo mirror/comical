@@ -28,6 +28,7 @@
 #include "ComicalApp.h"
 #include "ComicalFrame.h"
 #include <wx/log.h>
+#include <wx/icon.h>
 
 #if !defined(__WXMAC__) && !defined(__WXCOCOA__) && !defined(__WXMSW__) && !defined(__WXPM__)
 #include "../Comical Icons/comical.xpm"
