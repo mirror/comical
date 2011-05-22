@@ -1,10 +1,7 @@
-/***************************************************************************
-              ComicalCanvas.cpp - ComicalCanvas implementation
-                             -------------------
-    begin                : Thu Dec 18 2003
-    copyright            : (C) 2003-2006 by James Athey
-    email                : jathey@comcast.net
- ***************************************************************************/
+/*
+ * ComicalCanvas.cpp
+ * Copyright (c) 2003-2011, James Athey
+ */
 
 /***************************************************************************
  *                                                                         *
@@ -54,9 +51,6 @@ ComicalCanvas::ComicalCanvas(wxWindow *prnt, const wxPoint &pos, const wxSize &s
 {
 	parent = prnt;
 	SetBackgroundColour(* wxBLACK);
-	leftPage = NULL;
-	rightPage = NULL;
-	centerPage = NULL;
 	theBook = NULL;
 	contextMenu = NULL;
 	contextRotate = NULL;
@@ -114,9 +108,9 @@ void ComicalCanvas::clearBitmaps()
 {
 	wxMutexLocker lock(paintingMutex);
 	// Get the current scroll positions before we clear the bitmaps
-	wxDELETE(leftPage);
-	wxDELETE(centerPage);
-	wxDELETE(rightPage);
+	leftPage = wxBitmap();
+	centerPage = wxBitmap();
+	rightPage = wxBitmap();
 }
 
 void ComicalCanvas::createBitmaps()
@@ -128,29 +122,29 @@ void ComicalCanvas::createBitmaps()
 	
 	if (mode == ONEPAGE || theBook->GetPageCount() == 1 || leftNum == rightNum) {
 		if (mode == ONEPAGE || theBook->GetPageCount() == 1) {
-			if (centerPage && centerPage->Ok()) {
-				xScroll = centerPage->GetWidth();
-				yScroll = centerPage->GetHeight();
+			if (centerPage.Ok()) {
+				xScroll = centerPage.GetWidth();
+				yScroll = centerPage.GetHeight();
 			}
 		} else {
-			if (rightPage && rightPage->Ok()) {
-				xScroll = rightPage->GetWidth();
-				yScroll = rightPage->GetHeight();
+			if (rightPage.Ok()) {
+				xScroll = rightPage.GetWidth();
+				yScroll = rightPage.GetHeight();
 			}
-			if (leftPage && leftPage->Ok()) {
-				xScroll += leftPage->GetWidth();
-				yScroll = (leftPage->GetHeight() > yScroll) ? leftPage->GetHeight() : yScroll;
+			if (leftPage.Ok()) {
+				xScroll += leftPage.GetWidth();
+				yScroll = (leftPage.GetHeight() > yScroll) ? leftPage.GetHeight() : yScroll;
 			}
 		}
 	} else {
-		if (rightPage && (rightOk = rightPage->Ok())) {
-			xScroll = rightPage->GetWidth();
-			yScroll = rightPage->GetHeight();
+		if ((rightOk = rightPage.Ok())) {
+			xScroll = rightPage.GetWidth();
+			yScroll = rightPage.GetHeight();
 		}
 			
-		if (leftPage && (leftOk = leftPage->Ok())) {
-			xScroll += leftPage->GetWidth();
-			yScroll = (leftPage->GetHeight() > yScroll) ? leftPage->GetHeight() : yScroll;
+		if ((leftOk = leftPage.Ok())) {
+			xScroll += leftPage.GetWidth();
+			yScroll = (leftPage.GetHeight() > yScroll) ? leftPage.GetHeight() : yScroll;
 		}
 	}
 
@@ -708,8 +702,8 @@ void ComicalCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 	GetVirtualSize(&xCanvas, &yCanvas);
 	
 	if (mode == ONEPAGE) {
-		if (centerPage && centerPage->Ok())
-			dc.DrawBitmap(*centerPage, xCanvas/2 - centerPage->GetWidth()/2, 0, false);
+		if (centerPage.Ok())
+			dc.DrawBitmap(centerPage, xCanvas/2 - centerPage.GetWidth()/2, 0, false);
 		else if (theBook) {
 			text = wxString::Format(wxT("Page %d loading..."), theBook->GetCurrentPage() + 1);
 			dc.GetTextExtent(text, &textWidth, &textHeight);
@@ -722,7 +716,7 @@ void ComicalCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 			dc.DrawText(text, textX, textY);
 		}
 	} else { // mode == TWOPAGE
-		wxBitmap *trueLeftPage, *trueRightPage;
+		wxBitmap trueLeftPage, trueRightPage;
 		wxUint32 trueLeftNum, trueRightNum;
 		if (direction == COMICAL_LTR) {
 			trueLeftPage = leftPage;
@@ -735,8 +729,8 @@ void ComicalCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 			trueRightPage = leftPage;
 			trueRightNum = leftNum;
 		}
-		if (trueLeftPage && trueLeftPage->Ok())
-			dc.DrawBitmap(*trueLeftPage, xCanvas/2 - trueLeftPage->GetWidth(), 0, false);
+		if (trueLeftPage.Ok())
+			dc.DrawBitmap(trueLeftPage, xCanvas/2 - trueLeftPage.GetWidth(), 0, false);
 		else if (theBook) {
 			text = wxString::Format(wxT("Page %d loading..."), trueLeftNum + 1);
 			dc.GetTextExtent(text, &textWidth, &textHeight);
@@ -749,8 +743,8 @@ void ComicalCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 			dc.DrawText(text, textX, textY);
 		}
 		
-		if (trueRightPage && trueRightPage->Ok())
-			dc.DrawBitmap(*trueRightPage, xCanvas/2, 0, false);
+		if (trueRightPage.Ok())
+			dc.DrawBitmap(trueRightPage, xCanvas/2, 0, false);
 		else if (theBook) {
 			text = wxString::Format(wxT("Page %d loading..."), trueRightNum + 1);
 			dc.GetTextExtent(text, &textWidth, &textHeight);
@@ -1072,24 +1066,15 @@ void ComicalCanvas::ClearCanvas()
 
 bool ComicalCanvas::IsLeftPageOk()
 {
-	if (leftPage && leftPage->Ok())
-		return true;
-	else
-		return false;
+	return leftPage.Ok();
 }
 
 bool ComicalCanvas::IsRightPageOk()
 {
-	if (rightPage && rightPage->Ok())
-		return true;
-	else
-		return false;
+	return rightPage.Ok();
 }
 
 bool ComicalCanvas::IsCenterPageOk()
 {
-	if (centerPage && centerPage->Ok())
-		return true;
-	else
-		return false;
+	return centerPage.Ok();
 }

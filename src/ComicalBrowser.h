@@ -1,10 +1,7 @@
-/***************************************************************************
-      ComicalBrowser.h - ComicalBrowser class and supporting declarations
-                             -------------------
-    begin                : Tue Nov 22 2005
-    copyright            : (C) 2005-2006 James Athey
-    email                : jathey@comcast.net
- ***************************************************************************/
+/*
+ * ComicalBrowser.h
+ * Copyright (c) 2005-2011 James Athey
+ */
 
 /***************************************************************************
  *                                                                         *

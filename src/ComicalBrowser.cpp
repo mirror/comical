@@ -1,10 +1,7 @@
-/***************************************************************************
-              ComicalBrowser.cpp - ComicalBrowser implementation
-                             -------------------
-    begin                : Tue Nov 22 2005
-    copyright            : (C) 2005-2006 James Athey
-    email                : jathey@comcast.net
- ***************************************************************************/
+/*
+ * ComicalApp.cpp
+ * Copyright (c) 2005-2011, James Athey
+ */
 
 /***************************************************************************
  *                                                                         *
@@ -52,14 +49,11 @@ wxCoord ComicalBrowser::OnMeasureItem(size_t n) const
 void ComicalBrowser::OnDrawItem(wxDC& dc, const wxRect& rect, size_t n) const
 {
 	if (theBook) {
-		wxBitmap *thumbnail = theBook->GetThumbnail(n);
-		if (thumbnail) {
-			wxUint32 xPos = (rect.width / 2) - (thumbnail->GetWidth() / 2) + rect.x;
-			if (xPos < 0)
-				xPos = 0;
-			dc.DrawBitmap(*thumbnail, xPos, rect.y, false);
-			delete thumbnail;
-		}
+		wxBitmap thumbnail = theBook->GetThumbnail(n);
+		wxUint32 xPos = (rect.width / 2) - (thumbnail.GetWidth() / 2) + rect.x;
+		if (xPos < 0)
+			xPos = 0;
+		dc.DrawBitmap(thumbnail, xPos, rect.y, false);
 	}
 }
 

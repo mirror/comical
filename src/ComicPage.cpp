@@ -1,28 +1,48 @@
-//
-// C++ Implementation: ComicPage
-//
-// Description: 
-//
-//
-// Author: James Leighton Athey <jathey@comcast.net>, (C) 2006
-//
-// Copyright: See COPYING file that comes with this distribution
-//
-//
+/*
+ * ComicPage.cpp
+ * Copyright (c) 2006-2011, James Athey
+ */
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   In addition, as a special exception, the author gives permission to   *
+ *   link the code of his release of Comical with Rarlabs' "unrar"         *
+ *   library (or with modified versions of it that use the same license    *
+ *   as the "unrar" library), and distribute the linked executables. You   *
+ *   must obey the GNU General Public License in all respects for all of   *
+ *   the code used other than "unrar". If you modify this file, you may    *
+ *   extend this exception to your version of the file, but you are not    *
+ *   obligated to do so. If you do not wish to do so, delete this          *
+ *   exception statement from your version.                                *
+ *                                                                         *
+ ***************************************************************************/
 
 #include <cstring>
 #include "ComicPage.h"
 #include <wx/arrimpl.cpp> // this is a magic incantation which must be done!
 #include "Exceptions.h"
+#include "JpegWxInputStreamSrc.h"
+#include <setjmp.h>
 
-WX_DEFINE_OBJARRAY(ArrayPage);
-
-ComicPage::ComicPage(wxString &filename) : Filename(filename), Width(0), Height(0), orientation(NORTH)
+ComicPage::ComicPage(wxString &filename, wxInputStream *headerStream):
+Filename(filename),
+m_uiWidth(0),
+m_uiHeight(0),
+orientation(NORTH),
+m_bitmapType(wxBITMAP_TYPE_INVALID),
+m_bitmapLeft(NULL),
+m_bitmapRight(NULL),
+m_bitmapFull(NULL),
+m_bitmapThumb(NULL)
 {
-	OriginalLock = new wxMutex();
-	ResampleLock = new wxMutex();
-	ThumbnailLock = new wxMutex();
+	extractDimensions(headerStream);
 }
+
 
 ComicPage::~ComicPage()
 {
@@ -32,156 +52,198 @@ ComicPage::~ComicPage()
 void ComicPage::Rotate(COMICAL_ROTATE direction)
 {
 	if (orientation != direction) {
-		wxMutexLocker rlock(*ResampleLock);
-		wxMutexLocker tlock(*ThumbnailLock);
+		wxMutexLocker rlock(ResampleLock);
+		wxMutexLocker tlock(ThumbnailLock);
 		orientation = direction;
 		Resample.Destroy();
 		Thumbnail.Destroy();
 	}
 }
 
-#define STREAM_READ(stream, buffer, length) if(!(stream->Read(buffer, length).LastRead())) goto error;
-#define STREAM_SEEK(stream, pos, mode) if(stream->SeekI(pos, mode) == wxInvalidOffset) goto error;
+#define STREAM_READ(stream, buffer, length) if(!(stream->Read(buffer, length).LastRead())) return
+#define STREAM_SEEK(stream, pos, mode) if(stream->SeekI(pos, mode) == wxInvalidOffset) return
 
-bool ComicPage::ExtractDimensions(wxInputStream *stream)
+#define TIFF_IMAGE_LENGTH 257
+#define TIFF_IMAGE_WIDTH 256
+
+enum TIFF_TAG_DATATYPE
 {
-	wxUint8 buffer[8];
-	wxUint8 jpegHeader[] = { 0xFF, 0xD8 };
-	wxUint8 tiffBigHeader[] = { 0x4d, 0x4d, 0x00, 0x2a };
-	wxUint8 tiffLittleHeader[] = { 0x49, 0x49, 0x2a, 0x00 };
-	wxUint8 gif87Header[] = { 'G', 'I', 'F', '8', '7', 'a' };
-	wxUint8 gif89Header[] = { 'G', 'I', 'F', '8', '9', 'a' };
-	wxUint8 pngHeader[] = { '\211', 'P', 'N', 'G', '\r', '\n', '\032', '\n' };
-	wxUint16 width16, height16, length;
+	TIFF_TAG_DATATYPE_BYTE = 1,
+	TIFF_TAG_DATATYPE_ASCII,
+	TIFF_TAG_DATATYPE_SHORT,
+	TIFF_TAG_DATATYPE_LONG,
+	TIFF_TAG_DATATYPE_RATIONAL,
+};
 
-	if (!stream->IsOk() || !stream->CanRead())
-		goto error;
-	if(Filename.Right(5).Upper() == wxT(".JPEG") || Filename.Right(4).Upper() == wxT(".JPG")) {
-		unsigned char c;
-		STREAM_READ(stream, buffer, 2)
-		if (memcmp(buffer, jpegHeader, 2))
-			goto error;
-		while (1) {
-			// Find 0xFF byte; count and skip any non-FFs.
-			while ((c = stream->GetC()) != 0xFF)
-				if (!stream->LastRead()) goto error;
-			// Get marker code byte, swallowing any duplicate FF bytes.
-			while ((c = stream->GetC()) == 0xFF)
-				if (!stream->LastRead()) goto error;
-			
-			if (c >= 0xC0 && c <= 0xCF)
-				break;
-			
-			// Skip this marker
-			STREAM_READ(stream, &length, 2)
-			STREAM_SEEK(stream, wxUINT16_SWAP_ON_LE(length) - 2, wxFromCurrent)
-		}
-		STREAM_SEEK(stream, 3, wxFromCurrent)
-		STREAM_READ(stream, &height16, 2)
-		STREAM_READ(stream, &width16, 2)
-		Width = wxUINT16_SWAP_ON_LE(width16);
-		Height = wxUINT16_SWAP_ON_LE(height16);
-	} else if (Filename.Right(4).Upper() == wxT(".GIF")) {
-		STREAM_READ(stream, buffer, 6)
-		if (!memcmp(buffer, gif87Header, 6) || !memcmp(buffer, gif89Header, 6))
-			goto error;
-		STREAM_READ(stream, &width16, 2)
-		STREAM_READ(stream, &height16, 2)
-		Width = wxUINT16_SWAP_ON_BE(width16);
-		Height = wxUINT16_SWAP_ON_BE(height16);
-	} else if (Filename.Right(4).Upper() == wxT(".PNG")) {
-		STREAM_READ(stream, buffer, 8)
-		if (memcmp(buffer, pngHeader, 8))
-			goto error;
-		STREAM_SEEK(stream, 8, wxFromCurrent)
-		STREAM_READ(stream, &Width, 4)
-		STREAM_READ(stream, &Height, 4)
-		Width = wxUINT32_SWAP_ON_LE(Width);
-		Height = wxUINT32_SWAP_ON_LE(Height);
-	} else if (Filename.Right(5).Upper() == wxT(".TIFF") || Filename.Right(4).Upper() == wxT(".TIF")) {
-		wxUint16 count, tag, type;
-		wxUint32 offset;
-		STREAM_READ(stream, buffer, 4)
-		// Since TIFF supports both byte orders, there's alot of code duplication below.
-		if (!memcmp(buffer, tiffBigHeader, 4)) { // Big Endian TIFF
-			STREAM_READ(stream, &offset, 4)
-			offset = wxUINT32_SWAP_ON_LE(offset);
-			STREAM_SEEK(stream, offset, wxFromStart)
-			STREAM_READ(stream, &count, 2)
-			count = wxUINT16_SWAP_ON_LE(count);
-			for (wxUint16 i = 0; i < count; i++) {
-				STREAM_READ(stream, &tag, 2)
-				tag = wxUINT16_SWAP_ON_LE(tag);
-				if (tag == 256) { // ImageWidth
-					STREAM_READ(stream, &type, 2)
-					type = wxUINT16_SWAP_ON_LE(type);
-					STREAM_SEEK(stream, 4, wxFromCurrent) // there's only going to be 1 of these
-					if (type == 3) { // SHORT
-						STREAM_READ(stream, &width16, 2)
-						Width = wxUINT16_SWAP_ON_LE(width16);
-					} else if (type == 4) { // LONG
-						STREAM_READ(stream, &Width, 4)
-						Width = wxUINT32_SWAP_ON_LE(Width);
-					}
-				} else if (tag == 257) { // ImageHeight
-					STREAM_READ(stream, &type, 2)
-					type = wxUINT16_SWAP_ON_LE(type);
-					STREAM_SEEK(stream, 4, wxFromCurrent) // there's only going to be 1 of these
-					if (type == 3) { // SHORT
-						STREAM_READ(stream, &height16, 2)
-						Height = wxUINT16_SWAP_ON_LE(height16);
-					} else if (type == 4) { // LONG
-						STREAM_READ(stream, &Height, 4)
-						Height = wxUINT32_SWAP_ON_LE(Height);
-					}
-				}
-				if (Width && Height) // i.e., if Width and Height have both been set
-					break;
-			}
-		} else if (!memcmp(buffer, tiffLittleHeader, 4)) { // Little Endian TIFF
-			STREAM_READ(stream, &offset, 4)
-			offset = wxUINT32_SWAP_ON_BE(offset);
-			STREAM_SEEK(stream, offset, wxFromStart)
-			STREAM_READ(stream, &count, 2)
-			count = wxUINT16_SWAP_ON_LE(count);
-			for (wxUint16 i = 0; i < count; i++) {
-				STREAM_READ(stream, &tag, 2)
-				tag = wxUINT16_SWAP_ON_BE(tag);
-				if (tag == 256) { // ImageWidth
-					STREAM_READ(stream, &type, 2)
-					type = wxUINT16_SWAP_ON_BE(type);
-					STREAM_SEEK(stream, 4, wxFromCurrent) // there's only going to be 1 of these
-					if (type == 3) { // SHORT
-						STREAM_READ(stream, &width16, 2)
-						Width = wxUINT16_SWAP_ON_BE(width16);
-					} else if (type == 4) { // LONG
-						STREAM_READ(stream, &Width, 4)
-						Width = wxUINT32_SWAP_ON_BE(Width);
-					}
-				} else if (tag == 257) { // ImageHeight
-					STREAM_READ(stream, &type, 2)
-					type = wxUINT16_SWAP_ON_LE(type);
-					STREAM_SEEK(stream, 4, wxFromCurrent) // there's only going to be 1 of these
-					if (type == 3) { // SHORT
-						STREAM_READ(stream, &height16, 2)
-						Height = wxUINT16_SWAP_ON_BE(height16);
-					} else if (type == 4) { // LONG
-						STREAM_READ(stream, &Height, 4)
-						Height = wxUINT32_SWAP_ON_BE(Height);
-					}
-				}
-				if (Width && Height) // i.e., if Width and Height have both been set
-					break;
-			}
-		} else
-			goto error;
-	} else {
-		error:
-		return false;
-	}
-	return true;
-	
+
+struct my_error_mgr : public jpeg_error_mgr
+{
+	jmp_buf setjmp_buf;
+};
+
+/*
+ * A replacement for the jpeg library's default error_exit callback to keep
+ * the program from exiting on a jpeg decode error.
+ */
+METHODDEF(void) my_error_exit (j_common_ptr cinfo)
+{
+	/* Return control to the setjmp point */
+	longjmp(((struct my_error_mgr*)cinfo->err)->setjmp_buf, 1);
 }
+
+
+void ComicPage::extractDimensions(wxInputStream *stream)
+{
+	const wxUint8 jpegHeader[] = { 0xFF, 0xD8 };
+	const wxUint8 tiffBigHeader[] = { 0x4d, 0x4d, 0x00, 0x2a };
+	const wxUint8 tiffLittleHeader[] = { 0x49, 0x49, 0x2a, 0x00 };
+	const wxUint8 gif87Header[] = { 'G', 'I', 'F', '8', '7', 'a' };
+	const wxUint8 gif89Header[] = { 'G', 'I', 'F', '8', '9', 'a' };
+	const wxUint8 pngHeader[] = { '\211', 'P', 'N', 'G', '\r', '\n', '\032', '\n' };
+
+	wxUint16 width16, height16;
+	wxUint16 count, tag, type;
+	wxUint32 offset;
+
+	wxUint8 header[8];
+
+	if (!stream->IsOk())
+		return;
+
+	// try and determine the filetype not from the filename, but
+	// from the file's header
+	STREAM_READ(stream, header, sizeof(pngHeader)); // pngHeader is the longest
+
+	if (memcmp(header, jpegHeader, sizeof(jpegHeader)) == 0) {
+		// JPEG file
+
+		struct jpeg_decompress_struct cinfo;
+		struct my_error_mgr jerr;
+
+		// rewind to BEFORE the header, so jpeglib does not get confused
+		stream->Ungetch(header, sizeof(pngHeader));
+
+		jpeg_create_decompress(&cinfo);
+		cinfo.err = jpeg_std_error((jpeg_error_mgr*)&jerr);
+		cinfo.err->error_exit = my_error_exit;
+
+		if (setjmp(jerr.setjmp_buf)) {
+			// TODO show error message
+			jpeg_destroy_decompress(&cinfo);
+			return;
+		}
+
+		jpeg_wx_input_stream_src(&cinfo, stream);
+		jpeg_read_header(&cinfo, TRUE);
+		jpeg_calc_output_dimensions(&cinfo);
+		m_uiWidth = cinfo.output_width;
+		m_uiHeight = cinfo.output_height;
+
+		jpeg_destroy_decompress(&cinfo);
+
+		m_bitmapType = wxBITMAP_TYPE_JPEG;
+
+	} else if (memcmp(header, gif87Header, sizeof(gif87Header)) == 0 || memcmp(header, gif89Header, sizeof(gif89Header)) == 0) {
+		// GIF file
+
+		// The width has already been read
+		memcpy(&width16, header+sizeof(gif87Header), sizeof(width16));
+		STREAM_READ(stream, &height16, sizeof(height16));
+		m_uiWidth = wxUINT16_SWAP_ON_BE(width16);
+		m_uiHeight = wxUINT16_SWAP_ON_BE(height16);
+
+		m_bitmapType = wxBITMAP_TYPE_GIF;
+	} else if (memcmp(header, pngHeader, sizeof(pngHeader)) == 0) {
+		// PNG file
+		STREAM_SEEK(stream, 8, wxFromCurrent);
+		STREAM_READ(stream, &m_uiWidth, sizeof(m_uiWidth));
+		STREAM_READ(stream, &m_uiHeight, sizeof(m_uiHeight));
+		m_uiWidth = wxUINT32_SWAP_ON_LE(m_uiWidth);
+		m_uiHeight = wxUINT32_SWAP_ON_LE(m_uiHeight);
+
+		m_bitmapType = wxBITMAP_TYPE_PNG;
+	} else if (memcmp(header, tiffBigHeader, sizeof(tiffBigHeader)) == 0) {
+		// Big Endian TIFF
+		// Since TIFF supports both byte orders, there's a lot of code duplication below.
+
+		// The offset has already been read
+		memcpy(&offset, header+sizeof(tiffBigHeader), sizeof(offset));
+		offset = wxUINT32_SWAP_ON_LE(offset);
+		STREAM_SEEK(stream, offset, wxFromStart);
+		STREAM_READ(stream, &count, sizeof(count));
+		count = wxUINT16_SWAP_ON_LE(count);
+		for (wxUint16 i = 0; i < count; i++) {
+			STREAM_READ(stream, &tag, sizeof(tag));
+			tag = wxUINT16_SWAP_ON_LE(tag);
+			if (tag == TIFF_IMAGE_WIDTH) {
+				STREAM_READ(stream, &type, sizeof(type));
+				type = wxUINT16_SWAP_ON_LE(type);
+				STREAM_SEEK(stream, 4, wxFromCurrent); // there's only going to be 1 of these
+				if (type == 3) { // SHORT
+					STREAM_READ(stream, &width16, sizeof(width16));
+					m_uiWidth = wxUINT16_SWAP_ON_LE(width16);
+				} else if (type == 4) { // LONG
+					STREAM_READ(stream, &m_uiWidth, sizeof(m_uiWidth));
+					m_uiWidth = wxUINT32_SWAP_ON_LE(m_uiWidth);
+				}
+			} else if (tag == TIFF_IMAGE_LENGTH) {
+				STREAM_READ(stream, &type, sizeof(type));
+				type = wxUINT16_SWAP_ON_LE(type);
+				STREAM_SEEK(stream, 4, wxFromCurrent); // there's only going to be 1 of these
+				if (type == 3) { // SHORT
+					STREAM_READ(stream, &height16, sizeof(height16));
+					m_uiHeight = wxUINT16_SWAP_ON_LE(height16);
+				} else if (type == 4) { // LONG
+					STREAM_READ(stream, &m_uiHeight, sizeof(m_uiHeight));
+					m_uiHeight = wxUINT32_SWAP_ON_LE(m_uiHeight);
+				}
+			}
+			if (m_uiWidth && m_uiHeight) // i.e., if m_uiWidth and m_uiHeight have both been set
+				break;
+		}
+		m_bitmapType = wxBITMAP_TYPE_TIF;
+	} else if (memcmp(header, tiffLittleHeader, sizeof(tiffLittleHeader)) == 0) {
+		// Little Endian TIFF
+
+		// The offset has already been read
+		memcpy(&offset, header+sizeof(tiffLittleHeader), sizeof(offset));
+		offset = wxUINT32_SWAP_ON_BE(offset);
+		STREAM_SEEK(stream, offset, wxFromStart);
+		STREAM_READ(stream, &count, sizeof(count));
+		count = wxUINT16_SWAP_ON_LE(count);
+		for (wxUint16 i = 0; i < count; i++) {
+			STREAM_READ(stream, &tag, sizeof(tag));
+			tag = wxUINT16_SWAP_ON_BE(tag);
+			if (tag == TIFF_IMAGE_WIDTH) {
+				STREAM_READ(stream, &type, sizeof(type));
+				type = wxUINT16_SWAP_ON_BE(type);
+				STREAM_SEEK(stream, 4, wxFromCurrent); // there's only going to be 1 of these
+				if (type == 3) { // SHORT
+					STREAM_READ(stream, &width16, sizeof(width16));
+					m_uiWidth = wxUINT16_SWAP_ON_BE(width16);
+				} else if (type == 4) { // LONG
+					STREAM_READ(stream, &m_uiWidth, sizeof(m_uiWidth));
+					m_uiWidth = wxUINT32_SWAP_ON_BE(m_uiWidth);
+				}
+			} else if (tag == TIFF_IMAGE_LENGTH) {
+				STREAM_READ(stream, &type, sizeof(type));
+				type = wxUINT16_SWAP_ON_LE(type);
+				STREAM_SEEK(stream, 4, wxFromCurrent); // there's only going to be 1 of these
+				if (type == 3) { // SHORT
+					STREAM_READ(stream, &height16, sizeof(height16));
+					m_uiHeight = wxUINT16_SWAP_ON_BE(height16);
+				} else if (type == 4) { // LONG
+					STREAM_READ(stream, &m_uiHeight, sizeof(m_uiHeight));
+					m_uiHeight = wxUINT32_SWAP_ON_BE(m_uiHeight);
+				}
+			}
+			if (m_uiWidth && m_uiHeight) // i.e., if m_uiWidth and m_uiHeight have both been set
+				break;
+		}
+		m_bitmapType = wxBITMAP_TYPE_TIF;
+	}
+}
+
 
 void ComicPage::DestroyAll()
 {
@@ -190,74 +252,92 @@ void ComicPage::DestroyAll()
 	DestroyThumbnail();
 }
 
+
 void ComicPage::DestroyOriginal()
 {
-	wxMutexLocker lock(*OriginalLock);
+	wxMutexLocker lock(OriginalLock);
 	if (Original.Ok())
 		Original.Destroy();
 }
 
+
 void ComicPage::DestroyResample()
 {
-	wxMutexLocker lock(*ResampleLock);
+	wxMutexLocker lock(ResampleLock);
 	if (Resample.Ok())
 		Resample.Destroy();
+	m_bitmapFull = wxBitmap();
+	m_bitmapLeft = wxBitmap();
+	m_bitmapRight = wxBitmap();
 }
+
 
 void ComicPage::DestroyThumbnail()
 {
-	wxMutexLocker lock(*ThumbnailLock);
+	wxMutexLocker lock(ThumbnailLock);
 	if (Thumbnail.Ok())
 		Thumbnail.Destroy();
+	m_bitmapThumb = wxBitmap();
 }
 
-wxBitmap * ComicPage::GetPage()
+
+wxBitmap& ComicPage::GetPage()
 {
-	wxMutexLocker lock(*ResampleLock);
-	if (Resample.Ok())
-		return NULL;
-	return new wxBitmap(Resample);
+	wxMutexLocker lock(ResampleLock);
+	if (!m_bitmapFull.Ok())
+		if (Resample.Ok())
+			m_bitmapFull = wxBitmap(Resample);
+
+	return m_bitmapFull;
 }
 
-wxBitmap * ComicPage::GetPageLeftHalf()
+
+wxBitmap& ComicPage::GetPageLeftHalf()
 {
-	wxMutexLocker lock(*ResampleLock);
-	if (!Resample.Ok())
-		return NULL;
-	wxInt32 rWidth = Resample.GetWidth();
-	wxInt32 rHeight = Resample.GetHeight();
-	return new wxBitmap(Resample.GetSubImage(wxRect(0, 0, rWidth / 2, rHeight)));
+	wxMutexLocker lock(ResampleLock);
+	if (!m_bitmapLeft.Ok())
+		if (Resample.Ok())
+			m_bitmapLeft = wxBitmap(Resample.GetSubImage(wxRect(0, 0, Resample.GetWidth() / 2, Resample.GetHeight())));
+
+	return m_bitmapLeft;
 }
 
-wxBitmap * ComicPage::GetPageRightHalf()
+
+wxBitmap& ComicPage::GetPageRightHalf()
 {
-	wxMutexLocker lock(*ResampleLock);
-	if (!Resample.Ok())
-		return NULL;
-	wxInt32 rWidth = Resample.GetWidth();
-	wxInt32 rHeight = Resample.GetHeight();
-	wxInt32 offset = rWidth / 2;
-	wxInt32 remainder = rWidth % 2;
-	return new wxBitmap(Resample.GetSubImage(wxRect(offset, 0, offset + remainder, rHeight)));
+	wxMutexLocker lock(ResampleLock);
+	if (!m_bitmapRight.Ok()) {
+		if (Resample.Ok()) {
+			wxInt32 rWidth = Resample.GetWidth();
+			wxInt32 offset = rWidth / 2;
+			m_bitmapRight = wxBitmap(Resample.GetSubImage(wxRect(offset, 0, rWidth - offset, Resample.GetHeight())));
+		}
+	}
+
+	return m_bitmapRight;
 }
 
-wxBitmap * ComicPage::GetThumbnail()
+
+wxBitmap& ComicPage::GetThumbnail()
 {
-	wxMutexLocker lock(*ThumbnailLock);
-	if (!Thumbnail.Ok())
-		return NULL;
-	return new wxBitmap(Thumbnail);
+	wxMutexLocker lock(ThumbnailLock);
+	if (!m_bitmapThumb.Ok())
+		if (Thumbnail.Ok())
+			m_bitmapThumb = wxBitmap(Thumbnail);
+
+	return m_bitmapThumb;
 }
+
 
 bool ComicPage::IsLandscape()
 {
 	float rWidth, rHeight;
 	if (orientation == NORTH || orientation == SOUTH) {
-		rWidth = Width;
-		rHeight = Height;
+		rWidth = m_uiWidth;
+		rHeight = m_uiHeight;
 	} else {
-		rHeight = Width;
-		rWidth = Height;
+		rHeight = m_uiWidth;
+		rWidth = m_uiHeight;
 	}
 	
 	if ((rWidth / rHeight) > 1.0f)

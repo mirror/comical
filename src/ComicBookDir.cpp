@@ -1,10 +1,7 @@
-/***************************************************************************
-                              ComicBookDir.cpp
-                             -------------------
-    begin                : Sun Nov 6 2005
-    copyright            : (C) 2005 by James Athey
-    email                : jathey@comcast.net
- ***************************************************************************/
+/*
+ * ComicBookDir.cpp
+ * Copyright (c) 2005-2011, James Athey
+ */
 
 /***************************************************************************
  *                                                                         *
@@ -32,24 +29,25 @@
 
 ComicBookDir::ComicBookDir(wxString dir, wxUint32 cacheLen, COMICAL_ZOOM zoom, long zoomLevel, bool fitOnlyOversize, COMICAL_MODE mode, FREE_IMAGE_FILTER filter, COMICAL_DIRECTION direction, wxInt32 scrollbarThickness) : ComicBook(dir, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness)
 {
-	wxArrayString *allFiles = new wxArrayString();
+	wxArrayString allFiles;
 	wxString path;
-	size_t count = wxDir::GetAllFiles(dir, allFiles, wxEmptyString, wxDIR_FILES | wxDIR_DIRS);
-	ComicPage *page;
+	size_t count = wxDir::GetAllFiles(dir, &allFiles, wxEmptyString, wxDIR_FILES | wxDIR_DIRS);
 	wxInputStream *stream;
+	ComicPage *page;
 	
+	allFiles.Sort(false);
+
 	for (wxUint32 i = 0; i < count; i++) {
-		path = allFiles->Item(i);
-		page = new ComicPage(path);
+		path = allFiles.Item(i);
 		stream = ExtractStream(path);
-		if (page->ExtractDimensions(stream))
-			Pages->Add(page);
-		else
+		page = new ComicPage(path, stream);
+		if (page->GetBitmapType() == wxBITMAP_TYPE_INVALID)
 			delete page;
+		else
+			Pages.push_back(page);
+
 		wxDELETE(stream);
 	}
-	
-	delete allFiles;
 	
 	postCtor();
 	Create(); // create the wxThread
@@ -57,8 +55,9 @@ ComicBookDir::ComicBookDir(wxString dir, wxUint32 cacheLen, COMICAL_ZOOM zoom, l
 
 wxInputStream * ComicBookDir::ExtractStream(wxUint32 pageindex)
 {
-	return new wxFileInputStream(Pages->Item(pageindex).Filename);
+	return new wxFileInputStream(Pages.at(pageindex)->Filename);
 }
+
 
 wxInputStream * ComicBookDir::ExtractStream(wxString path)
 {

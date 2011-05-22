@@ -1,5 +1,5 @@
 CC = `wx-config --cxx`
-LDFLAGS = `wx-config --libs` -Lunrar -lunrar -Lunzip -lminiunzip
+LDFLAGS = `wx-config --libs` -Lunrar -lunrar -Lunzip -lminiunzip -lz -ljpeg
 INSTALL = install
 INSTALL_PROGRAM = $(INSTALL)
 prefix = /usr/local

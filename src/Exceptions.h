@@ -1,10 +1,7 @@
-/***************************************************************************
-      ComicalCanvas.h - ComicalCanvas class and supporting declarations
-                             -------------------
-    begin                : Tue Jun 14 2005
-    copyright            : (C) 2005 by James Athey
-    email                : jathey@comcast.net
- ***************************************************************************/
+/*
+ * Exceptions.h
+ * Copyright (c) 2005-2011 James Athey
+ */
 
 /***************************************************************************
  *                                                                         *

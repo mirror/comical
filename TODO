@@ -1,35 +1,34 @@
+Requirements for 0.9:
+* Ensure memory leaks are fixed
+* Use a wxCondition instead of busy-wait in the ComicBook thread
+* Continue fetching thumbnails in the background
+* Unicode working in filenames, ZIP file entries, RAR file entires
+* Universal build on Mac OS X
+* working wxRarInputStream with small buffer in first callback
+* Store image dimensions permanently
+    prefetch image headers to get dimensions
+* Check that broken pages are only tried once
+* the switch to PNG seems to have made startup slower
+* Check file header to find RAR or ZIP instead of relying on file extensions
+
 Requirements for 1.0:
 
-* Helpfile
-* User-configurable keybindings, use KeyBinder
-* Check that broken pages are only tried once
+* User-configurable keybindings (KeyBinder)
 * Open next book in series or directory
-* Box Zoom/Magnifying Glass - started, postponed for now
 * Info file display
 * Better code annotation and documentation
-* Store image dimensions permanently
-	prefetch image headers to get dimensions
+* Bookmarks, resume last comic book on open
 
 Nice-to-have features:
 
-* Bookmarks, resume last comic book on open
+* Box Zoom/Magnifying Glass
 * resizable ComicalBrowser
-* Intel/PPC Fat binary on MacOSX, requires latest XCode and Tiger
 * run source code through beautifier
 * const-correctness
-* look for any remaining memory leaks
-* the switch to PNG seems to have made startup slower
-* Multi-document mode on Mac OS X (i.e., act like a native Mac app)
-
-Long-term whiz-bang features:
-
+* Floating page controls (fade in-out on mouse movement)
 * Investigate painting only the damaged rectangle instead of the whole canvas
-* OpenGL backend
 * New comic book creation wizard
 	Could be good vehicle to encourage new file format
-* New file format
-	JPEG2000 support?
-	bzip2 / 7zip / zzip archives?
 * proper wxDocManager/wxDocument/wxView implementation
 * multi-volume RAR
 

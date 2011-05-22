@@ -1,10 +1,7 @@
-/***************************************************************************
-                ComicBook.h - ComicBook class and its children
-                             -------------------
-    begin                : Mon Sep 29 2003
-    copyright            : (C) 2003-2006 by James Athey
-    email                : jathey@comcast.net
- ***************************************************************************/
+/*
+ * ComicBook.h
+ * Copyright (c) 2003-2011, James Athey
+ */
 
 /***************************************************************************
  *                                                                         *
@@ -46,6 +43,8 @@
 
 #include "ComicPage.h"
 
+#include <vector>
+
 class ComicBook : public wxThread {
 
 public:
@@ -57,7 +56,7 @@ public:
 	virtual void * Entry();
 
 	void RotatePage(wxUint32 pagenumber, COMICAL_ROTATE direction);
-	wxUint32 GetPageCount() { return Pages->GetCount(); }
+	wxUint32 GetPageCount() { return Pages.size(); }
 	bool SetZoom(COMICAL_ZOOM zoom);
 	bool SetZoomLevel(long zoomLevel);
 	bool SetFitOnlyOversize(bool fitOnlyOversize);
@@ -68,10 +67,10 @@ public:
 	bool SetScrollbarThickness(wxInt32 scrollbarThickness);
 	wxUint32 GetCacheLen() { return cacheLen; }
 	void SetCacheLen(wxUint32 newCacheLen) { cacheLen = newCacheLen; }
-	wxBitmap *GetPage(wxUint32 pagenumber);
-	wxBitmap *GetPageLeftHalf(wxUint32 pagenumber);
-	wxBitmap *GetPageRightHalf(wxUint32 pagenumber);
-	wxBitmap *GetThumbnail(wxUint32 pagenumber);
+	wxBitmap& GetPage(wxUint32 pagenumber);
+	wxBitmap& GetPageLeftHalf(wxUint32 pagenumber);
+	wxBitmap& GetPageRightHalf(wxUint32 pagenumber);
+	wxBitmap& GetThumbnail(wxUint32 pagenumber);
 	COMICAL_ROTATE GetPageOrientation(wxUint32 pagenumber);
 	bool IsPageLandscape(wxUint32 pagenumber);
 	bool IsPageReady(wxUint32 pagenumber);
@@ -96,8 +95,6 @@ public:
 	bool Disconnect(int id, int lastId = wxID_ANY, wxEventType eventType = wxEVT_NULL, wxObjectEventFunction function = NULL, wxObject* userData = NULL, wxEvtHandler* eventSink = NULL)
 		{ return evtHandler->Disconnect(id, lastId, eventType, function, userData, eventSink); }
 
-	ArrayPage *Pages;
-
 	virtual wxInputStream * ExtractStream(wxUint32 pageindex) = 0;
 	virtual wxInputStream * ExtractStream(wxString) = 0;
 
@@ -108,6 +105,8 @@ protected:
 	
 	void SetPassword(const char* new_password);
 	void postCtor();
+
+	std::vector<ComicPage*> Pages;
 
 private:
 	void LoadOriginal(wxUint32 pagenumber);

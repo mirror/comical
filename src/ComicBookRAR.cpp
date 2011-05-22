@@ -1,10 +1,7 @@
-/***************************************************************************
-                              ComicBookRAR.cpp
-                             -------------------
-    begin                : Wed Oct 29 2003
-    copyright            : (C) 2003-2006 by James Athey
-    email                : jathey@comcast.net
- ***************************************************************************/
+/*
+ * ComicBookRAR.cpp
+ * Copyright (c) 2003-2011, James Athey
+ */
 
 /***************************************************************************
  *                                                                         *
@@ -29,12 +26,15 @@
 #include <wx/mstream.h>
 #include <wx/textdlg.h>
 #include "Exceptions.h"
+#include "wxRarInputStream.h"
 
 #ifdef wxUSE_UNICODE
 #include <wchar.h>
 #else
 #include <cstring>
 #endif
+
+extern "C" int CALLBACK TestPasswordCallbackProc(wxUint32 msg, long UserData, long P1, long P2);
 
 ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, long zoomLevel, bool fitOnlyOversize, COMICAL_MODE mode, FREE_IMAGE_FILTER filter, COMICAL_DIRECTION direction, wxInt32 scrollbarThickness) : ComicBook(file, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness)
 {
@@ -43,8 +43,8 @@ ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, 
 	struct RARHeaderDataEx header;
 	struct RAROpenArchiveDataEx flags;
 	wxString path, new_password;
-	ComicPage *page;
 	wxInputStream *stream;
+	ComicPage *page;
 	
 	open_rar:
 	
@@ -69,12 +69,12 @@ ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, 
 #else
 		path = wxString(header.FileName);
 #endif
-		page = new ComicPage(path);
 		stream = ExtractStream(path);
-		if (page->ExtractDimensions(stream))
-			Pages->Add(page);
-		else
+		page = new ComicPage(path, stream);
+		if (page->GetBitmapType() == wxBITMAP_TYPE_INVALID)
 			delete page;
+		else
+			Pages.push_back(page);
 		// Memory Input Streams don't take ownership of the buffer
 		wxMemoryInputStream *mstream = dynamic_cast<wxMemoryInputStream*>(stream);
 		if (mstream)
@@ -99,111 +99,12 @@ ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, 
 
 wxInputStream * ComicBookRAR::ExtractStream(wxUint32 pageindex)
 {
-	HANDLE rarFile;
-	int RHCode = 0, PFCode = 0;
-	struct RARHeaderDataEx header;
-	struct RAROpenArchiveDataEx flags;
-	
-	wxString page = Pages->Item(pageindex).Filename;
-	size_t length = 0;
-	
-	rarFile = openRar(&flags, &header, RAR_OM_EXTRACT);
-
-	if (password)
-		RARSetPassword(rarFile, password);
-
-	while ((RHCode = RARReadHeaderEx(rarFile, &header)) == 0) {
-#ifdef wxUSE_UNICODE
-		if (page.IsSameAs(wxString(header.FileNameW))) {
-#else // ASCII
-		if (page.IsSameAs(header.FileName)) {
-#endif
-			length = header.UnpSize;
-			break;	
-		} else {
-			if ((PFCode = RARProcessFile(rarFile, RAR_SKIP, NULL, NULL)) != 0) {
-				closeRar(rarFile, &flags);
-				throw ArchiveException(filename, ProcessFileError(PFCode, page));
-			}
-		}
-	}
-	
-	if (length == 0) { // archived file not found
-		closeRar(rarFile, &flags);
-		throw new ArchiveException(filename, page + wxT(" not found in this archive."));
-	}
-	if (RHCode) {
-		closeRar(rarFile, &flags);
-		throw new ArchiveException(filename, OpenArchiveError(PFCode));
-	}
-
-	wxUint8 *buffer = new wxUint8[length];
-	wxUint8 *callBackBuffer = buffer;
-
-	RARSetCallback(rarFile, CallbackProc, (long) &callBackBuffer);
-
-	PFCode = RARProcessFile(rarFile, RAR_TEST, NULL, NULL);
-
-	closeRar(rarFile, &flags);
-	
-	if (PFCode != 0)
-		throw new ArchiveException(filename, ProcessFileError(PFCode, page));
-
-	return new wxMemoryInputStream(buffer, length);
+	return new wxRarInputStream(filename, Pages.at(pageindex)->Filename, password);
 }
 
 wxInputStream * ComicBookRAR::ExtractStream(wxString page)
 {
-	HANDLE rarFile;
-	int RHCode = 0, PFCode = 0;
-	struct RARHeaderDataEx header;
-	struct RAROpenArchiveDataEx flags;
-	
-	size_t length = 0;
-	
-	rarFile = openRar(&flags, &header, RAR_OM_EXTRACT);
-
-	if (password)
-		RARSetPassword(rarFile, password);
-
-	while ((RHCode = RARReadHeaderEx(rarFile, &header)) == 0) {
-#ifdef wxUSE_UNICODE
-		if (page.IsSameAs(wxString(header.FileNameW))) {
-#else // ASCII
-		if (page.IsSameAs(header.FileName)) {
-#endif
-			length = header.UnpSize;
-			break;	
-		} else {
-			if ((PFCode = RARProcessFile(rarFile, RAR_SKIP, NULL, NULL)) != 0) {
-				closeRar(rarFile, &flags);
-				throw ArchiveException(filename, ProcessFileError(PFCode, page));
-			}
-		}
-	}
-	
-	if (length == 0) { // archived file not found
-		closeRar(rarFile, &flags);
-		throw new ArchiveException(filename, page + wxT(" not found in this archive."));
-	}
-	if (RHCode) {
-		closeRar(rarFile, &flags);
-		throw new ArchiveException(filename, OpenArchiveError(PFCode));
-	}
-
-	wxUint8 *buffer = new wxUint8[length];
-	wxUint8 *callBackBuffer = buffer;
-
-	RARSetCallback(rarFile, CallbackProc, (long) &callBackBuffer);
-
-	PFCode = RARProcessFile(rarFile, RAR_TEST, NULL, NULL);
-
-	closeRar(rarFile, &flags);
-	
-	if (PFCode != 0)
-		throw new ArchiveException(filename, ProcessFileError(PFCode, page));
-
-	return new wxMemoryInputStream(buffer, length);
+	return new wxRarInputStream(filename, page, password);
 }
 
 bool ComicBookRAR::TestPassword()
@@ -214,7 +115,7 @@ bool ComicBookRAR::TestPassword()
 	struct RAROpenArchiveDataEx flags;
 	bool passwordCorrect = true;
 	
-	wxString page = Pages->Item(0).Filename; // test using the first page
+	wxString page = Pages.at(0)->Filename; // test using the first page
 	
 	rarFile = openRar(&flags, &header, RAR_OM_EXTRACT);
 
@@ -301,25 +202,6 @@ wxString ComicBookRAR::ProcessFileError(int Error, wxString compressedFile)
 	}
 }
 
-int CALLBACK CallbackProc(wxUint32 msg, long UserData, long P1, long P2)
-{
-	wxUint8 **buffer;
-	
-	switch(msg) {
-
-	case UCM_CHANGEVOLUME:
-		break;
-	case UCM_PROCESSDATA:
-		buffer = (wxUint8 **) UserData;
-		memcpy(*buffer, (wxUint8 *)P1, P2);
-		// advance the buffer ptr, original m_buffer ptr is untouched
-		*buffer += P2;
-		break;
-	case UCM_NEEDPASSWORD:
-		break;
-	}
-	return(0);
-}
 
 int CALLBACK TestPasswordCallbackProc(wxUint32 msg, long UserData, long P1, long P2)
 {

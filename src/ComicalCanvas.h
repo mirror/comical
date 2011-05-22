@@ -1,10 +1,7 @@
-/***************************************************************************
-      ComicalCanvas.h - ComicalCanvas class and supporting declarations
-                             -------------------
-    begin                : Thu Dec 18 2003
-    copyright            : (C) 2003-2006 by James Athey
-    email                : jathey@comcast.net
- ***************************************************************************/
+/*
+ * ComicalCanvas.h
+ * Copyright (c) 2003-2011, James Athey
+ */
 
 /***************************************************************************
  *                                                                         *
@@ -94,7 +91,7 @@ class ComicalCanvas : public wxScrolledWindow
 
 	void SendPageShownEvent();
 
-    wxBitmap *leftPage, *rightPage, *centerPage;
+    wxBitmap leftPage, rightPage, centerPage;
     wxUint32 leftNum, rightNum;
     COMICAL_PAGETYPE leftPart, rightPart;
 	wxMenu *contextMenu, *contextRotate;

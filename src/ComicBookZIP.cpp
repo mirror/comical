@@ -1,10 +1,7 @@
-/***************************************************************************
-                              ComicBookZIP.cpp
-                             -------------------
-    begin                : Wed Oct 29 2003
-    copyright            : (C) 2003-2006 by James Athey
-    email                : jathey@comcast.net
- ***************************************************************************/
+/*
+ * ComicBookZIP.cpp
+ * Copyright (c) 2003-2011, James Athey
+ */
 
 /***************************************************************************
  *                                                                         *
@@ -26,7 +23,7 @@
  ***************************************************************************/
 
 #include "ComicBookZIP.h"
-#include <wx/mstream.h>
+#include "wxMiniZipInputStream.h"
 #include "unzip.h"
 #include "Exceptions.h"
 #include <cstring>
@@ -37,39 +34,26 @@ ComicBookZIP::ComicBookZIP(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, 
 	wxString path;
 	static char namebuf[1024];
 	unzFile ZipFile;
-	unz_file_info *fileInfo;
-	int retcode;
+	unz_file_info fileInfo;
 	ZipFile = unzOpen(filename.ToAscii());
-	fileInfo = (unz_file_info*) malloc(sizeof(unz_file_info_s));
-	ComicPage *page;
 	wxInputStream *stream;
+	ComicPage *page;
 
-	if (ZipFile) {
-		if ((retcode = unzGoToFirstFile(ZipFile)) != UNZ_OK) {
-			unzClose(ZipFile);
-			throw ArchiveException(filename, ArchiveError(retcode));
-		}
-	} else {
+	if (!ZipFile)
 		throw ArchiveException(filename, wxT("Could not open the file."));
-	}
 
-	do {
-		unzGetCurrentFileInfo(ZipFile, fileInfo, namebuf, 1024, NULL, 0, NULL, 0);
+	for (int retcode = unzGoToFirstFile(ZipFile); retcode == UNZ_OK; retcode = unzGoToNextFile(ZipFile)) {
+		unzGetCurrentFileInfo(ZipFile, &fileInfo, namebuf, 1024, NULL, 0, NULL, 0);
 		path = wxString::FromAscii(namebuf);
-		page = new ComicPage(path);
 		stream = ExtractStream(path);
-		if (page->ExtractDimensions(stream))
-			Pages->Add(page);
-		else
+		page = new ComicPage(path, stream);
+		if (page->GetBitmapType() == wxBITMAP_TYPE_INVALID)
 			delete page;
-		// Memory Input Streams don't take ownership of the buffer
-		wxMemoryInputStream *mstream = dynamic_cast<wxMemoryInputStream*>(stream);
-		if (mstream)
-			delete[] (wxUint8 *) mstream->GetInputStreamBuffer()->GetBufferStart();
-		wxDELETE(stream);
-	} while (unzGoToNextFile(ZipFile) == UNZ_OK);
+		else
+			Pages.push_back(page);
+		delete stream;
+	};
 
-	free(fileInfo);
 	unzClose(ZipFile);	
 
 	postCtor();
@@ -78,120 +62,12 @@ ComicBookZIP::ComicBookZIP(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, 
 
 wxInputStream * ComicBookZIP::ExtractStream(wxUint32 pageindex)
 {
-	unzFile ZipFile;
-	unz_file_info *fileInfo;
-	wxUint8 *buffer, *inc_buffer;
-	int retcode;
-	uLong length;
-	
-	ZipFile = unzOpen(filename.ToAscii());
-	fileInfo = (unz_file_info*) malloc(sizeof(unz_file_info_s));
-
-	if (!ZipFile) {
-		throw ArchiveException(filename, wxT("Could not open the file."));
-	}
-	if((retcode = unzLocateFile(ZipFile, Pages->Item(pageindex).Filename.ToAscii(), 0)) != UNZ_OK) {
-		unzClose(ZipFile);
-		throw ArchiveException(filename, ArchiveError(retcode));
-	}
-	
-	if ((retcode = unzGetCurrentFileInfo(ZipFile, fileInfo, NULL, 0, NULL, 0, NULL, 0)) != UNZ_OK) {
-		unzClose(ZipFile);
-		throw ArchiveException(filename, ArchiveError(retcode));
-	}
-	
-	length = fileInfo->uncompressed_size;
-	buffer = new wxUint8[length];
-	inc_buffer = buffer;
-
-	if (password)
-		retcode = unzOpenCurrentFilePassword(ZipFile, password);
-	else
-		retcode = unzOpenCurrentFile(ZipFile);
-		
-	if (retcode != UNZ_OK) {
-		unzClose(ZipFile);
-		throw ArchiveException(filename, ArchiveError(retcode));
-	}
-	
-	while((retcode = unzReadCurrentFile(ZipFile, inc_buffer, length)) > 0) {
-		inc_buffer += retcode;
-		length -= retcode;
-	}
-	
-	if (retcode < 0) {
-		unzClose(ZipFile);
-		throw ArchiveException(filename, ArchiveError(retcode));
-	}
-	
-	if ((retcode = unzCloseCurrentFile(ZipFile)) != UNZ_OK) {
-		unzClose(ZipFile);
-		throw ArchiveException(filename, ArchiveError(retcode));
-	}
-	
-	free(fileInfo);
-	unzClose(ZipFile);
-
-	return new wxMemoryInputStream(buffer, fileInfo->uncompressed_size);
+	return new wxMiniZipInputStream(filename, Pages.at(pageindex)->Filename, password);
 }
 
 wxInputStream * ComicBookZIP::ExtractStream(wxString path)
 {
-	unzFile ZipFile;
-	unz_file_info *fileInfo;
-	wxUint8 *buffer, *inc_buffer;
-	int retcode;
-	uLong length;
-	
-	ZipFile = unzOpen(filename.ToAscii());
-	fileInfo = (unz_file_info*) malloc(sizeof(unz_file_info_s));
-
-	if (!ZipFile) {
-		throw ArchiveException(filename, wxT("Could not open the file."));
-	}
-	if((retcode = unzLocateFile(ZipFile, path.ToAscii(), 0)) != UNZ_OK) {
-		unzClose(ZipFile);
-		throw ArchiveException(filename, ArchiveError(retcode));
-	}
-
-	if ((retcode = unzGetCurrentFileInfo(ZipFile, fileInfo, NULL, 0, NULL, 0, NULL, 0)) != UNZ_OK) {
-		unzClose(ZipFile);
-		throw ArchiveException(filename, ArchiveError(retcode));
-	}
-	
-	length = fileInfo->uncompressed_size;
-	buffer = new wxUint8[length];
-	inc_buffer = buffer;
-
-	if (password)
-		retcode = unzOpenCurrentFilePassword(ZipFile, password);
-	else
-		retcode = unzOpenCurrentFile(ZipFile);
-		
-	if (retcode != UNZ_OK) {
-		unzClose(ZipFile);
-		throw ArchiveException(filename, ArchiveError(retcode));
-	}
-	
-	while((retcode = unzReadCurrentFile(ZipFile, inc_buffer, length)) > 0) {
-		inc_buffer += retcode;
-		length -= retcode;
-	}
-	
-	if (retcode < 0) {
-		unzClose(ZipFile);
-		throw ArchiveException(filename, ArchiveError(retcode));
-	}
-	
-	if ((retcode = unzCloseCurrentFile(ZipFile)) != UNZ_OK) {
-		unzClose(ZipFile);
-		throw ArchiveException(filename, ArchiveError(retcode));
-	}
-	
-	free(fileInfo);
-	unzClose(ZipFile);
-
-	return new wxMemoryInputStream(buffer, fileInfo->uncompressed_size);
+	return new wxMiniZipInputStream(filename, path, password);
 }
 
 wxString ComicBookZIP::ArchiveError(int error)
@@ -227,7 +103,7 @@ bool ComicBookZIP::TestPassword()
 	if (!ZipFile) {
 		throw ArchiveException(filename, wxT("Could not open the file."));
 	}
-	if((retcode = unzLocateFile(ZipFile, Pages->Item(0).Filename.ToAscii(), 0)) != UNZ_OK) {
+	if((retcode = unzLocateFile(ZipFile, Pages.at(0)->Filename.ToAscii(), 0)) != UNZ_OK) {
 		unzClose(ZipFile);
 		throw ArchiveException(filename, ArchiveError(retcode));
 	}

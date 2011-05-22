@@ -1,6 +1,6 @@
 /*
- * ComicalManager.cpp
- * Copyright (c) 2006-2011 James Athey
+ * JpegWxInputStreamSrc.h
+ * Copyright (c) 2011 James Athey
  */
 
 /***************************************************************************
@@ -22,22 +22,12 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "ComicalManager.h"
+#ifndef JPEGWXINPUTSTREAMSRC_H_
+#define JPEGWXINPUTSTREAMSRC_H_
 
-ComicalManager::ComicalManager(ComicalFrame *_frame) : wxDocManager(wxDEFAULT_DOCMAN_FLAGS, false), frame(_frame)
-{
-}
+#include <wx/stream.h>
+#include <jpeglib.h>
 
-wxDocument* ComicalManager::CreateDocument(const wxString& filename, long flags)
-{
-	switch(flags) {
-	case wxDOC_SILENT:
-		frame->OpenFile(filename);
-		break;
-	case wxDOC_NEW:
-	default:
-		break;
-	}
-	
-	return NULL;
-}
+void jpeg_wx_input_stream_src (j_decompress_ptr cinfo, wxInputStream *stream);
+
+#endif /* JPEGWXINPUTSTREAMSRC_H_ */

@@ -10,11 +10,11 @@ Nifty Features:
 * Single-Page or Double-Page display modes.
 * Several zoom modes - Fit, Fit-to-Width, Fit-to-Height, Original, and Custom.
 * Crisp image scaling with algorithms adapted from FreeImage 3.
-* Autodetects double pages scanned together and displays it accordingly.
+* Autodetects facing pages scanned as a single image and shows it accordingly.
 * Page rotation.
 * Full-Screen mode.
 * Left-to-Right or Right-to-Left browsing.
-* Displays JPG, GIF, and PNG images.
+* Displays JPG, GIF, PNG, and TIFF images.
 * Supports RAR(.cbr) and ZIP(.cbz) comic book archives
 * Supports all encrypted RAR archives as well as ZIP archives with pkzip 2.04g
 encryption.
@@ -25,17 +25,16 @@ gcc 3.3 or later
 
 Acknowledgements:
 
-Cross-platform magic and GUI Widgets provided by:
-wxWidgets (http://www.wxwindows.org)
+Cross-platform magic and GUI Widgets provided by wxWidgets
+(http://www.wxwidgets.org).
 
-Image resizing provided by:
-FreeImage (http://freeimage.sourceforge.net/).
+This software uses the FreeImage open source image library. See
+http://freeimage.sourceforge.net for details.
+FreeImage is used under the GNU GPL, version 2.0.
 
-JPEG support provided by:
-Independent JPEG Group (http://www.ijg.org/)
+This software is based in part on the work of the Independent JPEG Group.
 
-ZIP decompression provided by:
-Copyright (C) 1998-2005 Gilles Vollant.
+ZIP decompression provided by MiniZip, Copyright (C) 1998-2005 Gilles Vollant.
 
 RAR decompression provided by RARLabs.  You cannot use the unrar source to
 re-create the RAR compression algorithm, which is proprietary.  Distribution
@@ -44,7 +43,7 @@ permitted, provided that it is clearly stated in the documentation and source
 comments that the code may not be used to develop a RAR compatible archiver.
 
 -------------------------------------------------------------------------------
-Copyright (c) 2003-2006 James Athey
+Copyright (c) 2003-2011 James Athey
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

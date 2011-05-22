@@ -1,6 +1,6 @@
 /*
- * ComicalManager.cpp
- * Copyright (c) 2006-2011 James Athey
+ * wxMiniZipInputStream.h
+ * Copyright (c) 2011 James Athey
  */
 
 /***************************************************************************
@@ -22,22 +22,38 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "ComicalManager.h"
+#ifndef _WX_MINI_ZIP_INPUT_STREAM_H_
+#define _WX_MINI_ZIP_INPUT_STREAM_H_
 
-ComicalManager::ComicalManager(ComicalFrame *_frame) : wxDocManager(wxDEFAULT_DOCMAN_FLAGS, false), frame(_frame)
-{
-}
+#include <wx/stream.h>
+#include "unzip.h"
 
-wxDocument* ComicalManager::CreateDocument(const wxString& filename, long flags)
+/**
+ * The built-in wxZipInputStream does not support password-protected ZIP
+ * files, but wxMiniZipInputStream does!
+ */
+class wxMiniZipInputStream : public wxInputStream
 {
-	switch(flags) {
-	case wxDOC_SILENT:
-		frame->OpenFile(filename);
-		break;
-	case wxDOC_NEW:
-	default:
-		break;
-	}
-	
-	return NULL;
-}
+public:
+	wxMiniZipInputStream(const wxString& filename, const wxString& entry, const char* password=NULL);
+	~wxMiniZipInputStream();
+
+	int GetMiniZipError() const { return m_iMiniZipError; }
+
+	virtual wxFileOffset GetLength() const;
+
+protected:
+	virtual wxFileOffset OnSysTell() const;
+	virtual size_t OnSysRead(void *buffer, size_t size);
+
+private:
+	unzFile m_zipFile;
+	unz_file_info m_fileInfo;
+	int m_iMiniZipError;
+
+	void cleanup();
+
+	static wxStreamError convertMiniZipError(int error);
+};
+
+#endif /* _WX_MINI_ZIP_INPUT_STREAM_H_ */

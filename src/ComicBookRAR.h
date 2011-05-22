@@ -1,10 +1,7 @@
-/***************************************************************************
-                               ComicBookRAR.h
-                             -------------------
-    begin                : Wed Oct 29 2003
-    copyright            : (C) 2003-2006 by James Athey
-    email                : jathey@comcast.net
- ***************************************************************************/
+/*
+ * ComicBookRAR.h
+ * Copyright (c) 2003-2011, James Athey
+ */
 
 /***************************************************************************
  *                                                                         *
@@ -38,9 +35,9 @@ public:
 	~ComicBookRAR() {};
 
 protected:
-	wxInputStream * ExtractStream(wxUint32 pageindex);
-	wxInputStream * ExtractStream(wxString path);
-	bool TestPassword();
+	virtual wxInputStream * ExtractStream(wxUint32 pageindex);
+	virtual wxInputStream * ExtractStream(wxString path);
+	virtual bool TestPassword();
 
 private:
 	wxString OpenArchiveError(int Error);
@@ -48,8 +45,5 @@ private:
 	HANDLE openRar(RAROpenArchiveDataEx *flags, RARHeaderDataEx *header, wxUint8 mode);
 	void closeRar(HANDLE rarFile, RAROpenArchiveDataEx *flags);
 };
-
-int CALLBACK CallbackProc(wxUint32 msg, long UserData, long P1, long P2);
-int CALLBACK TestPasswordCallbackProc(wxUint32 msg, long UserData, long P1, long P2);
 
 #endif

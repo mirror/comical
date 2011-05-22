@@ -1,10 +1,7 @@
-/***************************************************************************
-                               ComicBookZIP.h
-                             -------------------
-    begin                : Wed Oct 29 2003
-    copyright            : (C) 2003-2006 by James Athey
-    email                : jathey@comcast.net
- ***************************************************************************/
+/*
+ * ComicBookZIP.h
+ * Copyright (c) 2003-2011 James Athey
+ */
 
 /***************************************************************************
  *                                                                         *
@@ -36,14 +33,12 @@ public:
 	ComicBookZIP(wxString _filename, wxUint32 _cacheLen, COMICAL_ZOOM _zoom, long _zoomLevel, bool _fitOnlyOversize, COMICAL_MODE _mode, FREE_IMAGE_FILTER _filter, COMICAL_DIRECTION _direction, wxInt32 _scrollbarThickness);
 	~ComicBookZIP() {};
 
-protected:
-	wxInputStream * ExtractStream(wxUint32 pageindex);
-	wxInputStream * ExtractStream(wxString path);
-	bool TestPassword();
-
-private:
 	wxString ArchiveError(int Error);
 
+protected:
+	virtual wxInputStream * ExtractStream(wxUint32 pageindex);
+	virtual wxInputStream * ExtractStream(wxString path);
+	virtual bool TestPassword();
 };
 
 #endif
