@@ -20,7 +20,7 @@ LINK=$(CXX)
 UNRAR_OBJ=rar.o list.o
 LIB_OBJ=dll.o smallfn.o
 
-OBJECTS=strlist.o strfn.o pathfn.o int64.o savepos.o global.o file.o filefn.o filcreat.o \
+OBJECTS=strlist.o strfn.o pathfn.o savepos.o global.o file.o filefn.o filcreat.o \
 	archive.o arcread.o unicode.o system.o isnt.o crypt.o crc.o rawread.o encname.o \
 	resource.o match.o timefn.o rdwrfn.o consio.o options.o ulinks.o errhnd.o rarvm.o \
 	rijndael.o getbits.o sha1.o extinfo.o extract.o volume.o find.o unpack.o \

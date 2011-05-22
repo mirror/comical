@@ -20,6 +20,7 @@ Archive::Archive(RAROptions *InitCmd)
   LatestTime.Reset();
   Protected=false;
   Encrypted=false;
+  FailedHeaderDecryption=false;
   BrokenFileHeader=false;
   LastReadBlock=0;
 
@@ -64,7 +65,7 @@ void Archive::CheckArc(bool EnableBroken)
 
 
 #if !defined(SHELL_EXT) && !defined(SFX_MODULE)
-void Archive::CheckOpen(char *Name,wchar *NameW)
+void Archive::CheckOpen(const char *Name,const wchar *NameW)
 {
   TOpen(Name,NameW);
   CheckArc(false);
@@ -72,7 +73,7 @@ void Archive::CheckOpen(char *Name,wchar *NameW)
 #endif
 
 
-bool Archive::WCheckOpen(char *Name,wchar *NameW)
+bool Archive::WCheckOpen(const char *Name,const wchar *NameW)
 {
   if (!WOpen(Name,NameW))
     return(false);
@@ -132,7 +133,7 @@ bool Archive::IsArchive(bool EnableBroken)
   else
   {
     Array<char> Buffer(MAXSFXSIZE);
-    long CurPos=int64to32(Tell());
+    long CurPos=(long)Tell();
     int ReadSize=Read(&Buffer[0],Buffer.Size()-16);
     for (int I=0;I<ReadSize;I++)
       if (Buffer[I]==0x52 && IsSignature((byte *)&Buffer[I]))
@@ -195,19 +196,24 @@ bool Archive::IsArchive(bool EnableBroken)
     return(false);
   }
 #ifdef RARDLL
-  SilentOpen=true;
+  // If callback function is not set, we cannot get the password,
+  // so we skip the initial header processing for encrypted header archive.
+  // It leads to skipped archive comment, but the rest of archive data
+  // is processed correctly.
+  if (Cmd->Callback==NULL)
+    SilentOpen=true;
 #endif
 
-  //if not encrypted, we'll check it below
+  // If not encrypted, we'll check it below.
   NotFirstVolume=Encrypted && (NewMhd.Flags & MHD_FIRSTVOLUME)==0;
 
   if (!SilentOpen || !Encrypted)
   {
     SaveFilePos SavePos(*this);
-    Int64 SaveCurBlockPos=CurBlockPos,SaveNextBlockPos=NextBlockPos;
+    int64 SaveCurBlockPos=CurBlockPos,SaveNextBlockPos=NextBlockPos;
 
     NotFirstVolume=false;
-    while (ReadHeader())
+    while (ReadHeader()!=0)
     {
       int HeaderType=GetHeaderType();
       if (HeaderType==NEWSUB_HEAD)
@@ -233,7 +239,7 @@ bool Archive::IsArchive(bool EnableBroken)
   if (!Volume || !NotFirstVolume)
   {
     strcpy(FirstVolumeName,FileName);
-    strcpyw(FirstVolumeNameW,FileNameW);
+    wcscpy(FirstVolumeNameW,FileNameW);
   }
 
   return(true);

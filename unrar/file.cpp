@@ -18,7 +18,7 @@ File::File()
   AllowDelete=true;
   CloseCount=0;
   AllowExceptions=true;
-#ifdef _WIN_32
+#ifdef _WIN_ALL
   NoSequentialRead=false;
 #endif
 }
@@ -51,7 +51,7 @@ bool File::Open(const char *Name,const wchar *NameW,bool OpenShared,bool Update)
   FileHandle hNewFile;
   if (File::OpenShared)
     OpenShared=true;
-#ifdef _WIN_32
+#ifdef _WIN_ALL
   uint Access=GENERIC_READ;
   if (Update)
     Access|=GENERIC_WRITE;
@@ -62,7 +62,7 @@ bool File::Open(const char *Name,const wchar *NameW,bool OpenShared,bool Update)
   if (WinNT() && NameW!=NULL && *NameW!=0)
     hNewFile=CreateFileW(NameW,Access,ShareMode,NULL,OPEN_EXISTING,Flags,NULL);
   else
-    hNewFile=CreateFile(Name,Access,ShareMode,NULL,OPEN_EXISTING,Flags,NULL);
+    hNewFile=CreateFileA(Name,Access,ShareMode,NULL,OPEN_EXISTING,Flags,NULL);
 
   if (hNewFile==BAD_HANDLE && GetLastError()==ERROR_FILE_NOT_FOUND)
     ErrorType=FILE_NOTFOUND;
@@ -103,12 +103,17 @@ bool File::Open(const char *Name,const wchar *NameW,bool OpenShared,bool Update)
   if (Success)
   {
     hFile=hNewFile;
+
+    // We use memove instead of strcpy and wcscpy to avoid problems
+    // with overlapped buffers. While we do not call this function with
+    // really overlapped buffers yet, we do call it with Name equal to
+    // FileName like Arc.Open(Arc.FileName,Arc.FileNameW).
     if (NameW!=NULL)
-      strcpyw(FileNameW,NameW);
+      memmove(FileNameW,NameW,(wcslen(NameW)+1)*sizeof(*NameW));
     else
       *FileNameW=0;
     if (Name!=NULL)
-      strcpy(FileName,Name);
+      memmove(FileName,Name,strlen(Name)+1);
     else
       WideToChar(NameW,FileName);
     AddFileToList(hFile);
@@ -130,19 +135,20 @@ bool File::WOpen(const char *Name,const wchar *NameW)
 {
   if (Open(Name,NameW))
     return(true);
-  ErrHandler.OpenErrorMsg(Name);
+  ErrHandler.OpenErrorMsg(Name,NameW);
   return(false);
 }
 
 
-bool File::Create(const char *Name,const wchar *NameW)
+bool File::Create(const char *Name,const wchar *NameW,bool ShareRead)
 {
-#ifdef _WIN_32
+#ifdef _WIN_ALL
+  DWORD ShareMode=(ShareRead || File::OpenShared) ? FILE_SHARE_READ:0;
   if (WinNT() && NameW!=NULL && *NameW!=0)
-    hFile=CreateFileW(NameW,GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ,NULL,
+    hFile=CreateFileW(NameW,GENERIC_READ|GENERIC_WRITE,ShareMode,NULL,
                       CREATE_ALWAYS,0,NULL);
   else
-    hFile=CreateFile(Name,GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ,NULL,
+    hFile=CreateFileA(Name,GENERIC_READ|GENERIC_WRITE,ShareMode,NULL,
                      CREATE_ALWAYS,0,NULL);
 #else
   hFile=fopen(Name,CREATEBINARY);
@@ -151,7 +157,7 @@ bool File::Create(const char *Name,const wchar *NameW)
   HandleType=FILE_HANDLENORMAL;
   SkipClose=false;
   if (NameW!=NULL)
-    strcpyw(FileNameW,NameW);
+    wcscpy(FileNameW,NameW);
   else
     *FileNameW=0;
   if (Name!=NULL)
@@ -176,20 +182,20 @@ void File::AddFileToList(FileHandle hFile)
 
 
 #if !defined(SHELL_EXT) && !defined(SFX_MODULE)
-void File::TCreate(const char *Name,const wchar *NameW)
+void File::TCreate(const char *Name,const wchar *NameW,bool ShareRead)
 {
-  if (!WCreate(Name,NameW))
+  if (!WCreate(Name,NameW,ShareRead))
     ErrHandler.Exit(FATAL_ERROR);
 }
 #endif
 
 
-bool File::WCreate(const char *Name,const wchar *NameW)
+bool File::WCreate(const char *Name,const wchar *NameW,bool ShareRead)
 {
-  if (Create(Name,NameW))
+  if (Create(Name,NameW,ShareRead))
     return(true);
   ErrHandler.SetErrorCode(CREATE_ERROR);
-  ErrHandler.CreateErrorMsg(Name);
+  ErrHandler.CreateErrorMsg(Name,NameW);
   return(false);
 }
 
@@ -204,8 +210,8 @@ bool File::Close()
     {
       if (!SkipClose)
       {
-#ifdef _WIN_32
-        Success=CloseHandle(hFile);
+#ifdef _WIN_ALL
+        Success=CloseHandle(hFile)==TRUE;
 #else
         Success=fclose(hFile)!=EOF;
 #endif
@@ -219,7 +225,7 @@ bool File::Close()
       }
       hFile=BAD_HANDLE;
       if (!Success && AllowExceptions)
-        ErrHandler.CloseError(FileName);
+        ErrHandler.CloseError(FileName,FileNameW);
     }
   CloseCount++;
   return(Success);
@@ -228,7 +234,7 @@ bool File::Close()
 
 void File::Flush()
 {
-#ifdef _WIN_32
+#ifdef _WIN_ALL
   FlushFileBuffers(hFile);
 #else
   fflush(hFile);
@@ -238,29 +244,37 @@ void File::Flush()
 
 bool File::Delete()
 {
-  if (HandleType!=FILE_HANDLENORMAL || !AllowDelete)
+  if (HandleType!=FILE_HANDLENORMAL)
     return(false);
   if (hFile!=BAD_HANDLE)
     Close();
+  if (!AllowDelete)
+    return(false);
   return(DelFile(FileName,FileNameW));
 }
 
 
-bool File::Rename(const char *NewName)
+bool File::Rename(const char *NewName,const wchar *NewNameW)
 {
+  // we do not need to rename if names are already same
   bool Success=strcmp(FileName,NewName)==0;
+  if (Success && *FileNameW!=0 && *NullToEmpty(NewNameW)!=0)
+    Success=wcscmp(FileNameW,NewNameW)==0;
+
   if (!Success)
-    Success=rename(FileName,NewName)==0;
+    Success=RenameFile(FileName,FileNameW,NewName,NewNameW);
+
   if (Success)
   {
+    // renamed successfully, storing the new name
     strcpy(FileName,NewName);
-    *FileNameW=0;
+    wcscpy(FileNameW,NullToEmpty(NewNameW));
   }
   return(Success);
 }
 
 
-void File::Write(const void *Data,int Size)
+void File::Write(const void *Data,size_t Size)
 {
   if (Size==0)
     return;
@@ -269,14 +283,14 @@ void File::Write(const void *Data,int Size)
     switch(HandleType)
     {
       case FILE_HANDLESTD:
-#ifdef _WIN_32
+#ifdef _WIN_ALL
         hFile=GetStdHandle(STD_OUTPUT_HANDLE);
 #else
         hFile=stdout;
 #endif
         break;
       case FILE_HANDLEERR:
-#ifdef _WIN_32
+#ifdef _WIN_ALL
         hFile=GetStdHandle(STD_ERROR_HANDLE);
 #else
         hFile=stderr;
@@ -286,42 +300,46 @@ void File::Write(const void *Data,int Size)
 #endif
   while (1)
   {
-    bool Success;
-#ifdef _WIN_32
-    DWORD Written;
+    bool Success=false;
+#ifdef _WIN_ALL
+    DWORD Written=0;
     if (HandleType!=FILE_HANDLENORMAL)
     {
-      const int MaxSize=0x4000;
-      for (int I=0;I<Size;I+=MaxSize)
-        if (!(Success=WriteFile(hFile,(byte *)Data+I,Min(Size-I,MaxSize),&Written,NULL)))
+      // writing to stdout can fail in old Windows if data block is too large
+      const size_t MaxSize=0x4000;
+      for (size_t I=0;I<Size;I+=MaxSize)
+      {
+        Success=WriteFile(hFile,(byte *)Data+I,(DWORD)Min(Size-I,MaxSize),&Written,NULL)==TRUE;
+        if (!Success)
           break;
+      }
     }
     else
-      Success=WriteFile(hFile,Data,Size,&Written,NULL);
+      Success=WriteFile(hFile,Data,(DWORD)Size,&Written,NULL)==TRUE;
 #else
     int Written=fwrite(Data,1,Size,hFile);
     Success=Written==Size && !ferror(hFile);
 #endif
     if (!Success && AllowExceptions && HandleType==FILE_HANDLENORMAL)
     {
-#if defined(_WIN_32) && !defined(SFX_MODULE) && !defined(RARDLL)
+#if defined(_WIN_ALL) && !defined(SFX_MODULE) && !defined(RARDLL)
       int ErrCode=GetLastError();
-      Int64 FilePos=Tell();
-      Int64 FreeSize=GetFreeDisk(FileName);
+      int64 FilePos=Tell();
+      uint64 FreeSize=GetFreeDisk(FileName);
       SetLastError(ErrCode);
       if (FreeSize>Size && FilePos-Size<=0xffffffff && FilePos+Size>0xffffffff)
-        ErrHandler.WriteErrorFAT(FileName);
+        ErrHandler.WriteErrorFAT(FileName,FileNameW);
 #endif
-      if (ErrHandler.AskRepeatWrite(FileName))
+      if (ErrHandler.AskRepeatWrite(FileName,FileNameW,false))
       {
-#ifndef _WIN_32
+#ifndef _WIN_ALL
         clearerr(hFile);
 #endif
         if (Written<Size && Written>0)
           Seek(Tell()-Written,SEEK_SET);
         continue;
       }
-      ErrHandler.WriteError(NULL,FileName);
+      ErrHandler.WriteError(NULL,NULL,FileName,FileNameW);
     }
     break;
   }
@@ -329,9 +347,10 @@ void File::Write(const void *Data,int Size)
 }
 
 
-int File::Read(void *Data,int Size)
+int File::Read(void *Data,size_t Size)
 {
-  Int64 FilePos;
+  int64 FilePos=0; // Initialized only to suppress some compilers warning.
+
   if (IgnoreReadErrors)
     FilePos=Tell();
   int ReadSize;
@@ -345,19 +364,19 @@ int File::Read(void *Data,int Size)
         if (IgnoreReadErrors)
         {
           ReadSize=0;
-          for (int I=0;I<Size;I+=512)
+          for (size_t I=0;I<Size;I+=512)
           {
             Seek(FilePos+I,SEEK_SET);
-            int SizeToRead=Min(Size-I,512);
+            size_t SizeToRead=Min(Size-I,512);
             int ReadCode=DirectRead(Data,SizeToRead);
             ReadSize+=(ReadCode==-1) ? 512:ReadCode;
           }
         }
         else
         {
-          if (HandleType==FILE_HANDLENORMAL && ErrHandler.AskRepeatRead(FileName))
+          if (HandleType==FILE_HANDLENORMAL && ErrHandler.AskRepeatRead(FileName,FileNameW))
             continue;
-          ErrHandler.ReadError(FileName);
+          ErrHandler.ReadError(FileName,FileNameW);
         }
     }
     break;
@@ -366,15 +385,16 @@ int File::Read(void *Data,int Size)
 }
 
 
-int File::DirectRead(void *Data,int Size)
+// Returns -1 in case of error.
+int File::DirectRead(void *Data,size_t Size)
 {
-#ifdef _WIN_32
-  const int MaxDeviceRead=20000;
+#ifdef _WIN_ALL
+  const size_t MaxDeviceRead=20000;
 #endif
 #ifndef _WIN_CE
   if (HandleType==FILE_HANDLESTD)
   {
-#ifdef _WIN_32
+#ifdef _WIN_ALL
     if (Size>MaxDeviceRead)
       Size=MaxDeviceRead;
     hFile=GetStdHandle(STD_INPUT_HANDLE);
@@ -383,9 +403,9 @@ int File::DirectRead(void *Data,int Size)
 #endif
   }
 #endif
-#ifdef _WIN_32
+#ifdef _WIN_ALL
   DWORD Read;
-  if (!ReadFile(hFile,Data,Size,&Read,NULL))
+  if (!ReadFile(hFile,Data,(DWORD)Size,&Read,NULL))
   {
     if (IsDevice() && Size>MaxDeviceRead)
       return(DirectRead(Data,MaxDeviceRead));
@@ -401,33 +421,33 @@ int File::DirectRead(void *Data,int Size)
     LastWrite=false;
   }
   clearerr(hFile);
-  int ReadSize=fread(Data,1,Size,hFile);
+  size_t ReadSize=fread(Data,1,Size,hFile);
   if (ferror(hFile))
     return(-1);
-  return(ReadSize);
+  return((int)ReadSize);
 #endif
 }
 
 
-void File::Seek(Int64 Offset,int Method)
+void File::Seek(int64 Offset,int Method)
 {
   if (!RawSeek(Offset,Method) && AllowExceptions)
-    ErrHandler.SeekError(FileName);
+    ErrHandler.SeekError(FileName,FileNameW);
 }
 
 
-bool File::RawSeek(Int64 Offset,int Method)
+bool File::RawSeek(int64 Offset,int Method)
 {
   if (hFile==BAD_HANDLE)
     return(true);
-  if (!is64plus(Offset) && Method!=SEEK_SET)
+  if (Offset<0 && Method!=SEEK_SET)
   {
     Offset=(Method==SEEK_CUR ? Tell():FileLength())+Offset;
     Method=SEEK_SET;
   }
-#ifdef _WIN_32
-  LONG HighDist=int64to32(Offset>>32);
-  if (SetFilePointer(hFile,int64to32(Offset),&HighDist,Method)==0xffffffff &&
+#ifdef _WIN_ALL
+  LONG HighDist=(LONG)(Offset>>32);
+  if (SetFilePointer(hFile,(LONG)Offset,&HighDist,Method)==0xffffffff &&
       GetLastError()!=NO_ERROR)
     return(false);
 #else
@@ -435,7 +455,7 @@ bool File::RawSeek(Int64 Offset,int Method)
 #if defined(_LARGEFILE_SOURCE) && !defined(_OSF_SOURCE) && !defined(__VMS)
   if (fseeko(hFile,Offset,Method)!=0)
 #else
-  if (fseek(hFile,(long)int64to32(Offset),Method)!=0)
+  if (fseek(hFile,(long)Offset,Method)!=0)
 #endif
     return(false);
 #endif
@@ -443,17 +463,22 @@ bool File::RawSeek(Int64 Offset,int Method)
 }
 
 
-Int64 File::Tell()
+int64 File::Tell()
 {
-#ifdef _WIN_32
+  if (hFile==BAD_HANDLE)
+    if (AllowExceptions)
+      ErrHandler.SeekError(FileName,FileNameW);
+    else
+      return(-1);
+#ifdef _WIN_ALL
   LONG HighDist=0;
   uint LowDist=SetFilePointer(hFile,0,&HighDist,FILE_CURRENT);
   if (LowDist==0xffffffff && GetLastError()!=NO_ERROR)
     if (AllowExceptions)
-      ErrHandler.SeekError(FileName);
+      ErrHandler.SeekError(FileName,FileNameW);
     else
       return(-1);
-  return(int32to64(HighDist,LowDist));
+  return(INT32TO64(HighDist,LowDist));
 #else
 #if defined(_LARGEFILE_SOURCE) && !defined(_OSF_SOURCE)
   return(ftello(hFile));
@@ -464,9 +489,9 @@ Int64 File::Tell()
 }
 
 
-void File::Prealloc(Int64 Size)
+void File::Prealloc(int64 Size)
 {
-#ifdef _WIN_32
+#ifdef _WIN_ALL
   if (RawSeek(Size,SEEK_SET))
   {
     Truncate();
@@ -492,8 +517,8 @@ void File::PutByte(byte Byte)
 
 bool File::Truncate()
 {
-#ifdef _WIN_32
-  return(SetEndOfFile(hFile));
+#ifdef _WIN_ALL
+  return(SetEndOfFile(hFile)==TRUE);
 #else
   return(false);
 #endif
@@ -502,7 +527,7 @@ bool File::Truncate()
 
 void File::SetOpenFileTime(RarTime *ftm,RarTime *ftc,RarTime *fta)
 {
-#ifdef _WIN_32
+#ifdef _WIN_ALL
   bool sm=ftm!=NULL && ftm->IsSet();
   bool sc=ftc!=NULL && ftc->IsSet();
   bool sa=fta!=NULL && fta->IsSet();
@@ -533,7 +558,7 @@ void File::SetCloseFileTimeByName(const char *Name,RarTime *ftm,RarTime *fta)
   bool seta=fta!=NULL && fta->IsSet();
   if (setm || seta)
   {
-    struct utimbuf ut;
+    utimbuf ut;
     if (setm)
       ut.modtime=ftm->GetUnix();
     else
@@ -550,7 +575,7 @@ void File::SetCloseFileTimeByName(const char *Name,RarTime *ftm,RarTime *fta)
 
 void File::GetOpenFileTime(RarTime *ft)
 {
-#ifdef _WIN_32
+#ifdef _WIN_ALL
   FILETIME FileTime;
   GetFileTime(hFile,NULL,NULL,&FileTime);
   *ft=FileTime;
@@ -563,31 +588,7 @@ void File::GetOpenFileTime(RarTime *ft)
 }
 
 
-void File::SetOpenFileStat(RarTime *ftm,RarTime *ftc,RarTime *fta)
-{
-#ifdef _WIN_32
-  SetOpenFileTime(ftm,ftc,fta);
-#endif
-}
-
-
-void File::SetCloseFileStat(RarTime *ftm,RarTime *fta,uint FileAttr)
-{
-#ifdef _WIN_32
-  SetFileAttr(FileName,FileNameW,FileAttr);
-#endif
-#ifdef _EMX
-  SetCloseFileTime(ftm,fta);
-  SetFileAttr(FileName,FileNameW,FileAttr);
-#endif
-#ifdef _UNIX
-  SetCloseFileTime(ftm,fta);
-  chmod(FileName,(mode_t)FileAttr);
-#endif
-}
-
-
-Int64 File::FileLength()
+int64 File::FileLength()
 {
   SaveFilePos SavePos(*this);
   Seek(0,SEEK_END);
@@ -605,7 +606,7 @@ bool File::IsDevice()
 {
   if (hFile==BAD_HANDLE)
     return(false);
-#ifdef _WIN_32
+#ifdef _WIN_ALL
   uint Type=GetFileType(hFile);
   return(Type==FILE_TYPE_CHAR || Type==FILE_TYPE_PIPE);
 #else
@@ -621,7 +622,7 @@ void File::fprintf(const char *fmt,...)
   va_start(argptr,fmt);
   safebuf char Msg[2*NM+1024],OutMsg[2*NM+1024];
   vsprintf(Msg,fmt,argptr);
-#ifdef _WIN_32
+#ifdef _WIN_ALL
   for (int Src=0,Dest=0;;Src++)
   {
     char CurChar=Msg[Src];
@@ -664,16 +665,16 @@ bool File::RemoveCreated()
 
 
 #ifndef SFX_MODULE
-long File::Copy(File &Dest,Int64 Length)
+int64 File::Copy(File &Dest,int64 Length)
 {
   Array<char> Buffer(0x10000);
-  long CopySize=0;
-  bool CopyAll=(Length==INT64ERR);
+  int64 CopySize=0;
+  bool CopyAll=(Length==INT64NDF);
 
   while (CopyAll || Length>0)
   {
     Wait();
-    int SizeToRead=(!CopyAll && Length<Buffer.Size()) ? int64to32(Length):Buffer.Size();
+    size_t SizeToRead=(!CopyAll && Length<(int64)Buffer.Size()) ? (size_t)Length:Buffer.Size();
     int ReadSize=Read(&Buffer[0],SizeToRead);
     if (ReadSize==0)
       break;

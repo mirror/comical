@@ -25,12 +25,7 @@
 #include "wxRarInputStream.h"
 #include <iostream>
 
-#ifndef LPARAM
-#define LPARAM long
-#endif
-
 extern "C" int CALLBACK unrarThreadCallback(wxUint32 msg, LPARAM UserData, LPARAM P1, LPARAM P2);
-
 
 wxUnrarThread::wxUnrarThread(wxRarInputStream *stream):
 wxThread(wxTHREAD_JOINABLE),

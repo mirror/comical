@@ -104,7 +104,7 @@ class ModelPPM
   private:
     friend struct PPM_CONTEXT;
     
-    _PACK_ATTR SEE2_CONTEXT SEE2Cont[25][16], DummySEE2Cont;
+    SEE2_CONTEXT SEE2Cont[25][16], DummySEE2Cont;
     
     struct PPM_CONTEXT *MinContext, *MedContext, *MaxContext;
     STATE* FoundState;      // found next state transition
@@ -124,6 +124,7 @@ class ModelPPM
     inline void ClearMask();
   public:
     ModelPPM();
+    void CleanUp(); // reset PPM variables after data error
     bool DecodeInit(Unpack *UnpackRead,int &EscChar);
     int DecodeChar();
 };

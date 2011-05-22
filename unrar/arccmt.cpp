@@ -1,30 +1,38 @@
+bool IsAnsiComment(const char *Data,int Size);
+
 bool Archive::GetComment(Array<byte> *CmtData,Array<wchar> *CmtDataW)
 {
   if (!MainComment)
     return(false);
   SaveFilePos SavePos(*this);
 
-  ushort CmtLength;
 #ifndef SFX_MODULE
+  ushort CmtLength;
   if (OldFormat)
   {
     Seek(SFXSize+SIZEOF_OLDMHD,SEEK_SET);
-    CmtLength=GetByte()+(GetByte()<<8);
+    CmtLength=GetByte();
+    CmtLength+=(GetByte()<<8);
   }
   else
 #endif
   {
     if (NewMhd.Flags & MHD_COMMENT)
     {
+      // Old style (RAR 2.9) archive comment embedded into the main 
+      // archive header.
       Seek(SFXSize+SIZEOF_MARKHEAD+SIZEOF_NEWMHD,SEEK_SET);
       ReadHeader();
     }
     else
     {
+      // Current (RAR 3.0+) version of archive comment.
       Seek(SFXSize+SIZEOF_MARKHEAD+NewMhd.HeadSize,SEEK_SET);
       return(SearchSubBlock(SUBHEAD_TYPE_CMT)!=0 && ReadCommentData(CmtData,CmtDataW)!=0);
     }
 #ifndef SFX_MODULE
+    // Old style (RAR 2.9) comment header embedded into the main 
+    // archive header.
     if (CommHead.HeadCRC!=HeaderCRC)
     {
       Log(FileName,St(MLogCommHead));
@@ -46,9 +54,14 @@ bool Archive::GetComment(Array<byte> *CmtData,Array<wchar> *CmtDataW)
     uint UnpCmtLength;
     if (OldFormat)
     {
-      UnpCmtLength=GetByte()+(GetByte()<<8);
+#ifdef NOCRYPT
+      return(false);
+#else
+      UnpCmtLength=GetByte();
+      UnpCmtLength+=(GetByte()<<8);
       CmtLength-=2;
       DataIO.SetCmt13Encryption();
+#endif
     }
     else
       UnpCmtLength=CommHead.UnpSize;
@@ -66,8 +79,8 @@ bool Archive::GetComment(Array<byte> *CmtData,Array<wchar> *CmtDataW)
     }
     else
     {
-      unsigned char *UnpData;
-      uint UnpDataSize;
+      byte *UnpData;
+      size_t UnpDataSize;
       DataIO.GetUnpackedData(&UnpData,&UnpDataSize);
       CmtData->Alloc(UnpDataSize);
       memcpy(&((*CmtData)[0]),UnpData,UnpDataSize);
@@ -87,19 +100,20 @@ bool Archive::GetComment(Array<byte> *CmtData,Array<wchar> *CmtDataW)
     }
   }
 #endif
-#if defined(_WIN_32) && !defined(_WIN_CE)
+#if defined(_WIN_ALL) && !defined(_WIN_CE)
   if (CmtData->Size()>0)
   {
-    int CmtSize=CmtData->Size();
-    OemToCharBuff((char *)CmtData->Addr(),(char *)CmtData->Addr(),CmtSize);
+    size_t CmtSize=CmtData->Size();
+    char *DataA=(char *)CmtData->Addr();
+    OemToCharBuffA(DataA,DataA,(DWORD)CmtSize);
 
     if (CmtDataW!=NULL)
     {
       CmtDataW->Alloc(CmtSize+1);
       CmtData->Push(0);
-      CharToWide((char *)CmtData->Addr(),CmtDataW->Addr(),CmtSize+1);
+      CharToWide(DataA,CmtDataW->Addr(),CmtSize+1);
       CmtData->Alloc(CmtSize);
-      CmtDataW->Alloc(strlenw(CmtDataW->Addr()));
+      CmtDataW->Alloc(wcslen(CmtDataW->Addr()));
     }
   }
 #endif
@@ -107,19 +121,19 @@ bool Archive::GetComment(Array<byte> *CmtData,Array<wchar> *CmtDataW)
 }
 
 
-int Archive::ReadCommentData(Array<byte> *CmtData,Array<wchar> *CmtDataW)
+size_t Archive::ReadCommentData(Array<byte> *CmtData,Array<wchar> *CmtDataW)
 {
   bool Unicode=SubHead.SubFlags & SUBHEAD_FLAGS_CMT_UNICODE;
   if (!ReadSubData(CmtData,NULL))
     return(0);
-  int CmtSize=CmtData->Size();
+  size_t CmtSize=CmtData->Size();
   if (Unicode)
   {
     CmtSize/=2;
     Array<wchar> DataW(CmtSize+1);
     RawToWide(CmtData->Addr(),DataW.Addr(),CmtSize);
     DataW[CmtSize]=0;
-    int DestSize=CmtSize*4;
+    size_t DestSize=CmtSize*4;
     CmtData->Alloc(DestSize+1);
     WideToChar(DataW.Addr(),(char *)CmtData->Addr(),DestSize);
     (*CmtData)[DestSize]=0;
@@ -138,7 +152,7 @@ int Archive::ReadCommentData(Array<byte> *CmtData,Array<wchar> *CmtDataW)
       CmtDataW->Alloc(CmtSize+1);
       CharToWide((char *)CmtData->Addr(),CmtDataW->Addr(),CmtSize+1);
       CmtData->Alloc(CmtSize);
-      CmtDataW->Alloc(strlenw(CmtDataW->Addr()));
+      CmtDataW->Alloc(wcslen(CmtDataW->Addr()));
     }
   return(CmtSize);
 }
@@ -152,7 +166,7 @@ void Archive::ViewComment()
   Array<byte> CmtBuf;
   if (GetComment(&CmtBuf,NULL))
   {
-    int CmtSize=CmtBuf.Size();
+    size_t CmtSize=CmtBuf.Size();
     char *ChPtr=(char *)memchr(&CmtBuf[0],0x1A,CmtSize);
     if (ChPtr!=NULL)
       CmtSize=ChPtr-(char *)&CmtBuf[0];
@@ -164,6 +178,9 @@ void Archive::ViewComment()
 
 
 #ifndef SFX_MODULE
+// Used for archives created by old RAR versions up to and including RAR 2.9.
+// New RAR versions store file comments in separate headers and such comments
+// are displayed in ListNewSubHeader function.
 void Archive::ViewFileComment()
 {
   if (!(NewLhd.Flags & LHD_COMMENT) || Cmd->DisableComment || OldFormat)
@@ -175,10 +192,10 @@ void Archive::ViewFileComment()
   Array<char> CmtBuf(MaxSize);
   SaveFilePos SavePos(*this);
   Seek(CurBlockPos+SIZEOF_NEWLHD+NewLhd.NameSize,SEEK_SET);
-  Int64 SaveCurBlockPos=CurBlockPos;
-  Int64 SaveNextBlockPos=NextBlockPos;
+  int64 SaveCurBlockPos=CurBlockPos;
+  int64 SaveNextBlockPos=NextBlockPos;
 
-  int Size=ReadHeader();
+  size_t Size=ReadHeader();
 
   CurBlockPos=SaveCurBlockPos;
   NextBlockPos=SaveNextBlockPos;
@@ -209,3 +226,5 @@ void Archive::ViewFileComment()
   }
 }
 #endif
+
+
