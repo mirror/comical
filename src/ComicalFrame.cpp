@@ -27,19 +27,18 @@
 #include "ComicBookZIP.h"
 #include "ComicBookDir.h"
 #include "Exceptions.h"
-#include <wx/textdlg.h>
-#include <wx/textctrl.h>
-#include <wx/filedlg.h>
-#include <wx/dirdlg.h>
-#include <wx/msgdlg.h>
-#include <wx/numdlg.h>
-#include <wx/tokenzr.h>
-#include <wx/log.h>
-#include <wx/utils.h>
-#include <wx/mimetype.h>
-#include <wx/event.h>
-#include <wx/scrolbar.h>
+
 #include <wx/artprov.h>
+#include <wx/dirdlg.h>
+#include <wx/event.h>
+#include <wx/filedlg.h>
+#include <wx/log.h>
+#include <wx/mimetype.h>
+#include <wx/msgdlg.h>
+#include <wx/scrolbar.h>
+#include <wx/textdlg.h>
+#include <wx/utils.h>
+#include <wx/wfstream.h>
 
 // and the icons
 #include "firstpage.h"
@@ -343,20 +342,30 @@ void ComicalFrame::OpenFile(const wxString& filename)
 {
 	ComicBook *newBook;
 	
+	static const wxUint8 zipHeader[] = { 0x50, 0x4b, 0x03, 0x04 };
+	static const wxUint8 rarHeader[] = { 0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x00 };
+
+	wxUint8 fileHeader[sizeof(rarHeader)];
+
 	if (filename.empty())
 		return;
 		
 	clearComicBook();
 	try {
-		if (filename.Right(4).Upper() == wxT(".CBR") || filename.Right(4).Upper() == wxT(".RAR"))
+		wxFileInputStream filestream(filename);
+		if (!filestream.IsOk())
+			throw ArchiveException(filename, wxString(wxT("Could not open the file.")));
+
+		filestream.Read(fileHeader, sizeof(fileHeader));
+		if (filestream.LastRead() != sizeof(fileHeader))
+			throw ArchiveException(filename, wxString(wxT("Not a valid comic book archive.")));
+
+		if (memcmp(fileHeader, rarHeader, sizeof(rarHeader)) == 0)
 			newBook = new ComicBookRAR(filename, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness);
-		else if (filename.Right(4).Upper() == wxT(".CBZ") || filename.Right(4).Upper() == wxT(".ZIP"))
+		else if (memcmp(fileHeader, zipHeader, sizeof(zipHeader)) == 0)
 			newBook = new ComicBookZIP(filename, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness);
-		else {
-			wxLogError(wxT("Cannot open ") + filename);
-			wxLog::FlushActive();
-			return;
-		}
+		else
+			throw ArchiveException(filename, wxString(wxT("Not a valid comic book archive.")));
 		
 		if (newBook->GetPageCount() == 0) {
 			wxLogError(wxT("The archive \"") + filename + wxT("\" does not contain any pages."));
@@ -369,8 +378,8 @@ void ComicalFrame::OpenFile(const wxString& filename)
 		config->Write(wxT("CWD"), wxPathOnly(filename));
 	} catch (ArchiveException &ae) {
 		clearComicBook();
-		wxLogError(ae.Message);
-		wxLog::FlushActive();
+		wxMessageDialog errDlg(this, ae.Message, wxT("Open Failed"), wxOK | wxICON_ERROR);
+		errDlg.ShowModal();
 	}
 }
 
