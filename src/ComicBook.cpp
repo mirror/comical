@@ -24,6 +24,7 @@
 
 #include "ComicBook.h"
 #include "Exceptions.h"
+#include <algorithm>
 #include <cstring>
 #include <wx/datetime.h>
 #include <wx/mstream.h>
@@ -722,6 +723,13 @@ void ComicBook::SetPassword(const char* new_password)
 	strcpy(password, new_password);
 }
 
+
+static bool sortPageFunc(ComicPage* left, ComicPage* right)
+{
+	return (left->Filename.Cmp(right->Filename) <= 0);
+}
+
+
 void ComicBook::postCtor()
 {
 	if (!password) { // the password may already have been set if this is a RAR with encrypted headers
@@ -735,4 +743,7 @@ void ComicBook::postCtor()
 			SetPassword(new_password.ToAscii());
 		}
 	}
+
+	// Sort the pages
+	std::sort(Pages.begin(), Pages.end(), sortPageFunc);
 }

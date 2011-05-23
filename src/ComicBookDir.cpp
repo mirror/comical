@@ -35,8 +35,6 @@ ComicBookDir::ComicBookDir(wxString dir, wxUint32 cacheLen, COMICAL_ZOOM zoom, l
 	wxInputStream *stream;
 	ComicPage *page;
 	
-	allFiles.Sort(false);
-
 	for (wxUint32 i = 0; i < count; i++) {
 		path = allFiles.Item(i);
 		stream = ExtractStream(path);
