@@ -64,24 +64,17 @@ ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, 
 		RARSetPassword(rarFile, password);
 
 	while ((RHCode = RARReadHeaderEx(rarFile, &header)) == 0) {
-#ifdef wxUSE_UNICODE
-		path = wxString(header.FileNameW);
-#else
-		path = wxString(header.FileName);
-#endif
+		path = header.FileNameW;
 		stream = ExtractStream(path);
 		page = new ComicPage(path, stream);
 		if (page->GetBitmapType() == wxBITMAP_TYPE_INVALID)
 			delete page;
 		else
 			Pages.push_back(page);
-		// Memory Input Streams don't take ownership of the buffer
-		wxMemoryInputStream *mstream = dynamic_cast<wxMemoryInputStream*>(stream);
-		if (mstream)
-			delete[] (wxUint8 *) mstream->GetInputStreamBuffer()->GetBufferStart();
+
 		wxDELETE(stream);
 
-		if ((PFCode = RARProcessFile(rarFile, RAR_SKIP, NULL, NULL)) != 0) {
+		if ((PFCode = RARProcessFileW(rarFile, RAR_SKIP, NULL, NULL)) != 0) {
 			closeRar(rarFile, &flags);
 			throw ArchiveException(filename, ProcessFileError(PFCode, path));
 		}
@@ -123,12 +116,8 @@ bool ComicBookRAR::TestPassword()
 		RARSetPassword(rarFile, password);
 
 	while ((RHCode = RARReadHeaderEx(rarFile, &header)) == 0) {
-#ifdef wxUSE_UNICODE
-		if (page.IsSameAs(wxString(header.FileNameW))) {
-#else // ASCII
-		if (page.IsSameAs(header.FileName)) {
-#endif
-			break;	
+		if (page.Cmp(header.FileNameW) == 0) {
+			break;
 		} else {
 			if ((PFCode = RARProcessFile(rarFile, RAR_SKIP, NULL, NULL)) != 0) {
 				closeRar(rarFile, &flags);
@@ -225,19 +214,7 @@ HANDLE ComicBookRAR::openRar(RAROpenArchiveDataEx *flags, RARHeaderDataEx *heade
 	HANDLE rarFile;
 
 	memset(flags, 0, sizeof(*flags));
-#ifdef wxUSE_UNICODE
-#ifdef __WXOSX__
-	const char *filenameData = filename.fn_str().data();
-	flags->ArcName = new char[strlen(filenameData) + 1];
-	strcpy(flags->ArcName, filenameData);
-#else
-	flags->ArcNameW = new wchar_t[filename.Length() + 1];
-	wcscpy(flags->ArcNameW, filename.c_str());
-#endif
-#else // ASCII
-	flags->ArcName = new char[filename.Length() + 1];
-	strcpy(flags->ArcName, filename.c_str());
-#endif
+	flags->ArcNameW = const_cast<wchar_t*>(filename.wc_str());
 	flags->CmtBuf = NULL;
 	flags->OpenMode = mode;
 
@@ -256,10 +233,4 @@ void ComicBookRAR::closeRar(HANDLE rarFile, RAROpenArchiveDataEx *flags)
 {
 	if (rarFile)
 		RARCloseArchive(rarFile);
-
-#if defined(wxUSE_UNICODE) && !defined(__WXOSX__)
-	delete[] flags->ArcNameW;
-#else
-	delete[] flags->ArcName;
-#endif
 }

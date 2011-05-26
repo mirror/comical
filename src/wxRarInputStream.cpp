@@ -60,22 +60,10 @@ m_iLength(wxInvalidOffset)
 	int RHCode, PFCode;
 	wxFileOffset length = 0;
 
-	std::cerr << "Opening page " << entry.ToAscii() << " from " << filename.ToAscii() << std::endl;
-
 	memset(&flags, 0, sizeof(flags));
 	memset(&m_rarHeader, 0, sizeof(m_rarHeader));
 
-#ifdef wxUSE_UNICODE
-#ifdef __WXOSX__
-	const char *filenameData = filename.fn_str().data();
-	flags.rcName = new char[strlen(filenameData) + 1];
-	strcpy(flags.ArcName, filenameData);
-#else
-	flags.ArcNameW = const_cast<wchar_t*>(filename.c_str());
-#endif
-#else // ASCII
-	flags.ArcName = const_cast<char*>(filename.c_str());
-#endif
+	flags.ArcNameW = const_cast<wchar_t*>(filename.wc_str());
 	flags.CmtBuf = NULL;
 	flags.OpenMode = RAR_OM_EXTRACT;
 
@@ -89,11 +77,7 @@ m_iLength(wxInvalidOffset)
 		RARSetPassword(m_rarFile, const_cast<char*>(password));
 
 	while ((RHCode = RARReadHeaderEx(m_rarFile, &m_rarHeader)) == 0) {
-#ifdef wxUSE_UNICODE
-		if (entry.IsSameAs(wxString(m_rarHeader.FileNameW))) {
-#else // ASCII
-		if (entry.IsSameAs(m_rarHeader.FileName)) {
-#endif
+		if (entry.Cmp(m_rarHeader.FileNameW) == 0) {
 			// Handle archive members bigger than 2 GiB
 			if (sizeof(wxFileOffset) == sizeof(unsigned int)) {
 				// uh oh, 2 gig file limit...
@@ -106,7 +90,7 @@ m_iLength(wxInvalidOffset)
 						(wxFileOffset)m_rarHeader.UnpSize;
 			break;
 		} else {
-			if ((PFCode = RARProcessFile(m_rarFile, RAR_SKIP, NULL, NULL)) != 0) {
+			if ((PFCode = RARProcessFileW(m_rarFile, RAR_SKIP, NULL, NULL)) != 0) {
 				m_lasterror = wxSTREAM_READ_ERROR;
 				return;
 			}

@@ -41,7 +41,7 @@ m_iMiniZipError(UNZ_OK)
 
 	// FIXME what encoding is the filename in?  What encoding does unzOpen
 	// expect?  (Does it depend on the system's encoding?)
-	m_zipFile = unzOpen(filename.ToAscii());
+	m_zipFile = unzOpen64(filename.fn_str());
 
 	if (!m_zipFile) {
 		m_iMiniZipError = UNZ_BADZIPFILE;
@@ -49,12 +49,12 @@ m_iMiniZipError(UNZ_OK)
 		return;
 	}
 
-	if((m_iMiniZipError = unzLocateFile(m_zipFile, entry.ToAscii(), 0)) != UNZ_OK) {
+	if((m_iMiniZipError = unzLocateFile(m_zipFile, entry.ToUTF8(), 0)) != UNZ_OK) {
 		cleanup();
 		return;
 	}
 
-	if ((m_iMiniZipError = unzGetCurrentFileInfo(m_zipFile, &m_fileInfo, NULL, 0, NULL, 0, NULL, 0)) != UNZ_OK) {
+	if ((m_iMiniZipError = unzGetCurrentFileInfo64(m_zipFile, &m_fileInfo, NULL, 0, NULL, 0, NULL, 0)) != UNZ_OK) {
 		cleanup();
 		return;
 	}
@@ -125,7 +125,7 @@ size_t wxMiniZipInputStream::OnSysRead(void* buffer, size_t size)
 wxFileOffset wxMiniZipInputStream::OnSysTell() const
 {
 	if (m_zipFile)
-		return unztell(m_zipFile);
+		return unztell64(m_zipFile);
 	else
 		return wxInvalidOffset;
 }

@@ -34,8 +34,8 @@ ComicBookZIP::ComicBookZIP(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, 
 	wxString path;
 	static char namebuf[1024];
 	unzFile ZipFile;
-	unz_file_info fileInfo;
-	ZipFile = unzOpen(filename.ToAscii());
+	unz_file_info64 fileInfo;
+	ZipFile = unzOpen64(filename.fn_str());
 	wxInputStream *stream;
 	ComicPage *page;
 
@@ -43,8 +43,8 @@ ComicBookZIP::ComicBookZIP(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, 
 		throw ArchiveException(filename, wxT("Could not open the file."));
 
 	for (int retcode = unzGoToFirstFile(ZipFile); retcode == UNZ_OK; retcode = unzGoToNextFile(ZipFile)) {
-		unzGetCurrentFileInfo(ZipFile, &fileInfo, namebuf, 1024, NULL, 0, NULL, 0);
-		path = wxString::FromAscii(namebuf);
+		unzGetCurrentFileInfo64(ZipFile, &fileInfo, namebuf, 1024, NULL, 0, NULL, 0);
+		path = wxString::FromUTF8(namebuf);
 		stream = ExtractStream(path);
 		page = new ComicPage(path, stream);
 		if (page->GetBitmapType() == wxBITMAP_TYPE_INVALID)

@@ -48,7 +48,7 @@ protected:
 
 private:
 	unzFile m_zipFile;
-	unz_file_info m_fileInfo;
+	unz_file_info64 m_fileInfo;
 	int m_iMiniZipError;
 
 	void cleanup();

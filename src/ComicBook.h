@@ -98,8 +98,9 @@ public:
 	virtual wxInputStream * ExtractStream(wxUint32 pageindex) = 0;
 	virtual wxInputStream * ExtractStream(wxString) = 0;
 
+	const wxString filename;
+
 protected:
-	wxString filename;
 	char* password;
 	virtual bool TestPassword() { return true; }
 	

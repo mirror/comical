@@ -61,7 +61,7 @@ public:
 
 	wxBitmapType GetBitmapType() const { return m_bitmapType; }
 	
-	wxString Filename;
+	const wxString Filename;
 
 	wxImage Original;
 	wxImage Resample;
