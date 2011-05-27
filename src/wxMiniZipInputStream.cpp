@@ -39,8 +39,6 @@ m_iMiniZipError(UNZ_OK)
 
 	// TODO what minizip / zlib errors set errno?
 
-	// FIXME what encoding is the filename in?  What encoding does unzOpen
-	// expect?  (Does it depend on the system's encoding?)
 	m_zipFile = unzOpen64(filename.fn_str());
 
 	if (!m_zipFile) {

@@ -33,9 +33,8 @@ ComicBookZIP::ComicBookZIP(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, 
 {
 	wxString path;
 	static char namebuf[1024];
-	unzFile ZipFile;
 	unz_file_info64 fileInfo;
-	ZipFile = unzOpen64(filename.fn_str());
+	unzFile ZipFile = unzOpen64(filename.fn_str());
 	wxInputStream *stream;
 	ComicPage *page;
 
@@ -97,13 +96,13 @@ bool ComicBookZIP::TestPassword()
 {
 	int retcode;
 	unzFile ZipFile;
-	ZipFile = unzOpen(filename.ToAscii());
+	ZipFile = unzOpen64(filename.fn_str());
 	bool retval;
 	
 	if (!ZipFile) {
 		throw ArchiveException(filename, wxT("Could not open the file."));
 	}
-	if((retcode = unzLocateFile(ZipFile, Pages.at(0)->Filename.ToAscii(), 0)) != UNZ_OK) {
+	if((retcode = unzLocateFile(ZipFile, Pages.at(0)->Filename.fn_str(), 0)) != UNZ_OK) {
 		unzClose(ZipFile);
 		throw ArchiveException(filename, ArchiveError(retcode));
 	}

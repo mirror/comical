@@ -726,7 +726,15 @@ void ComicBook::SetPassword(const char* new_password)
 
 static bool sortPageFunc(ComicPage* left, ComicPage* right)
 {
-	return (left->Filename.Cmp(right->Filename) <= 0);
+	// wxWidget's wxString::Cmp() function is actually just a dumb memchr!
+	// strcoll / wcscoll does a proper string comparison using the user's
+	// current locale
+#if _WIN32
+	// _WIN32 is really just a shortcut for "fn_str() returns wchar_t*"
+	return (wcscoll(left->Filename.fn_str(), right->Filename.fn_str()) <= 0);
+#else
+	return (strcoll(left->Filename.fn_str(), right->Filename.fn_str()) <= 0);
+#endif
 }
 
 

@@ -2,14 +2,13 @@ Requirements for 0.9:
 * Ensure memory leaks are fixed
 * Use a wxCondition instead of busy-wait in the ComicBook thread
 * Continue fetching thumbnails in the background
-* Unicode working in filenames, ZIP file entries, RAR file entires
 * Universal build on Mac OS X
 * working wxRarInputStream with small buffer in first callback
-* Store image dimensions permanently
-    prefetch image headers to get dimensions
-* Check that broken pages are only tried once
+* Make a note of broken pages
 * the switch to PNG seems to have made startup slower
-* Check file header to find RAR or ZIP instead of relying on file extensions
+* Progress dialog for opening archives
+* wxLog does not appear to be the correct response to errors
+* Revisit ZIP and RAR encryption testing
 
 Requirements for 1.0:
 
@@ -23,14 +22,11 @@ Nice-to-have features:
 
 * Box Zoom/Magnifying Glass
 * resizable ComicalBrowser
-* run source code through beautifier
-* const-correctness
 * Floating page controls (fade in-out on mouse movement)
 * Investigate painting only the damaged rectangle instead of the whole canvas
-* New comic book creation wizard
-	Could be good vehicle to encourage new file format
 * proper wxDocManager/wxDocument/wxView implementation
 * multi-volume RAR
+* SIMD optimizations for image resizing
 
 Bugs:
 * When landscape page is shown, make both sets of rotation buttons work
