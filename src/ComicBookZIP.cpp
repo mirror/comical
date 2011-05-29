@@ -24,26 +24,37 @@
 
 #include "ComicBookZIP.h"
 #include "wxMiniZipInputStream.h"
-#include "unzip.h"
 #include "Exceptions.h"
-#include <cstring>
 #include <errno.h>
+
+#include <wx/progdlg.h>
 
 ComicBookZIP::ComicBookZIP(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, long zoomLevel, bool fitOnlyOversize, COMICAL_MODE mode, FREE_IMAGE_FILTER filter, COMICAL_DIRECTION direction, wxInt32 scrollbarThickness) : ComicBook(file, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness)
 {
 	wxString path;
 	static char namebuf[1024];
 	unz_file_info64 fileInfo;
+	unz_global_info64 globalInfo;
 	unzFile ZipFile = unzOpen64(filename.fn_str());
 	wxInputStream *stream;
 	ComicPage *page;
+	int progress = 0;
 
 	if (!ZipFile)
 		throw ArchiveException(filename, wxT("Could not open the file."));
 
+	unzGetGlobalInfo64(ZipFile, &globalInfo);
+
+	wxProgressDialog progressDlg(wxString(wxT("Opening ")) + file, wxString(), globalInfo.number_entry);
+	progressDlg.SetMinSize(wxSize(400, -1));
+
 	for (int retcode = unzGoToFirstFile(ZipFile); retcode == UNZ_OK; retcode = unzGoToNextFile(ZipFile)) {
 		unzGetCurrentFileInfo64(ZipFile, &fileInfo, namebuf, 1024, NULL, 0, NULL, 0);
 		path = wxString::FromUTF8(namebuf);
+
+		progressDlg.Update(progress, wxString(wxT("Scanning: ")) + path);
+		progressDlg.CentreOnParent(wxHORIZONTAL);
+
 		stream = ExtractStream(path);
 		page = new ComicPage(path, stream);
 		if (page->GetBitmapType() == wxBITMAP_TYPE_INVALID)
@@ -51,6 +62,8 @@ ComicBookZIP::ComicBookZIP(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, 
 		else
 			Pages.push_back(page);
 		delete stream;
+
+		progressDlg.Update(++progress);
 	};
 
 	unzClose(ZipFile);	

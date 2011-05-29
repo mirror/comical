@@ -28,6 +28,8 @@
 #include "Exceptions.h"
 #include "wxRarInputStream.h"
 
+#include <wx/progdlg.h>
+
 extern "C" int CALLBACK TestPasswordCallbackProc(wxUint32 msg, long UserData, long P1, long P2);
 
 ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, long zoomLevel, bool fitOnlyOversize, COMICAL_MODE mode, FREE_IMAGE_FILTER filter, COMICAL_DIRECTION direction, wxInt32 scrollbarThickness) : ComicBook(file, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness)
@@ -39,6 +41,7 @@ ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, 
 	wxString path, new_password;
 	wxInputStream *stream;
 	ComicPage *page;
+	int numEntries, progress=0;
 	
 	open_rar:
 	
@@ -57,8 +60,27 @@ ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, 
 	if (password)
 		RARSetPassword(rarFile, password);
 
+	// skip through the entire archive to count the number of entries
+	for (numEntries = 0; RARReadHeaderEx(rarFile, &header) == 0; numEntries++) {
+		if ((PFCode = RARProcessFile(rarFile, RAR_SKIP, NULL, NULL)) != 0) {
+			closeRar(rarFile, &flags);
+			throw ArchiveException(filename, ProcessFileError(PFCode, header.FileNameW));
+		}
+	}
+
+	wxProgressDialog progressDlg(wxString(wxT("Opening ")) + file, wxString(), numEntries);
+	progressDlg.SetMinSize(wxSize(400, -1));
+
+	// close and re-open the archive to restart at the first header
+	closeRar(rarFile, &flags);
+	rarFile = openRar(&flags, &header, RAR_OM_LIST);
+
 	while ((RHCode = RARReadHeaderEx(rarFile, &header)) == 0) {
 		path = header.FileNameW;
+
+		progressDlg.Update(progress, wxString(wxT("Scanning: ")) + path);
+		progressDlg.CentreOnParent(wxHORIZONTAL);
+
 		stream = ExtractStream(path);
 		page = new ComicPage(path, stream);
 		if (page->GetBitmapType() == wxBITMAP_TYPE_INVALID)
@@ -72,6 +94,8 @@ ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, 
 			closeRar(rarFile, &flags);
 			throw ArchiveException(filename, ProcessFileError(PFCode, path));
 		}
+
+		progressDlg.Update(++progress);
 	}
 
 	closeRar(rarFile, &flags);

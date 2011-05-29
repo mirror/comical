@@ -6,7 +6,6 @@ Requirements for 0.9:
 * working wxRarInputStream with small buffer in first callback
 * Make a note of broken pages
 * the switch to PNG seems to have made startup slower
-* Progress dialog for opening archives
 * wxLog does not appear to be the correct response to errors
 * Revisit ZIP and RAR encryption testing
 
@@ -17,16 +16,16 @@ Requirements for 1.0:
 * Info file display
 * Better code annotation and documentation
 * Bookmarks, resume last comic book on open
+* Floating page controls (fade in-out on mouse movement)
+* SIMD optimizations for image resizing
 
 Nice-to-have features:
 
 * Box Zoom/Magnifying Glass
 * resizable ComicalBrowser
-* Floating page controls (fade in-out on mouse movement)
 * Investigate painting only the damaged rectangle instead of the whole canvas
 * proper wxDocManager/wxDocument/wxView implementation
 * multi-volume RAR
-* SIMD optimizations for image resizing
 
 Bugs:
 * When landscape page is shown, make both sets of rotation buttons work

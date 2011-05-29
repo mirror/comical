@@ -26,6 +26,7 @@
 
 #include <wx/file.h>
 #include <wx/log.h>
+#include <wx/progdlg.h>
 
 ComicBookDir::ComicBookDir(wxString dir, wxUint32 cacheLen, COMICAL_ZOOM zoom, long zoomLevel, bool fitOnlyOversize, COMICAL_MODE mode, FREE_IMAGE_FILTER filter, COMICAL_DIRECTION direction, wxInt32 scrollbarThickness) : ComicBook(dir, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness)
 {
@@ -35,8 +36,15 @@ ComicBookDir::ComicBookDir(wxString dir, wxUint32 cacheLen, COMICAL_ZOOM zoom, l
 	wxInputStream *stream;
 	ComicPage *page;
 	
+	wxProgressDialog progressDlg(wxString(wxT("Opening ")) + dir, wxString(), count);
+	progressDlg.SetMinSize(wxSize(400, -1));
+
 	for (wxUint32 i = 0; i < count; i++) {
 		path = allFiles.Item(i);
+
+		progressDlg.Update(i, wxString(wxT("Scanning: ")) + path);
+		progressDlg.CentreOnParent(wxHORIZONTAL);
+
 		stream = ExtractStream(path);
 		page = new ComicPage(path, stream);
 		if (page->GetBitmapType() == wxBITMAP_TYPE_INVALID)
@@ -45,6 +53,8 @@ ComicBookDir::ComicBookDir(wxString dir, wxUint32 cacheLen, COMICAL_ZOOM zoom, l
 			Pages.push_back(page);
 
 		wxDELETE(stream);
+
+		progressDlg.Update(i + 1);
 	}
 	
 	postCtor();
