@@ -442,9 +442,9 @@ void * ComicBook::Entry()
 				page->OriginalLock.Lock();
 				try {
 					if (!page->Original.Ok())
-						LoadOriginal(target);
+						LoadOriginal(j);
 				} catch (ArchiveException *ae) {
-					SendPageErrorEvent(target, ae->Message);
+					SendPageErrorEvent(j, ae->Message);
 				}
 				page->OriginalLock.Unlock();
 				
