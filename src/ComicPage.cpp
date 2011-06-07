@@ -31,9 +31,9 @@
 
 ComicPage::ComicPage(wxString &filename, wxInputStream *headerStream):
 Filename(filename),
+orientation(NORTH),
 m_uiWidth(0),
 m_uiHeight(0),
-orientation(NORTH),
 m_bitmapType(wxBITMAP_TYPE_INVALID),
 m_bitmapLeft(NULL),
 m_bitmapRight(NULL),

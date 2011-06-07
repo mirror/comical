@@ -32,9 +32,6 @@ wxInputStream(),
 m_zipFile(NULL),
 m_iMiniZipError(UNZ_OK)
 {
-	wxUint8 *buffer, *inc_buffer;
-	uLong length;
-
 	memset(&m_fileInfo, 0, sizeof(m_fileInfo));
 
 	// TODO what minizip / zlib errors set errno?

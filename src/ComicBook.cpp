@@ -39,6 +39,9 @@ DEFINE_EVENT_TYPE(EVT_PAGE_ERROR)
 ComicBook::ComicBook(wxString _filename, wxUint32 _cacheLen, COMICAL_ZOOM _zoom, long _zoomLevel, bool _fitOnlyOversize, COMICAL_MODE _mode, FREE_IMAGE_FILTER _filter, COMICAL_DIRECTION _direction, wxInt32 _scrollbarThickness):
 wxThread(wxTHREAD_JOINABLE),
 filename(_filename),
+password(NULL),
+evtHandler(new wxEvtHandler()),
+currentPage(0),
 cacheLen(_cacheLen),
 zoom(_zoom),
 zoomLevel(_zoomLevel),
@@ -46,10 +49,7 @@ fitOnlyOversize(_fitOnlyOversize),
 mode(_mode),
 filter(_filter),
 direction(_direction),
-scrollbarThickness(_scrollbarThickness),
-currentPage(0),
-evtHandler(new wxEvtHandler()),
-password(NULL)
+scrollbarThickness(_scrollbarThickness)
 {
 }
 

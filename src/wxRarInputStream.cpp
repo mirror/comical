@@ -58,7 +58,6 @@ m_iLength(wxInvalidOffset)
 {
 	struct RAROpenArchiveDataEx flags;
 	int RHCode, PFCode;
-	wxFileOffset length = 0;
 
 	memset(&flags, 0, sizeof(flags));
 	memset(&m_rarHeader, 0, sizeof(m_rarHeader));
