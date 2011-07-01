@@ -162,9 +162,13 @@ extern int ZEXPORT unzStringFileNameCompare OF ((const char* fileName1,
     (like 1 on Unix, 2 on Windows)
 */
 
-
+#if defined(_WIN32) || defined(WIN32)
+extern unzFile ZEXPORT unzOpen OF((const TCHAR *path));
+extern unzFile ZEXPORT unzOpen64 OF((const TCHAR *path));
+#else
 extern unzFile ZEXPORT unzOpen OF((const char *path));
-extern unzFile ZEXPORT unzOpen64 OF((const void *path));
+extern unzFile ZEXPORT unzOpen64 OF((const char *path));
+#endif
 /*
   Open a Zip file. path contain the full pathname (by example,
      on a Windows XP computer "c:\\zlib\\zlib113.zip" or on an Unix computer
@@ -173,23 +177,30 @@ extern unzFile ZEXPORT unzOpen64 OF((const void *path));
        return value is NULL.
      Else, the return value is a unzFile Handle, usable with other function
        of this unzip package.
-     the "64" function take a const void* pointer, because the path is just the
-       value passed to the open64_file_func callback.
-     Under Windows, if UNICODE is defined, using fill_fopen64_filefunc, the path
-       is a pointer to a wide unicode string (LPCTSTR is LPCWSTR), so const char*
-       does not describe the reality
+     Under Windows, if _UNICODE is defined, TCHAR is a wchar_t, and a char
+       otherwise.
 */
 
 
+#if defined(_WIN32) || defined(WIN32)
+extern unzFile ZEXPORT unzOpen2 OF((const TCHAR *path,
+                                    zlib_filefunc_def* pzlib_filefunc_def));
+#else
 extern unzFile ZEXPORT unzOpen2 OF((const char *path,
                                     zlib_filefunc_def* pzlib_filefunc_def));
+#endif
 /*
    Open a Zip file, like unzOpen, but provide a set of file low level API
       for read/write the zip file (see ioapi.h)
 */
 
-extern unzFile ZEXPORT unzOpen2_64 OF((const void *path,
+#if defined(_WIN32) || defined(WIN32)
+extern unzFile ZEXPORT unzOpen2_64 OF((const TCHAR *path,
                                     zlib_filefunc64_def* pzlib_filefunc_def));
+#else
+extern unzFile ZEXPORT unzOpen2_64 OF((const char *path,
+                                    zlib_filefunc64_def* pzlib_filefunc_def));
+#endif
 /*
    Open a Zip file, like unz64Open, but provide a set of file low level API
       for read/write the zip file (see ioapi.h)

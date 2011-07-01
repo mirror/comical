@@ -581,9 +581,15 @@ local ZPOS64_T unz64local_SearchCentralDir64(const zlib_filefunc64_32_def* pzlib
      Else, the return value is a unzFile Handle, usable with other function
        of this unzip package.
 */
-local unzFile unzOpenInternal (const void *path,
+#if defined(_WIN32) || defined(WIN32)
+local unzFile unzOpenInternal (const TCHAR *path,
                                zlib_filefunc64_32_def* pzlib_filefunc64_32_def,
                                int is64bitOpenFunction)
+#else
+local unzFile unzOpenInternal (const char *path,
+                               zlib_filefunc64_32_def* pzlib_filefunc64_32_def,
+                               int is64bitOpenFunction)
+#endif
 {
     unz64_s us;
     unz64_s *s;
@@ -762,8 +768,13 @@ local unzFile unzOpenInternal (const void *path,
 }
 
 
+#if defined(_WIN32) || defined(WIN32)
+extern unzFile ZEXPORT unzOpen2 (const TCHAR *path,
+                                        zlib_filefunc_def* pzlib_filefunc32_def)
+#else
 extern unzFile ZEXPORT unzOpen2 (const char *path,
                                         zlib_filefunc_def* pzlib_filefunc32_def)
+#endif
 {
     if (pzlib_filefunc32_def != NULL)
     {
@@ -775,8 +786,13 @@ extern unzFile ZEXPORT unzOpen2 (const char *path,
         return unzOpenInternal(path, NULL, 0);
 }
 
-extern unzFile ZEXPORT unzOpen2_64 (const void *path,
+#if defined(_WIN32) || defined(WIN32)
+extern unzFile ZEXPORT unzOpen2_64 (const TCHAR *path,
                                      zlib_filefunc64_def* pzlib_filefunc_def)
+#else
+extern unzFile ZEXPORT unzOpen2_64 (const char *path,
+                                     zlib_filefunc64_def* pzlib_filefunc_def)
+#endif
 {
     if (pzlib_filefunc_def != NULL)
     {
@@ -790,12 +806,20 @@ extern unzFile ZEXPORT unzOpen2_64 (const void *path,
         return unzOpenInternal(path, NULL, 1);
 }
 
+#if defined(_WIN32) || defined(WIN32)
+extern unzFile ZEXPORT unzOpen (const TCHAR *path)
+#else
 extern unzFile ZEXPORT unzOpen (const char *path)
+#endif
 {
     return unzOpenInternal(path, NULL, 0);
 }
 
-extern unzFile ZEXPORT unzOpen64 (const void *path)
+#if defined(_WIN32) || defined(WIN32)
+extern unzFile ZEXPORT unzOpen64 (const TCHAR *path)
+#else
+extern unzFile ZEXPORT unzOpen64 (const char *path)
+#endif
 {
     return unzOpenInternal(path, NULL, 1);
 }

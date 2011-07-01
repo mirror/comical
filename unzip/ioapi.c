@@ -12,17 +12,25 @@
 
 #if (defined(_WIN32))
         #define _CRT_SECURE_NO_WARNINGS
+#else
+#ifndef _T
+#define _T
+#endif
 #endif
 
 #include "ioapi.h"
 
-voidpf call_zopen64 (const zlib_filefunc64_32_def* pfilefunc,const void*filename,int mode)
+#ifdef _WIN32
+voidpf call_zopen64 (const zlib_filefunc64_32_def* pfilefunc,const TCHAR*filename,int mode)
+#else
+voidpf call_zopen64 (const zlib_filefunc64_32_def* pfilefunc,const char*filename,int mode)
+#endif
 {
     if (pfilefunc->zfile_func64.zopen64_file != NULL)
         return (*(pfilefunc->zfile_func64.zopen64_file)) (pfilefunc->zfile_func64.opaque,filename,mode);
     else
     {
-        return (*(pfilefunc->zopen32_file))(pfilefunc->zfile_func64.opaque,(const char*)filename,mode);
+        return (*(pfilefunc->zopen32_file))(pfilefunc->zfile_func64.opaque,filename,mode);
     }
 }
 
@@ -72,7 +80,11 @@ void fill_zlib_filefunc64_32_def_from_filefunc32(zlib_filefunc64_32_def* p_filef
 
 
 
+#if defined(_WIN32) || defined(WIN32)
+static voidpf  ZCALLBACK fopen_file_func OF((voidpf opaque, const TCHAR* filename, int mode));
+#else
 static voidpf  ZCALLBACK fopen_file_func OF((voidpf opaque, const char* filename, int mode));
+#endif
 static uLong   ZCALLBACK fread_file_func OF((voidpf opaque, voidpf stream, void* buf, uLong size));
 static uLong   ZCALLBACK fwrite_file_func OF((voidpf opaque, voidpf stream, const void* buf,uLong size));
 static ZPOS64_T ZCALLBACK ftell64_file_func OF((voidpf opaque, voidpf stream));
@@ -80,39 +92,55 @@ static long    ZCALLBACK fseek64_file_func OF((voidpf opaque, voidpf stream, ZPO
 static int     ZCALLBACK fclose_file_func OF((voidpf opaque, voidpf stream));
 static int     ZCALLBACK ferror_file_func OF((voidpf opaque, voidpf stream));
 
+#if defined(_WIN32)
+static voidpf ZCALLBACK fopen_file_func (voidpf opaque, const TCHAR* filename, int mode)
+#else
 static voidpf ZCALLBACK fopen_file_func (voidpf opaque, const char* filename, int mode)
+#endif
 {
     FILE* file = NULL;
+#ifdef _WIN32
+    const TCHAR* mode_fopen = NULL;
+#else
     const char* mode_fopen = NULL;
+#endif
     if ((mode & ZLIB_FILEFUNC_MODE_READWRITEFILTER)==ZLIB_FILEFUNC_MODE_READ)
-        mode_fopen = "rb";
+        mode_fopen = _T("rb");
     else
     if (mode & ZLIB_FILEFUNC_MODE_EXISTING)
-        mode_fopen = "r+b";
+        mode_fopen = _T("r+b");
     else
     if (mode & ZLIB_FILEFUNC_MODE_CREATE)
-        mode_fopen = "wb";
+        mode_fopen = _T("wb");
 
     if ((filename!=NULL) && (mode_fopen != NULL))
         file = fopen(filename, mode_fopen);
     return file;
 }
 
-static voidpf ZCALLBACK fopen64_file_func (voidpf opaque, const void* filename, int mode)
+#if defined(_WIN32)
+static voidpf ZCALLBACK fopen64_file_func (voidpf opaque, const TCHAR* filename, int mode)
+#else
+static voidpf ZCALLBACK fopen64_file_func (voidpf opaque, const char* filename, int mode)
+#endif
 {
     FILE* file = NULL;
+#ifdef _WIN32
+    const TCHAR* mode_fopen = NULL;
+#else
     const char* mode_fopen = NULL;
+#endif
     if ((mode & ZLIB_FILEFUNC_MODE_READWRITEFILTER)==ZLIB_FILEFUNC_MODE_READ)
-        mode_fopen = "rb";
+        mode_fopen = _T("rb");
     else
     if (mode & ZLIB_FILEFUNC_MODE_EXISTING)
-        mode_fopen = "r+b";
+        mode_fopen = _T("r+b");
     else
     if (mode & ZLIB_FILEFUNC_MODE_CREATE)
-        mode_fopen = "wb";
+        mode_fopen = _T("wb");
 
     if ((filename!=NULL) && (mode_fopen != NULL))
-        file = fopen64((const char*)filename, mode_fopen);
+        file = fopen64(filename, mode_fopen);
     return file;
 }
 

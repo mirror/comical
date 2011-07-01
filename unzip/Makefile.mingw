@@ -3,8 +3,10 @@
 #  MinGW
 #
 
+WXWIDGETS ?= C:/wxWidgets
+
 CC = gcc
-CFLAGS = -Os
+CFLAGS = -Os -I$(WXWIDGETS)/src/zlib -D_UNICODE
 
 ##########################
 
