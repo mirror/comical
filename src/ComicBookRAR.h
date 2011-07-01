@@ -26,6 +26,9 @@
 #define _ComicBookRAR_h_
 
 #include "ComicBook.h"
+#ifdef _WIN32
+#include <windef.h>
+#endif
 #include "dll.hpp"
  
 class ComicBookRAR : public ComicBook {
