@@ -73,7 +73,7 @@
 #endif // _WIN_CE
 
 #if defined(ENABLE_BAD_ALLOC) && !defined(_WIN_CE)
-  #include <new.h>
+  #include <new>
 #endif
 
 #ifdef _EMX

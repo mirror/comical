@@ -31,6 +31,9 @@ int uni_done();
 #define sprintfw snwprintf
 #elif defined (__OpenBSD__)
 #define sprintfw(s,...) *(s)=0
+#elif defined(__GNUC__) && defined (_WIN32)
+// The MinGW windows headers do not define the second version of sprintfw
+#define sprintfw snwprintf
 #else
 #define sprintfw swprintf
 #endif
