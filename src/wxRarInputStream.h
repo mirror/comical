@@ -31,6 +31,9 @@
 #include <queue>
 #include <utility>
 
+#ifdef _WIN32
+#include <windef.h>
+#endif
 #include "dll.hpp"
 
 class wxRarInputStream;
