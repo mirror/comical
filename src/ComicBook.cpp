@@ -407,7 +407,6 @@ void * ComicBook::Entry()
 			} catch (ArchiveException *ae) {
 				SendPageErrorEvent(target, ae->Message);
 			}
-			page->OriginalLock.Unlock();
 			
 			ScaleImage(target);
 			scalingHappened = true;
@@ -423,6 +422,10 @@ void * ComicBook::Entry()
 				}
 			}
 			page->ThumbnailLock.Unlock();
+			page->OriginalLock.Unlock();
+
+			page->DestroyOriginal();
+
 			
 			break;
 		}
@@ -446,11 +449,12 @@ void * ComicBook::Entry()
 				} catch (ArchiveException *ae) {
 					SendPageErrorEvent(j, ae->Message);
 				}
-				page->OriginalLock.Unlock();
 				
 				ScaleThumbnail(j);
 				page->ThumbnailLock.Unlock();
-				
+				page->OriginalLock.Unlock();
+
+				page->DestroyOriginal();
 				break;
 			}
 		}
@@ -461,14 +465,12 @@ void * ComicBook::Entry()
 				for (i = 0; wxInt32(i) < low; i++) {
 					page = Pages.at(i);
 					page->DestroyResample();
-					page->DestroyOriginal();
 				}
 				
 				for (i = Pages.size() - 1; i > high; i--) {
 
 					page = Pages.at(i);
 					page->DestroyResample();
-					page->DestroyOriginal();
 				}
 			}
 		}
