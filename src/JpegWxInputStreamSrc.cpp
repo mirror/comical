@@ -113,23 +113,29 @@ static boolean fill_wx_input_buffer (j_decompress_ptr cinfo)
 
 static void skip_wx_input_data (j_decompress_ptr cinfo, long num_bytes)
 {
-	struct jpeg_source_mgr * src = cinfo->src;
-	JpegWxInputStreamSrc *wsrc = static_cast<JpegWxInputStreamSrc*>(cinfo->client_data);
+	if (num_bytes <= 0)
+		return;
 
-	wsrc->stream->SeekI((off_t)num_bytes, wxFromCurrent);
-	if (num_bytes < (long) src->bytes_in_buffer) {
-		src->next_input_byte += (size_t) num_bytes;
-		src->bytes_in_buffer -= (size_t) num_bytes;
-	} else {
-		src->next_input_byte = wsrc->buffer;
-		src->bytes_in_buffer = 0;
+	struct jpeg_source_mgr * src = cinfo->src;
+
+	while (num_bytes > (long)src->bytes_in_buffer)
+	{
+		num_bytes -= (long) src->bytes_in_buffer;
+		src->fill_input_buffer(cinfo);
 	}
+	src->next_input_byte += (size_t) num_bytes;
+	src->bytes_in_buffer -= (size_t) num_bytes;
 }
 
 
 static void term_wx_source (j_decompress_ptr cinfo)
 {
-	delete static_cast<JpegWxInputStreamSrc*>(cinfo->client_data);
+	JpegWxInputStreamSrc *wsrc = static_cast<JpegWxInputStreamSrc*>(cinfo->client_data);
+
+	if (cinfo->src->bytes_in_buffer > 0)
+		wsrc->stream->SeekI(-(long)cinfo->src->bytes_in_buffer, wxFromCurrent);
+
+	delete wsrc;
 	cinfo->client_data = NULL;
 }
 
