@@ -49,7 +49,8 @@ fitOnlyOversize(_fitOnlyOversize),
 mode(_mode),
 filter(_filter),
 direction(_direction),
-scrollbarThickness(_scrollbarThickness)
+scrollbarThickness(_scrollbarThickness),
+m_iThumbMaxWidth(100)
 {
 }
 
@@ -173,6 +174,19 @@ bool ComicBook::SetScrollbarThickness(wxInt32 newScrollbarThickness)
 	} else
 		return FALSE;
 }
+
+
+void ComicBook::SetThumbnailMaxWidth(wxInt32 maxWidthPixels)
+{
+	if (m_iThumbMaxWidth == maxWidthPixels)
+		return;
+
+	m_iThumbMaxWidth = maxWidthPixels;
+	for (wxUint32 i = 0; i < Pages.size(); i++) {
+		Pages.at(i)->DestroyThumbnail();
+	}
+}
+
 
 wxBitmap& ComicBook::GetPage(wxUint32 pagenumber)
 {
@@ -654,12 +668,12 @@ void ComicBook::ScaleThumbnail(wxUint32 pagenumber)
 	}
 	
 	if(float(yImage) / float(xImage) > 0.6f) {
-		yScaled = 60;
-		scalingFactor = 60.0f / float(yImage);
+		yScaled = m_iThumbMaxWidth * 0.6f;
+		scalingFactor = yScaled / float(yImage);
 		xScaled = wxInt32(float(xImage) * scalingFactor);
 	} else {
-		xScaled = 100;
-		scalingFactor = 100.0f / float(xImage);
+		xScaled = m_iThumbMaxWidth;
+		scalingFactor = float(xScaled) / float(xImage);
 		yScaled = wxInt32(float(yImage) * scalingFactor);
 	}
 	

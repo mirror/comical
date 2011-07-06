@@ -1,6 +1,6 @@
 /*
- * ComicalBrowser.h
- * Copyright (c) 2005-2011 James Athey
+ * Exceptions.cpp
+ * Copyright (c) 2011 James Athey
  */
 
 /***************************************************************************
@@ -22,49 +22,17 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef _ComicalBrowser_h_
-#define _ComicalBrowser_h_
+#include "Exceptions.h"
 
-#include <wx/bitmap.h>
-#include <wx/vlbox.h>
-#include <wx/dcclient.h>
-#include <wx/dcmemory.h>
-#include <wx/stream.h>
-#include <wx/event.h>
-#include <wx/pen.h>
-#include <wx/brush.h>
-#include <wx/utils.h>
-
-#include "ComicBook.h"
-#include "ComicalCanvas.h"
-
-class ComicalBrowser : public wxVListBox
+JpegException::JpegException(j_common_ptr cinfo):
+std::runtime_error(formatJpegErrorMsg(cinfo)),
+cinfo(cinfo)
 {
-public:
-	ComicalBrowser(wxWindow *parent, wxInt32 startingWidth);
-	~ComicalBrowser() {}
+}
 
-	void SetComicBook(ComicBook *book);
-	void SetComicalCanvas(ComicalCanvas *canvas);
-	void ClearBrowser();
 
-	static const unsigned int MARGINS = 5;
-	static const unsigned int SPACING = 3;
-
-private:
-	virtual void OnDrawItem(wxDC& dc, const wxRect& rect, size_t n) const;
-	virtual wxCoord OnMeasureItem(size_t n) const;
-	void OnItemSelected(wxCommandEvent &event);
-	void OnCurrentPageChanged(wxCommandEvent &event);
-	void OnThumbnailReady(wxCommandEvent &event);
-	void OnSize(wxSizeEvent &event);
-
-	ComicBook *theBook;
-	ComicalCanvas *theCanvas;
-	wxWindow *parent;
-	wxInt32 m_iThumbMaxWidth;
-
-	DECLARE_EVENT_TABLE()
-};
-
-#endif
+const char* JpegException::formatJpegErrorMsg(j_common_ptr cinfo)
+{
+	cinfo->err->format_message(cinfo, errMsg);
+	return errMsg;
+}

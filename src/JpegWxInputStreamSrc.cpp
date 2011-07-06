@@ -26,13 +26,8 @@
 
 #include <jerror.h>
 
-/* Expanded data source object for stdio input */
-
-class JpegWxInputStreamSrc
+struct JpegWxInputStreamSrc : public jpeg_source_mgr
 {
-public:
-	JpegWxInputStreamSrc(wxInputStream* stream) : stream(stream), start_of_file(true) {}
-
 	wxInputStream* stream;
 	JOCTET buffer[4096];
 	bool start_of_file;
@@ -47,14 +42,9 @@ extern "C" {
 }
 
 
-/*
- * Initialize source --- called by jpeg_read_header
- * before any data is actually read.
- */
-
 static void init_wx_source(j_decompress_ptr cinfo)
 {
-	JpegWxInputStreamSrc *wsrc = static_cast<JpegWxInputStreamSrc*>(cinfo->client_data);
+	JpegWxInputStreamSrc *wsrc = static_cast<JpegWxInputStreamSrc*>(cinfo->src);
 
 	/* We reset the empty-input-file flag for each image,
 	 * but we don't clear the input buffer.
@@ -63,28 +53,10 @@ static void init_wx_source(j_decompress_ptr cinfo)
 	wsrc->start_of_file = true;
 }
 
-/*
- * Fill the input buffer --- called whenever buffer is emptied.
- *
- * In typical applications, this should read fresh data into the buffer
- * (ignoring the current state of next_input_byte & bytes_in_buffer),
- * reset the pointer & count to the start of the buffer, and return TRUE
- * indicating that the buffer has been reloaded.  It is not necessary to
- * fill the buffer entirely, only to obtain at least one more byte.
- *
- * There is no such thing as an EOF return.  If the end of the file has been
- * reached, the routine has a choice of ERREXIT() or inserting fake data into
- * the buffer.  In most cases, generating a warning message and inserting a
- * fake EOI marker is the best course of action --- this will allow the
- * decompressor to output however much of the image is there.  However,
- * the resulting error message is misleading if the real problem is an empty
- * input file, so we handle that case specially.
- */
 
 static boolean fill_wx_input_buffer (j_decompress_ptr cinfo)
 {
-	struct jpeg_source_mgr * src = cinfo->src;
-	JpegWxInputStreamSrc *wsrc = static_cast<JpegWxInputStreamSrc*>(cinfo->client_data);
+	JpegWxInputStreamSrc *wsrc = static_cast<JpegWxInputStreamSrc*>(cinfo->src);
 
 	wsrc->stream->Read(wsrc->buffer, sizeof(wsrc->buffer));
 	size_t nbytes = wsrc->stream->LastRead();
@@ -99,17 +71,13 @@ static boolean fill_wx_input_buffer (j_decompress_ptr cinfo)
 		nbytes = 2;
 	}
 
-	src->next_input_byte = wsrc->buffer;
-	src->bytes_in_buffer = nbytes;
+	wsrc->next_input_byte = wsrc->buffer;
+	wsrc->bytes_in_buffer = nbytes;
 	wsrc->start_of_file = false;
 
 	return TRUE;
 }
 
-/*
- * Skip data --- used to skip over a potentially large amount of
- * uninteresting data (such as an APPn marker).
- */
 
 static void skip_wx_input_data (j_decompress_ptr cinfo, long num_bytes)
 {
@@ -130,13 +98,10 @@ static void skip_wx_input_data (j_decompress_ptr cinfo, long num_bytes)
 
 static void term_wx_source (j_decompress_ptr cinfo)
 {
-	JpegWxInputStreamSrc *wsrc = static_cast<JpegWxInputStreamSrc*>(cinfo->client_data);
+	JpegWxInputStreamSrc *wsrc = static_cast<JpegWxInputStreamSrc*>(cinfo->src);
 
-	if (cinfo->src->bytes_in_buffer > 0)
-		wsrc->stream->SeekI(-(long)cinfo->src->bytes_in_buffer, wxFromCurrent);
-
-	delete wsrc;
-	cinfo->client_data = NULL;
+	if (wsrc->bytes_in_buffer > 0)
+		wsrc->stream->SeekI(-(long)wsrc->bytes_in_buffer, wxFromCurrent);
 }
 
 
@@ -149,8 +114,8 @@ void jpeg_wx_input_stream_src (j_decompress_ptr cinfo, wxInputStream *stream)
 	if (cinfo->src == NULL) {	/* first time for this JPEG object? */
 		cinfo->src = (struct jpeg_source_mgr*)
 				(*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-	    				  sizeof(struct jpeg_source_mgr));
-		cinfo->client_data = new JpegWxInputStreamSrc(stream);
+	    				  sizeof(struct JpegWxInputStreamSrc));
+		static_cast<JpegWxInputStreamSrc*>(cinfo->src)->stream = stream;
 	}
 
 	struct jpeg_source_mgr *src = cinfo->src;

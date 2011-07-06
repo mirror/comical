@@ -1,5 +1,7 @@
-CC = `wx-config --cxx`
-LDFLAGS = `wx-config --libs` -Lunrar -lunrar -Lunzip -lminiunzip -lz -ljpeg
+LDFLAGS = `wx-config --libs` -lz -ljpeg
+ifeq ($(DEBUG),1)
+LDFLAGS += -g -lm -lstdc++
+endif
 INSTALL = install
 INSTALL_PROGRAM = $(INSTALL)
 prefix = /usr/local
@@ -13,7 +15,7 @@ OBJS = $(patsubst %.cpp,%.o,$(wildcard src/*.cpp))
 all: comical
 
 comical: sources unrar/libunrar.a unzip/libminiunzip.a
-	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+	$(CC) -o $@ $(OBJS) unrar/libunrar.a unzip/libminiunzip.a $(LDFLAGS)
 
 sources:
 	$(MAKE) -C src

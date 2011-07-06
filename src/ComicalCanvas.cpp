@@ -47,7 +47,12 @@
 
 DEFINE_EVENT_TYPE(EVT_PAGE_SHOWN)
 
-ComicalCanvas::ComicalCanvas(wxWindow *prnt, const wxPoint &pos, const wxSize &size, COMICAL_MODE _mode, COMICAL_DIRECTION _direction, wxInt32 _scrollbarThickness) : wxScrolledWindow(prnt, -1, pos, size, wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE), mode(_mode), direction(_direction), scrollbarThickness(_scrollbarThickness)
+ComicalCanvas::ComicalCanvas(ComicalFrame *prnt, COMICAL_MODE _mode, COMICAL_DIRECTION _direction, wxInt32 _scrollbarThickness):
+wxScrolledWindow(prnt, -1, wxDefaultPosition, wxDefaultSize, wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE),
+mode(_mode),
+direction(_direction),
+scrollbarThickness(_scrollbarThickness),
+m_frameParent(prnt)
 {
 	parent = prnt;
 	SetBackgroundColour(* wxBLACK);
@@ -1012,6 +1017,7 @@ void ComicalCanvas::OnMouseMove(wxMouseEvent &event)
 		Scroll(viewX - diffX, viewY - diffY);
 		pointerOrigin = currMousePos;
 	}
+	m_frameParent->ShowToolbar();
 }
 
 void ComicalCanvas::SetComicBook(ComicBook *book)
@@ -1055,6 +1061,7 @@ void ComicalCanvas::OnResize(wxSizeEvent &event)
 		return;
 	if (theBook->SetCanvasSize(GetSize()) && theBook->IsRunning()) // if the parameters are actually different
 		ResetView();
+	m_frameParent->RepositionToolbar();
 }
 
 void ComicalCanvas::ClearCanvas()

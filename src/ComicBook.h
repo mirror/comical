@@ -56,7 +56,7 @@ public:
 	virtual void * Entry();
 
 	void RotatePage(wxUint32 pagenumber, COMICAL_ROTATE direction);
-	wxUint32 GetPageCount() { return Pages.size(); }
+	wxUint32 GetPageCount() const { return Pages.size(); }
 	bool SetZoom(COMICAL_ZOOM zoom);
 	bool SetZoomLevel(long zoomLevel);
 	bool SetFitOnlyOversize(bool fitOnlyOversize);
@@ -65,7 +65,7 @@ public:
 	bool SetDirection(COMICAL_DIRECTION direction);
 	bool SetCanvasSize(wxSize size);
 	bool SetScrollbarThickness(wxInt32 scrollbarThickness);
-	wxUint32 GetCacheLen() { return cacheLen; }
+	wxUint32 GetCacheLen() const { return cacheLen; }
 	void SetCacheLen(wxUint32 newCacheLen) { cacheLen = newCacheLen; }
 	wxBitmap& GetPage(wxUint32 pagenumber);
 	wxBitmap& GetPageLeftHalf(wxUint32 pagenumber);
@@ -75,13 +75,15 @@ public:
 	bool IsPageLandscape(wxUint32 pagenumber);
 	bool IsPageReady(wxUint32 pagenumber);
 	bool IsThumbReady(wxUint32 pagenumber);
+	wxInt32 GetThumbnailMaxWidth() const { return m_iThumbMaxWidth; }
+	void SetThumbnailMaxWidth(wxInt32 maxWidthPixels);
 	
-	wxUint32 GetCurrentPage() { return currentPage; }
+	wxUint32 GetCurrentPage() const { return currentPage; }
 	void SetCurrentPage(wxUint32 pagenumber);
 
 	// Instead of insane multiple inheritance, put the evtHandler inside this
 	// class and provide passthroughs to its methods
-	wxEvtHandler * GetEventHandler() { return evtHandler; }
+	wxEvtHandler * GetEventHandler() const { return evtHandler; }
 	void Connect(int id, int lastId, wxEventType eventType, wxObjectEventFunction function, wxObject* userData = NULL, wxEvtHandler* eventSink = NULL)
 		{ evtHandler->Connect(id, lastId, eventType, function, userData, eventSink); }
 	void Connect(int id, wxEventType eventType, wxObjectEventFunction function, wxObject* userData = NULL, wxEvtHandler* eventSink = NULL)
@@ -146,6 +148,8 @@ private:
 	
 	wxInt32 canvasWidth;
 	wxInt32 canvasHeight;
+
+	wxInt32 m_iThumbMaxWidth;
 };
 
 DECLARE_EVENT_TYPE(EVT_PAGE_SCALED, -1)

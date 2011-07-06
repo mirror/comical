@@ -55,7 +55,7 @@ bool ComicalApp::OnInit()
 	wxInt32 x = (wxInt32) config->Read(wxT("FrameX"), 50l);
 	wxInt32 y = (wxInt32) config->Read(wxT("FrameY"), 50l);
 	
-	ComicalFrame *frame = new ComicalFrame(wxT("Comical"), wxPoint(x, y), wxSize(width, height), wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE);
+	ComicalFrame *frame = new ComicalFrame(wxT("Comical"), wxPoint(x, y), wxSize(width, height));
 	docManager = new ComicalManager(frame);
 
 #if !defined(__WXMAC__) && !defined(__WXCOCOA__)

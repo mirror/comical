@@ -27,13 +27,13 @@
 #include <wx/arrimpl.cpp> // this is a magic incantation which must be done!
 #include "Exceptions.h"
 #include "JpegWxInputStreamSrc.h"
-#include <setjmp.h>
+#include <wx/imagjpeg.h>
 
 ComicPage::ComicPage(wxString &filename, wxInputStream *headerStream):
 Filename(filename),
 orientation(NORTH),
-m_uiWidth(0),
-m_uiHeight(0),
+m_uiWidth(1),
+m_uiHeight(1),
 m_bitmapType(wxBITMAP_TYPE_INVALID),
 m_bitmapLeft(NULL),
 m_bitmapRight(NULL),
@@ -76,19 +76,13 @@ enum TIFF_TAG_DATATYPE
 };
 
 
-struct my_error_mgr : public jpeg_error_mgr
-{
-	jmp_buf setjmp_buf;
-};
-
 /*
  * A replacement for the jpeg library's default error_exit callback to keep
  * the program from exiting on a jpeg decode error.
  */
 METHODDEF(void) my_error_exit (j_common_ptr cinfo)
 {
-	/* Return control to the setjmp point */
-	longjmp(((struct my_error_mgr*)cinfo->err)->setjmp_buf, 1);
+	throw JpegException(cinfo);
 }
 
 
@@ -118,26 +112,24 @@ void ComicPage::extractDimensions(wxInputStream *stream)
 		// JPEG file
 
 		struct jpeg_decompress_struct cinfo;
-		struct my_error_mgr jerr;
+		struct jpeg_error_mgr jerr;
 
 		// rewind to BEFORE the header, so jpeglib does not get confused
 		stream->Ungetch(header, sizeof(pngHeader));
 
 		jpeg_create_decompress(&cinfo);
-		cinfo.err = jpeg_std_error((jpeg_error_mgr*)&jerr);
+		cinfo.err = jpeg_std_error(&jerr);
 		cinfo.err->error_exit = my_error_exit;
 
-		if (setjmp(jerr.setjmp_buf)) {
-			// TODO show error message
-			jpeg_destroy_decompress(&cinfo);
-			return;
+		try {
+			jpeg_wx_input_stream_src(&cinfo, stream);
+			jpeg_read_header(&cinfo, TRUE);
+			jpeg_calc_output_dimensions(&cinfo);
+			m_uiWidth = cinfo.output_width;
+			m_uiHeight = cinfo.output_height;
+		} catch (JpegException &je) {
+			cinfo.err->output_message((j_common_ptr)&cinfo);
 		}
-
-		jpeg_wx_input_stream_src(&cinfo, stream);
-		jpeg_read_header(&cinfo, TRUE);
-		jpeg_calc_output_dimensions(&cinfo);
-		m_uiWidth = cinfo.output_width;
-		m_uiHeight = cinfo.output_height;
 
 		jpeg_destroy_decompress(&cinfo);
 

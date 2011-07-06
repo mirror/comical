@@ -1,5 +1,10 @@
 INCLUDE = -I../unrar -I../unzip
-CFLAGS = -O2 -Wundef -Wno-ctor-dtor-privacy -fno-strict-aliasing -pipe
+CFLAGS = -pipe
+ifeq ($(DEBUG),1)
+CFLAGS += -g -Wall
+else
+CFLAGS += -O2
+endif
 CPPFLAGS = `wx-config --cxxflags` $(CFLAGS) -D_UNIX $(INCLUDE)
 
 .SUFFIXES: .cpp .png .h .d .o
@@ -9,8 +14,6 @@ OBJS = $(patsubst %.cpp,%.o,$(wildcard *.cpp))
 ICONS = $(patsubst %.png,%.h,$(wildcard *.png))
 
 all: $(OBJS)
-
--include $(DEPS)
 
 %.h : %.png
 	@echo "Converting" $<
@@ -30,6 +33,10 @@ all: $(OBJS)
 	 rm -f $@.$$$$
 
 clean:
-	rm -f $(OBJS) $(ICONS)
+	rm -f *.o *.d $(ICONS)
 
 .PHONY : clean
+
+ifneq ($(MAKECMDGOALS),clean)
+-include $(DEPS)
+endif

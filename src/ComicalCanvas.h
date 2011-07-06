@@ -35,11 +35,13 @@
 
 #include "enums.h"
 
+class ComicalFrame;
+
 class ComicalCanvas : public wxScrolledWindow
 {
 
   public:
-    ComicalCanvas(wxWindow *parent, const wxPoint &pos, const wxSize &size, COMICAL_MODE, COMICAL_DIRECTION, wxInt32 scrollbarThickness);
+    ComicalCanvas(ComicalFrame *parent, COMICAL_MODE, COMICAL_DIRECTION, wxInt32 scrollbarThickness);
     ~ComicalCanvas();
 
     void FirstPage();
@@ -96,6 +98,7 @@ class ComicalCanvas : public wxScrolledWindow
     COMICAL_PAGETYPE leftPart, rightPart;
 	wxMenu *contextMenu, *contextRotate;
 
+	ComicalFrame *m_frameParent;
     ComicBook *theBook;
 	wxPoint pointerOrigin;
 	bool zoomEnabled, zoomOn;

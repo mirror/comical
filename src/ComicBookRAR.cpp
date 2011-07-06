@@ -126,6 +126,10 @@ bool ComicBookRAR::TestPassword()
 	struct RAROpenArchiveDataEx flags;
 	bool passwordCorrect = true;
 	
+	if (Pages.size() == 0)
+		// nothing in the archive to open
+		return true;
+
 	wxString page = Pages.at(0)->Filename; // test using the first page
 	
 	rarFile = openRar(&flags, &header, RAR_OM_EXTRACT);

@@ -25,6 +25,13 @@
 #ifndef _Exceptions_h_
 #define _Exceptions_h_
 
+#include <cstddef>
+#include <cstdio>
+#include <jpeglib.h>
+#include <stdexcept>
+#include <wx/defs.h>
+#include <wx/string.h>
+
 class PageOutOfRangeException
 {
 	public:
@@ -37,6 +44,18 @@ class ArchiveException
 	public:
 		ArchiveException(wxString filename, wxString message) { Filename = filename; Message = message; }
 		wxString Filename, Message;
+};
+
+class JpegException : public std::runtime_error
+{
+public:
+	JpegException(j_common_ptr cinfo);
+
+	const j_common_ptr cinfo;
+
+private:
+	char errMsg[JMSG_LENGTH_MAX];
+	const char* formatJpegErrorMsg(j_common_ptr cinfo);
 };
 
 #endif

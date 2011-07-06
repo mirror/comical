@@ -24,26 +24,25 @@
 
 #include "ComicalBrowser.h"
 
-#if wxCHECK_VERSION(2, 5, 1)
-ComicalBrowser::ComicalBrowser(wxWindow *prnt, const wxPoint &pos, const wxSize &size) : wxVListBox(prnt, -1, pos, size, wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE | wxLB_SINGLE)
-#else
-ComicalBrowser::ComicalBrowser(wxWindow *prnt, const wxPoint &pos, const wxSize &size) : wxVListBox(prnt, -1, pos, size, wxNO_BORDER | wxLB_SINGLE)
-#endif
+ComicalBrowser::ComicalBrowser(wxWindow *prnt, wxInt32 startingWidth):
+wxVListBox(prnt, -1, wxDefaultPosition, wxSize(startingWidth,SPACING), wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE | wxLB_SINGLE),
+parent(prnt),
+theBook(NULL),
+theCanvas(NULL),
+m_iThumbMaxWidth(startingWidth - (MARGINS * 2))
 {
-	parent = prnt;
-	SetBackgroundColour(* wxWHITE);
-	theBook = NULL;
-	theCanvas = NULL;
-	SetMargins(5, 3);
+	SetMargins(MARGINS, SPACING);
+	SetBackgroundColour(*wxBLACK);
 }
 
 BEGIN_EVENT_TABLE(ComicalBrowser, wxVListBox)
 	EVT_LISTBOX(wxID_ANY, ComicalBrowser::OnItemSelected)
+	EVT_SIZE(ComicalBrowser::OnSize)
 END_EVENT_TABLE()
 
 wxCoord ComicalBrowser::OnMeasureItem(size_t n) const
 {
-	return wxCoord(60);
+	return wxCoord(m_iThumbMaxWidth * 0.6f);
 }
 
 void ComicalBrowser::OnDrawItem(wxDC& dc, const wxRect& rect, size_t n) const
@@ -99,3 +98,11 @@ void ComicalBrowser::ClearBrowser()
 	SetItemCount(1);
 }
 
+
+void ComicalBrowser::OnSize(wxSizeEvent &event)
+{
+	wxSize size = GetClientSize();
+	m_iThumbMaxWidth = size.x - (MARGINS * 2);
+	if (theBook)
+		theBook->SetThumbnailMaxWidth(m_iThumbMaxWidth);
+}

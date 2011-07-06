@@ -34,6 +34,7 @@
 #include <wx/filedlg.h>
 #include <wx/log.h>
 #include <wx/mimetype.h>
+#include <wx/minifram.h>
 #include <wx/msgdlg.h>
 #include <wx/scrolbar.h>
 #include <wx/textdlg.h>
@@ -51,19 +52,19 @@
 #include "rot_ccw.h"
 #include "fullscreen.h"
 
-ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSize& size, long style) : wxFrame(NULL, -1, title, pos, size, style)
+ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSize& size):
+wxFrame(NULL, -1, title, pos, size, wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE),
+m_timerToolbarHide(this, ID_HideTimer),
+theCanvas(NULL),
+theBook(NULL),
+theBrowser(NULL),
+toolBarNav(NULL),
+labelLeft(NULL),
+labelRight(NULL),
+toolbarSizer(new wxBoxSizer(wxHORIZONTAL))
 {
-	theCanvas = NULL;
-	theBook = NULL;
-	theBrowser = NULL;
-	toolBarNav = NULL;
-	labelLeft = NULL;
-	labelRight = NULL;
-	
-	frameSizer = new wxBoxSizer(wxHORIZONTAL);
-	bookPanelSizer = new wxBoxSizer(wxVERTICAL);
-	toolbarSizer = new wxBoxSizer(wxHORIZONTAL);
-	
+	m_auiManager.SetManagedWindow(this);
+
 	config = wxConfig::Get();
 	
 	// Get the thickness of scrollbars.  Knowing this, we can precalculate
@@ -174,7 +175,6 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	menuView->Append(fsMenu);
 	menuView->AppendSeparator();
 	wxMenuItem *browserMenu = menuView->AppendCheckItem(ID_Browser, wxT("Thumbnail Browser"), wxT("Show/Hide the thumbnail browser"));
-	wxMenuItem *toolbarMenu = menuView->AppendCheckItem(ID_Toolbar, wxT("Toolbar"), wxT("Show/Hide the toolbar"));
 
 	menuHelp = new wxMenu();
 	menuHelp->Append(wxID_ABOUT, wxT("&About...\tF1"), wxT("Display About Dialog."));
@@ -197,7 +197,6 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	direction = (COMICAL_DIRECTION) config->Read(wxT("Direction"), 0l); // Left-To-Right by default
 	fitOnlyOversize = (bool) config->Read(wxT("FitOnlyOversize"), 0l); // off by default
 	browserActive = (bool) config->Read(wxT("BrowserActive"), 1l); // Shown by default
-	toolbarActive = (bool) config->Read(wxT("ToolbarActive"), 1l); // Shown by default
 
 	// Record the settings from the config in the menus
 	menuZoom->FindItemByPosition(zoom)->Check(true);
@@ -206,22 +205,25 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	menuDirection->FindItemByPosition(direction)->Check(true);
 	fitOnlyOversizeMenu->Check(fitOnlyOversize);
 	browserMenu->Check(browserActive);
-	toolbarMenu->Check(toolbarActive);
 	if (mode == ONEPAGE) {
 		prevTurnMenu->Enable(false);
 		nextTurnMenu->Enable(false);
 	} // else they're already enabled
 
-	theBrowser = new ComicalBrowser(this, wxDefaultPosition, wxSize(110, 10));
-	frameSizer->Add(theBrowser, 0, wxEXPAND, 0);
+	theBrowser = new ComicalBrowser(this, 110);
 	
-	theCanvas = new ComicalCanvas(this, wxDefaultPosition, wxSize(10, 10), mode, direction, scrollbarThickness);
+	theCanvas = new ComicalCanvas(this, mode, direction, scrollbarThickness);
 	theCanvas->Connect(EVT_PAGE_SHOWN, wxCommandEventHandler(ComicalFrame::OnPageShown), NULL, this);
 	theCanvas->Connect(ID_ContextFull, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(ComicalFrame::OnFull), NULL, this);
-	bookPanelSizer->Add(theCanvas, 1, wxEXPAND, 0);
+
 	theBrowser->SetComicalCanvas(theCanvas);
 
-	toolBarNav = new wxToolBar(this, -1, wxDefaultPosition, wxDefaultSize, wxNO_BORDER | wxTB_HORIZONTAL | wxTB_FLAT);
+	wxMiniFrame *toolbarFrame = new wxMiniFrame(this, wxID_ANY, wxT(""), wxDefaultPosition, wxDefaultSize,
+			wxCLIP_CHILDREN | wxFRAME_NO_TASKBAR | wxFRAME_FLOAT_ON_PARENT | wxFRAME_TOOL_WINDOW);
+	m_frameNav = toolbarFrame;
+
+	toolBarNav = new wxToolBar(toolbarFrame, -1, wxDefaultPosition, wxDefaultSize,
+			wxNO_BORDER | wxTB_HORIZONTAL | wxTB_FLAT);
 	toolBarNav->SetToolBitmapSize(wxSize(16, 16));
 	toolBarNav->AddTool(ID_CCWL, wxT("Rotate Counter-Clockwise (left page)"), wxGetBitmapFromMemory(rot_ccw), wxT("Rotate Counter-Clockwise (left page)"));
 	toolBarNav->AddTool(ID_CWL, wxT("Rotate Clockwise (left page)"), wxGetBitmapFromMemory(rot_cw), wxT("Rotate Clockwise (left page)"));
@@ -255,12 +257,32 @@ ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSi
 	toolbarSizer->AddSpacer(10);
 	toolbarSizer->Add(labelRight, 1, wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 0);
 	toolbarSizer->Layout();
-	bookPanelSizer->Add(toolbarSizer, 0, wxEXPAND, 0);
-	frameSizer->Add(bookPanelSizer, 1, wxEXPAND);
-	SetSizer(frameSizer);
 	
-	frameSizer->Show(theBrowser, browserActive);
-	bookPanelSizer->Show(toolbarSizer, toolbarActive, true);
+	toolbarFrame->SetSizer(toolbarSizer);
+	toolbarFrame->SetClientSize(toolbarSizer->ComputeFittingClientSize(toolbarFrame));
+
+	wxAuiPaneInfo canvasPaneInfo;
+	canvasPaneInfo.CenterPane()
+		.DestroyOnClose(true)
+		.Resizable(true);
+	m_auiManager.AddPane(theCanvas, canvasPaneInfo);
+
+	wxAuiPaneInfo browserPaneInfo;
+	browserPaneInfo.CloseButton(true)
+			.Dock()
+			.Floatable(false)
+			.Left()
+			.MaximizeButton(false)
+			.MinimizeButton(false)
+			.MinSize(wxSize(50, 1))
+			.Movable(true)
+			.Name(wxT("Browser"))
+			.Resizable(true);
+	m_auiManager.AddPane(theBrowser, browserPaneInfo);
+
+	m_auiManager.Update();
+
+	RepositionToolbar();
 }
 
 BEGIN_EVENT_TABLE(ComicalFrame, wxFrame)
@@ -279,10 +301,18 @@ BEGIN_EVENT_TABLE(ComicalFrame, wxFrame)
 	EVT_MENU_RANGE(ID_LeftToRight, ID_RightToLeft, ComicalFrame::OnDirection)
 //	EVT_MENU(ID_ZoomBox, ComicalFrame::OnZoomBox)
 	EVT_MENU(ID_Browser, ComicalFrame::OnBrowser)
-	EVT_MENU(ID_Toolbar, ComicalFrame::OnToolbar)
 	EVT_MENU(ID_Homepage, ComicalFrame::OnHomepage)
 	EVT_CLOSE(ComicalFrame::OnClose)
+	EVT_MOVE(ComicalFrame::OnMove)
+	EVT_TIMER(ID_HideTimer, ComicalFrame::OnToolbarHideTimer)
 END_EVENT_TABLE()
+
+
+ComicalFrame::~ComicalFrame()
+{
+	m_auiManager.UnInit();
+}
+
 
 void ComicalFrame::OnClose(wxCloseEvent& event)
 {
@@ -302,7 +332,6 @@ void ComicalFrame::OnClose(wxCloseEvent& event)
 	config->Write(wxT("FrameHeight"), frameDim.height);
 	config->Write(wxT("FrameX"), frameDim.x);
 	config->Write(wxT("FrameY"), frameDim.y);
-	config->Write(wxT("ToolbarActive"), toolbarActive);
 	config->Write(wxT("BrowserActive"), browserActive);
 	Destroy();	// Close the window
 }
@@ -314,7 +343,7 @@ void ComicalFrame::OnQuit(wxCommandEvent& event)
 
 void ComicalFrame::OnAbout(wxCommandEvent& event)
 {
-	wxMessageDialog AboutDlg(this, wxT("Comical 0.8, (c) 2003-2006 James Athey.\nComical is licensed under the GPL, version 2,\nwith a linking exception; see README for details."), wxT("About Comical"), wxOK);
+	wxMessageDialog AboutDlg(this, wxT("Comical 0.9, (c) 2003-2011 James Athey.\nComical is licensed under the GPL, version 2 or later,\nwith a linking exception; see README for details."), wxT("About Comical"), wxOK);
 	AboutDlg.ShowModal();
 }
 
@@ -453,14 +482,13 @@ void ComicalFrame::OnBuffer(wxCommandEvent& event)
 void ComicalFrame::OnFull(wxCommandEvent& event)
 {
 	if (IsFullScreen()) {
-		bookPanelSizer->Show(toolbarSizer, toolbarActive, true);
-		if (theBrowser)
-			frameSizer->Show(theBrowser, browserActive);
+		//if (theBrowser)
+			//frameSizer->Show(theBrowser, browserActive);
 		ShowFullScreen(false, wxFULLSCREEN_ALL);
 	} else {
-		bookPanelSizer->Show(toolbarSizer, false, true);
-		if (theBrowser)
-			frameSizer->Show(theBrowser, false);
+		//bookPanelSizer->Show(toolbarSizer, false, true);
+		//if (theBrowser)
+			//frameSizer->Show(theBrowser, false);
 		ShowFullScreen(true, wxFULLSCREEN_ALL);		
 	}
 }
@@ -500,19 +528,11 @@ void ComicalFrame::OnZoomBox(wxCommandEvent &event)
 		theCanvas->SetZoomEnable(event.IsChecked());
 }
 
-void ComicalFrame::OnToolbar(wxCommandEvent &event)
-{
-	toolbarActive = event.IsChecked();
-	bookPanelSizer->Show(toolbarSizer, toolbarActive, true);
-	bookPanelSizer->Layout();
-}
-
 void ComicalFrame::OnBrowser(wxCommandEvent &event)
 {
 	browserActive = event.IsChecked();
-	if (theBrowser)
-		frameSizer->Show(theBrowser, browserActive);
-	frameSizer->Layout();
+	m_auiManager.GetPane(wxT("Browser")).Show(browserActive);
+	m_auiManager.Update();
 }
 
 void ComicalFrame::OnPageError(wxCommandEvent &event)
@@ -695,6 +715,50 @@ void ComicalFrame::OnPageShown(wxCommandEvent& event)
 	toolBarNav->Realize();
 
 }
+
+
+void ComicalFrame::OnMove(wxMoveEvent& event)
+{
+	RepositionToolbar();
+}
+
+void ComicalFrame::RepositionToolbar()
+{
+	if (!m_frameNav)
+		return;
+
+	wxSize canvasSize = theCanvas->GetClientSize();
+	wxPoint canvasPos = theCanvas->GetScreenPosition();
+
+	wxSize toolbarSize = m_frameNav->GetSize();
+
+	m_frameNav->Move(wxPoint(canvasPos.x + ((canvasSize.x - toolbarSize.x) / 2),
+			canvasPos.y + canvasSize.y - (toolbarSize.y * 2)));
+}
+
+
+void ComicalFrame::ShowToolbar()
+{
+	m_frameNav->Show();
+	m_frameNav->SetTransparent(255);
+
+	// hide the toolbar after 2 seconds, only fire the event once
+	m_timerToolbarHide.Start(2000, true);
+}
+
+
+void ComicalFrame::OnToolbarHideTimer(wxTimerEvent& event)
+{
+	// Only start hiding if the mouse is not hovering over the toolbar
+	wxPoint mousePos = wxGetMousePosition();
+	wxPoint framePos = m_frameNav->GetScreenPosition();
+	wxSize frameSize = m_frameNav->GetSize();
+
+	if (mousePos.x < framePos.x || mousePos.x > framePos.x + frameSize.x ||
+			mousePos.y < framePos.y || mousePos.y > framePos.y + frameSize.y)
+		m_frameNav->Hide();
+}
+
 
 void ComicalFrame::setComicBook(ComicBook *newBook)
 {

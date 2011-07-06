@@ -32,6 +32,9 @@
 #include <wx/stattext.h>
 #include <wx/sizer.h>
 #include <wx/mstream.h>
+#include <wx/timer.h>
+
+#include <wx/aui/aui.h>
 
 #include "ComicalBrowser.h"
 #include "ComicalCanvas.h"
@@ -43,13 +46,16 @@ class ComicalFrame : public wxFrame
 
     ComicalFrame(const wxString& title,
               const wxPoint& pos,
-              const wxSize& size,
-              long style = wxDEFAULT_FRAME_STYLE);
+              const wxSize& size);
+    ~ComicalFrame();
 
     void OpenFile(const wxString&);
     void OpenDir(const wxString&);
     void OnOpen(wxCommandEvent& event);
     void OnOpenDir(wxCommandEvent& event);
+
+	void RepositionToolbar();
+	void ShowToolbar();
 
   private:
 
@@ -62,7 +68,6 @@ class ComicalFrame : public wxFrame
 	void OnBuffer(wxCommandEvent& event);
 	void OnZoomBox(wxCommandEvent& event);
 	void OnBrowser(wxCommandEvent& event);
-	void OnToolbar(wxCommandEvent& event);
 	void OnPageError(wxCommandEvent& event);
 	void OnHomepage(wxCommandEvent& event);
 	void OnZoom(wxCommandEvent& event);
@@ -71,18 +76,26 @@ class ComicalFrame : public wxFrame
 	void OnFitOnlyOversize(wxCommandEvent& event);
 	void OnDirection(wxCommandEvent& event);
 	void OnPageShown(wxCommandEvent& event);
+	void OnMove(wxMoveEvent& event);
+	void OnToolbarHideTimer(wxTimerEvent& event);
+
 	void startBook();
 	void setComicBook(ComicBook *newBook);
 	void clearComicBook();
 	
+	wxFrame *m_frameNav;
 	wxToolBar *toolBarNav;
 	wxMenuBar *menuBar;
 	wxMenu *menuFile, *menuGo, *menuView, *menuHelp, *menuZoom, *menuMode, *menuFilter, *menuDirection, *menuRotate, *menuRotateLeft, *menuRotateRight;
 	wxStaticText *labelLeft, *labelRight;
 
     wxConfigBase *config;
-	wxBoxSizer *frameSizer, *bookPanelSizer, *toolbarSizer;	
-	bool browserActive, toolbarActive;
+	wxBoxSizer *toolbarSizer;
+
+	wxAuiManager m_auiManager;
+	wxTimer m_timerToolbarHide;
+
+	bool browserActive;
 	ComicalCanvas *theCanvas;
 	ComicBook *theBook;
 	ComicalBrowser *theBrowser;
@@ -118,8 +131,8 @@ ID_RotateRight,
 ID_Full,
 ID_ZoomBox,
 ID_Browser,
-ID_Toolbar,
 ID_Homepage,
+ID_HideTimer,
 //Zooms
 ID_Fit,
 ID_FitV,
