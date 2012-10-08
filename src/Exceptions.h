@@ -1,6 +1,6 @@
 /*
  * Exceptions.h
- * Copyright (c) 2005-2011 James Athey
+ * Copyright (c) 2005-2011 James Athey. 2012, John Peterson.
  */
 
 /***************************************************************************
@@ -27,10 +27,28 @@
 
 #include <cstddef>
 #include <cstdio>
+#define XMD_H
 #include <jpeglib.h>
 #include <stdexcept>
 #include <wx/defs.h>
 #include <wx/string.h>
+#include "Common.h"
+
+class wxMessageWarning : wxMessageDialog
+{
+	public:
+		wxMessageWarning(wxWindow *parent, const wxString &message, const wxString &caption = wxMessageBoxCaptionStr, long style = wxOK|wxCENTER|wxICON_EXCLAMATION, const wxPoint &pos = wxDefaultPosition) : wxMessageDialog(NULL, message, caption, style, pos) {
+			ShowModal();
+		}
+};
+
+class wxMessageError : wxMessageDialog
+{
+	public:
+		wxMessageError(wxWindow *parent, const wxString &message, const wxString &caption = wxMessageBoxCaptionStr, long style = wxOK|wxCENTER|wxICON_ERROR, const wxPoint &pos = wxDefaultPosition) : wxMessageDialog(NULL, message, caption, style, pos) {
+			ShowModal();
+		}
+};
 
 class PageOutOfRangeException
 {

@@ -1,5 +1,5 @@
 INCLUDE = -I../unrar -I../unzip
-CFLAGS = -pipe
+CFLAGS = -pipe -std=gnu++0x
 ifeq ($(DEBUG),1)
 CFLAGS += -g -Wall
 else
@@ -18,10 +18,10 @@ all: $(OBJS)
 %.h : %.png
 	@echo "Converting" $<
 	@echo "#ifndef _"$*"_png_h" > $@
-	@echo -e "#define _"$*"_png_h\n" >> $@
+	@printf "#define _"$*"_png_h\n" >> $@
 	@echo "static const unsigned char "$*"_png[] = {" >> $@
 	@hexdump -e "13/1 \"0x%02X, \" \"\n\"" $< | sed 's/0x  ,//g' >> $@
-	@echo -e "};\n\n#endif" >> $@
+	@printf "};\n\n#endif" >> $@
 
 %.o : %.cpp
 	$(CC) $(CPPFLAGS) -c -o $*.o $<

@@ -36,7 +36,7 @@ struct JpegWxInputStreamSrc : public jpeg_source_mgr
 
 extern "C" {
 	static void init_wx_source(j_decompress_ptr cinfo);
-	static boolean fill_wx_input_buffer (j_decompress_ptr cinfo);
+	static jpeg_boolean fill_wx_input_buffer (j_decompress_ptr cinfo);
 	static void skip_wx_input_data (j_decompress_ptr cinfo, long num_bytes);
 	static void term_wx_source (j_decompress_ptr cinfo);
 }
@@ -54,7 +54,7 @@ static void init_wx_source(j_decompress_ptr cinfo)
 }
 
 
-static boolean fill_wx_input_buffer (j_decompress_ptr cinfo)
+static jpeg_boolean fill_wx_input_buffer (j_decompress_ptr cinfo)
 {
 	JpegWxInputStreamSrc *wsrc = static_cast<JpegWxInputStreamSrc*>(cinfo->src);
 

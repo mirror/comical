@@ -26,7 +26,11 @@
 #define JPEGWXINPUTSTREAMSRC_H_
 
 #include <wx/stream.h>
+#define XMD_H
 #include <jpeglib.h>
+#ifndef __MINGW32__
+typedef int jpeg_boolean;
+#endif
 
 void jpeg_wx_input_stream_src (j_decompress_ptr cinfo, wxInputStream *stream);
 

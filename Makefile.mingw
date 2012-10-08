@@ -1,12 +1,18 @@
 CC			= g++
 RC			= windres
-INCLUDE		= -Iunrar -Iunzip -IC:\wxWidgets-2.6.2\include -IC:\wxWidgets-2.6.2\lib\gcc_lib\mswu
+WX_DIR		?= $(WXWIN)
+WX_VERSION	?= 295
+INCLUDE		= -Iunrar -Iunzip -I$(WX_DIR)/include -I$(WX_DIR)/lib/gcc_dll/mswu
+ifdef DEBUG
+CFLAGS		= -g -Wall -pipe
+else
 CFLAGS		= -Os -Wall -pipe
+endif
 CPPFLAGS	= $(CFLAGS) -mthreads -DWIN32 -D__WXMSW__ -D_UNICODE -DwxUSE_UNICODE_MSLU=1 $(INCLUDE)
-LDFLAGS		= -mwindows -mthreads -Lunzip -Lunrar -Lc:\wxWidgets-2.6.2\lib\gcc_lib
-LIBS		= -lunrar -lminiunzip -lwxmsw26u_core -lwxbase26u -lwxjpeg -lwxpng -lz
+LDFLAGS		= -mwindows -mthreads -L. -Lunzip -Lunrar -L$(WX_DIR)/lib/gcc_dll
+LIBS		= -lunrar -lminiunzip -ljpeg -lwxmsw$(WX_VERSION)u_core -lwxbase$(WX_VERSION)u -lwxmsw$(WX_VERSION)u_aui -lwxjpeg -lwxpng -lz
 WIN32_LIBS	= -lunicows -lkernel32 -luser32 -lgdi32 -lcomdlg32 -lshell32 -lcomctl32 -lole32 -loleaut32 -luuid -loleacc
-RESFLAGS	= --use-temp-file --define __WXMSW__ --define _UNICODE --include-dir C:/wxWidgets-2.6.2/include --include-dir C:/wxWidgets-2.6.2/lib/gcc_lib/mswu
+RESFLAGS	= --use-temp-file --define __WXMSW__ --define _UNICODE --include-dir $(WX_DIR)/include --include-dir $(WX_DIR)/lib/gcc_dll/mswu
 STRIP		= strip
 
 .SUFFIXES: .c .cpp .png .h .d .o .a .exe
@@ -14,6 +20,12 @@ STRIP		= strip
 DEPS = $(patsubst %.cpp,%.d,$(wildcard src/*.cpp))
 OBJS = $(patsubst %.cpp,%.o,$(wildcard src/*.cpp)) src/Comical.o
 ICONS = $(patsubst %.png,%.h,$(wildcard src/*.png))
+
+ifeq ($(WX_DIR),)
+$(error WX_DIR is undefined)
+endif
+
+$(shell sed -i 's/\bboolean\b/jpeg_boolean/' /mingw/include/jmorecfg.h /mingw/include/jpeglib.h)
 
 all: Comical.exe
 
@@ -38,7 +50,7 @@ all: Comical.exe
 
 Comical.exe: $(OBJS) unrar/libunrar.a unzip/libminiunzip.a
 	$(CC) -o $@ $(OBJS) $(LDFLAGS) $(LIBS) $(WIN32_LIBS)
-	$(STRIP) $@
+	if [ -z "$(DEBUG)" ]; then $(STRIP) $@; fi
 
 unrar/libunrar.a:
 	$(MAKE) lib -C unrar -f makefile.mingw
@@ -50,7 +62,7 @@ bin2h.exe: src/bin2h.o
 	$(CC) -o $@ src/bin2h.o
 
 clean:
-	-if exist src\*.o del src\*.o
+	-if exist src/*.o del src/*.o
 	-if exist comical.exe del comical.exe
 	
 distclean:
