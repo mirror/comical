@@ -1,6 +1,6 @@
 /*
  * wxRarInputStream.h
- * Copyright (c) 2011 James Athey
+ * Copyright (c) 2011 James Athey. 2012, John Peterson.
  */
 
 /***************************************************************************
@@ -35,6 +35,7 @@
 #include <windef.h>
 #endif
 #include "dll.hpp"
+#include "Common.h"
 
 class wxRarInputStream;
 
@@ -56,8 +57,9 @@ class wxRarInputStream : public wxInputStream
 	friend class wxUnrarThread;
 
 public:
-	wxRarInputStream(const wxString& filename, const wxString& entry, const char* password=NULL, bool throttle=false);
+	wxRarInputStream(const wxString& filename, const wxString& entry, const wxString password = wxEmptyString, bool throttle=false);
 	~wxRarInputStream();
+	bool Open();
 
 	// from wxStreamBase
 	virtual wxFileOffset GetLength() const;
@@ -72,16 +74,23 @@ public:
 
 protected:
 	// from wxStreamBase
+	virtual bool IsSeekable() const { return true; }
+	virtual wxFileOffset OnSysSeek(wxFileOffset seek, wxSeekMode mode);
 	virtual wxFileOffset OnSysTell() const;
 
 	// from wxInputStream
 	virtual size_t OnSysRead(void *buffer, size_t size);
 
 private:
-	wxUnrarThread m_unrarThread;
+	void Close();
 
-	HANDLE m_rarFile;
-	struct RARHeaderDataEx m_rarHeader;
+	wxUnrarThread *m_unrarThread;
+
+	HANDLE m_file;
+	wxString m_filename;
+	wxString m_entry;
+	wxString password;
+	struct RARHeaderDataEx m_Header;
 
 	const bool m_bThrottle;
 	/**

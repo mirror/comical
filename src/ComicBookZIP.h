@@ -1,6 +1,6 @@
 /*
  * ComicBookZIP.h
- * Copyright (c) 2003-2011 James Athey
+ * Copyright (c) 2003-2011 James Athey. 2012, John Peterson.
  */
 
 /***************************************************************************
@@ -25,20 +25,33 @@
 #ifndef _ComicBookZIP_h_
 #define _ComicBookZIP_h_
 
+#include "ComicalFrame.h"
 #include "ComicBook.h"
 
+class ComicBookZIPOpen;
+
 class ComicBookZIP : public ComicBook {
-
+	friend class ComicBookZIPOpen;
 public:
-	ComicBookZIP(wxString _filename, wxUint32 _cacheLen, COMICAL_ZOOM _zoom, long _zoomLevel, bool _fitOnlyOversize, COMICAL_MODE _mode, FREE_IMAGE_FILTER _filter, COMICAL_DIRECTION _direction, wxInt32 _scrollbarThickness);
-	~ComicBookZIP() {};
-
+	ComicBookZIP(wxString _filename, wxUint32 _cacheLen, COMICAL_ZOOM _zoom, long _zoomLevel, bool _fitOnlyOversize, COMICAL_MODE _mode, FREE_IMAGE_FILTER _filter, COMICAL_DIRECTION _direction);
+	~ComicBookZIP();
 	wxString ArchiveError(int Error);
 
 protected:
+	ComicBookZIPOpen *Open;
 	virtual wxInputStream * ExtractStream(wxUint32 pageindex);
 	virtual wxInputStream * ExtractStream(wxString path);
 	virtual bool TestPassword();
+	virtual void ResumeOpen();
+};
+
+class ComicBookZIPOpen : public ComicBookOpen {
+	friend class ComicBookZIP;
+	ComicBookZIP *p;
+
+public:
+	ComicBookZIPOpen(ComicBookZIP *parent) : p(parent) {}
+	virtual ExitCode Entry();
 };
 
 #endif
