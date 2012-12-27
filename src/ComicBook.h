@@ -38,18 +38,34 @@
 #include <wx/arrstr.h>
 #include <wx/event.h>
 
-#include "Resize.h"
-#include "enums.h"
-
-#include "ComicPage.h"
-
 #include <vector>
 
-class ComicBook : public wxThread {
+#include "ComicPage.h"
+#include "Resize.h"
+
+class ComicalFrame;
+
+class ComicBookOpen : public wxThread {
+protected:
+	bool is_paused;
 
 public:
+	ComicBookOpen() : wxThread(wxTHREAD_JOINABLE), is_paused(false) { Create(); Run(); }
+	void Pause() { is_paused = true; while(IsPaused()) { wxThread::Sleep(1); } }
+	void Resume() { is_paused = false; }
+	bool IsPaused() { return is_paused; }
+};
+
+class ComicBook : public wxThread {
+	friend class ComicalCanvas;
+	friend class ComicalFrame;
+	friend class ComicBookRAR;
+	friend class ComicBookZIP;
+	friend class ComicBookRAROpen;
+	friend class ComicBookZIPOpen;
+public:
 	// Constructors / Destructors
-	ComicBook(wxString filename, wxUint32 cacheLen, COMICAL_ZOOM, long zoomLevel, bool fitOnlyOversize, COMICAL_MODE, FREE_IMAGE_FILTER, COMICAL_DIRECTION, wxInt32 scrollbarThickness);
+	ComicBook(ComicalFrame *parent, wxString filename, wxUint32 cacheLen, COMICAL_ZOOM, long zoomLevel, bool fitOnlyOversize, COMICAL_MODE, FREE_IMAGE_FILTER, COMICAL_DIRECTION);
 	virtual ~ComicBook();
 	
 	// wxThread required functions
@@ -57,25 +73,36 @@ public:
 
 	void RotatePage(wxUint32 pagenumber, COMICAL_ROTATE direction);
 	wxUint32 GetPageCount() const { return Pages.size(); }
+	wxUint32 GetPageTotalCount() const;
+	bool IsPageCountEven() const { return GetPageTotalCount()%2 == 0; }
+	
+	wxSize GetSize();
+	wxUint32 GetPageNum(wxInt32 pos);
+	wxUint32 GetPagePos(wxInt32 pagenumber);	
+	wxSize GetPageSize(wxInt32 pagenumber);	
+	wxSize GetThumbnailSize(wxInt32 pagenumber);
+	
 	bool SetZoom(COMICAL_ZOOM zoom);
 	bool SetZoomLevel(long zoomLevel);
 	bool SetFitOnlyOversize(bool fitOnlyOversize);
 	bool SetMode(COMICAL_MODE mode);
 	bool SetFilter(FREE_IMAGE_FILTER filter);
 	bool SetDirection(COMICAL_DIRECTION direction);
-	bool SetCanvasSize(wxSize size);
-	bool SetScrollbarThickness(wxInt32 scrollbarThickness);
 	wxUint32 GetCacheLen() const { return cacheLen; }
 	void SetCacheLen(wxUint32 newCacheLen) { cacheLen = newCacheLen; }
+	void SetReady();
+	ComicPage* GetComicPage(wxUint32 pagenumber);
+	wxSize GetComicPageSize(wxUint32 pagenumber);
 	wxBitmap& GetPage(wxUint32 pagenumber);
 	wxBitmap& GetPageLeftHalf(wxUint32 pagenumber);
 	wxBitmap& GetPageRightHalf(wxUint32 pagenumber);
 	wxBitmap& GetThumbnail(wxUint32 pagenumber);
 	COMICAL_ROTATE GetPageOrientation(wxUint32 pagenumber);
 	bool IsPageLandscape(wxUint32 pagenumber);
+	bool IsReady();
 	bool IsPageReady(wxUint32 pagenumber);
 	bool IsThumbReady(wxUint32 pagenumber);
-	wxInt32 GetThumbnailMaxWidth() const { return m_iThumbMaxWidth; }
+	wxInt32 GetThumbnailMaxWidth() const { return thumbMaxWidth; }
 	void SetThumbnailMaxWidth(wxInt32 maxWidthPixels);
 	
 	wxUint32 GetCurrentPage() const { return currentPage; }
@@ -103,31 +130,32 @@ public:
 	const wxString filename;
 
 protected:
-	char* password;
+	wxString password;
 	virtual bool TestPassword() { return true; }
+	virtual void ResumeOpen() {}
 	
-	void SetPassword(const char* new_password);
+	bool SetPassword();
+	void NoPasswordProvided();
 	void postCtor();
 
 	std::vector<ComicPage*> Pages;
 
 private:
+	void AddPage(ComicPage *page);
 	void LoadOriginal(wxUint32 pagenumber);
+	wxRect DoGetSize(wxInt32 pagenumber = -1, wxInt32 pos = -1);
 	void ScaleImage(wxUint32 pagenumber);
 	void ScaleThumbnail(wxUint32 pagenumber);
-	// Returns true if the page can fit well in the current zoom mode, i.e., if
-	// squeezing the page into the frame doesn't leave more than
-	// scrollBarThickness pixels of black space on any side.  Returns the
-	// scalingFactor to make the page fit without scrollbars in the parameter.
-	bool FitWithoutScrollbars(wxUint32 pagenumber, float *scalingFactor);
-	bool FitWithoutScrollbars(wxUint32 pagenumber);
+	// Returns true if the page can fit well in the current zoom mode, i.e., if squeezing the page into the frame doesn't leave more than black space on any side. Returns the scalingFactor to make the page fit without scrollbars in the parameter.
+	bool IsFit(wxUint32 pagenumber, float &scalingFactor);
+	bool IsFit(wxUint32 pagenumber);
 	
 	bool IsOversize(wxUint32 pagenumber);
 	
 	void SendScaledEvent(wxUint32 pagenumber);
 	void SendThumbnailedEvent(wxUint32 pagenumber);
 	void SendCurrentPageChangedEvent();
-	void SendPageErrorEvent(wxUint32 pagenumber, wxString message);
+	void SendCustomEvent(wxUint32 id, wxString message = _(""));
 
 	wxEvtHandler *evtHandler;
 
@@ -144,17 +172,15 @@ private:
 	COMICAL_MODE mode;
 	FREE_IMAGE_FILTER filter;
 	COMICAL_DIRECTION direction;
-	wxInt32 scrollbarThickness;
 	
-	wxInt32 canvasWidth;
-	wxInt32 canvasHeight;
-
-	wxInt32 m_iThumbMaxWidth;
+	ComicalFrame *parent;
+	bool bookReady;
+	wxInt32 thumbMaxWidth;
 };
 
 DECLARE_EVENT_TYPE(EVT_PAGE_SCALED, -1)
 DECLARE_EVENT_TYPE(EVT_PAGE_THUMBNAILED, -1)
 DECLARE_EVENT_TYPE(EVT_CURRENT_PAGE_CHANGED, -1)
-DECLARE_EVENT_TYPE(EVT_PAGE_ERROR, -1)
+DECLARE_EVENT_TYPE(EVT_CUSTOM_EVENT, -1)
 
 #endif

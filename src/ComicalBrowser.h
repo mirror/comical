@@ -37,6 +37,7 @@
 
 #include "ComicBook.h"
 #include "ComicalCanvas.h"
+#include "Common.h"
 
 class ComicalBrowser : public wxVListBox
 {
@@ -46,6 +47,8 @@ public:
 
 	void SetComicBook(ComicBook *book);
 	void SetComicalCanvas(ComicalCanvas *canvas);
+	wxInt32 GetThumbnailMaxWidth();
+	void UpdateItemCount();
 	void ClearBrowser();
 
 	static const unsigned int MARGINS = 5;
@@ -56,13 +59,13 @@ private:
 	virtual wxCoord OnMeasureItem(size_t n) const;
 	void OnItemSelected(wxCommandEvent &event);
 	void OnCurrentPageChanged(wxCommandEvent &event);
+	wxSize GetThumbSize(wxInt32 pagenumber) const;
 	void OnThumbnailReady(wxCommandEvent &event);
 	void OnSize(wxSizeEvent &event);
 
 	ComicBook *theBook;
 	ComicalCanvas *theCanvas;
 	wxWindow *parent;
-	wxInt32 m_iThumbMaxWidth;
 
 	DECLARE_EVENT_TABLE()
 };

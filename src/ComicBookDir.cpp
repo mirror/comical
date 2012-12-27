@@ -28,7 +28,7 @@
 #include <wx/log.h>
 #include <wx/progdlg.h>
 
-ComicBookDir::ComicBookDir(wxString dir, wxUint32 cacheLen, COMICAL_ZOOM zoom, long zoomLevel, bool fitOnlyOversize, COMICAL_MODE mode, FREE_IMAGE_FILTER filter, COMICAL_DIRECTION direction, wxInt32 scrollbarThickness) : ComicBook(dir, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness)
+ComicBookDir::ComicBookDir(ComicalFrame *_parent, wxString dir, wxUint32 cacheLen, COMICAL_ZOOM zoom, long zoomLevel, bool fitOnlyOversize, COMICAL_MODE mode, FREE_IMAGE_FILTER filter, COMICAL_DIRECTION direction) : ComicBook(_parent, dir, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction)
 {
 	wxArrayString allFiles;
 	wxString path;

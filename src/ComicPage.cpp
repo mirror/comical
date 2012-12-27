@@ -1,6 +1,6 @@
 /*
  * ComicPage.cpp
- * Copyright (c) 2006-2011, James Athey
+ * Copyright (c) 2006-2011, James Athey. 2012, John Peterson.
  */
 
 /***************************************************************************
@@ -32,13 +32,13 @@
 ComicPage::ComicPage(wxString &filename, wxInputStream *headerStream):
 Filename(filename),
 orientation(NORTH),
-m_uiWidth(1),
-m_uiHeight(1),
+m_uiWidth(0),
+m_uiHeight(0),
 m_bitmapType(wxBITMAP_TYPE_INVALID),
-m_bitmapLeft(NULL),
-m_bitmapRight(NULL),
-m_bitmapFull(NULL),
-m_bitmapThumb(NULL)
+m_bitmapLeft(),
+m_bitmapRight(),
+m_bitmapFull(),
+m_bitmapThumb()
 {
 	extractDimensions(headerStream);
 }
@@ -55,8 +55,8 @@ void ComicPage::Rotate(COMICAL_ROTATE direction)
 		wxMutexLocker rlock(ResampleLock);
 		wxMutexLocker tlock(ThumbnailLock);
 		orientation = direction;
-		Resample.Destroy();
-		Thumbnail.Destroy();
+		DestroyResample();
+		DestroyThumbnail();
 	}
 }
 
@@ -202,7 +202,7 @@ void ComicPage::extractDimensions(wxInputStream *stream)
 		offset = wxUINT32_SWAP_ON_BE(offset);
 		STREAM_SEEK(stream, offset, wxFromStart);
 		STREAM_READ(stream, &count, sizeof(count));
-		count = wxUINT16_SWAP_ON_LE(count);
+		count = wxUINT16_SWAP_ON_BE(count);
 		for (wxUint16 i = 0; i < count; i++) {
 			STREAM_READ(stream, &tag, sizeof(tag));
 			tag = wxUINT16_SWAP_ON_BE(tag);
@@ -219,7 +219,7 @@ void ComicPage::extractDimensions(wxInputStream *stream)
 				}
 			} else if (tag == TIFF_IMAGE_LENGTH) {
 				STREAM_READ(stream, &type, sizeof(type));
-				type = wxUINT16_SWAP_ON_LE(type);
+				type = wxUINT16_SWAP_ON_BE(type);
 				STREAM_SEEK(stream, 4, wxFromCurrent); // there's only going to be 1 of these
 				if (type == 3) { // SHORT
 					STREAM_READ(stream, &height16, sizeof(height16));

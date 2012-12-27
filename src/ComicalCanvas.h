@@ -26,6 +26,7 @@
 #define _ComicalCanvas_h_
 
 #include "ComicBook.h"
+#include "enums.h"
 
 #include <wx/bitmap.h>
 #include <wx/event.h>
@@ -33,15 +34,18 @@
 #include <wx/gdicmn.h>
 #include <wx/scrolwin.h>
 
-#include "enums.h"
+enum
+{
+ID_WheelTimer
+};
 
 class ComicalFrame;
 
 class ComicalCanvas : public wxScrolledWindow
 {
-
+	friend class ComicalFrame;
   public:
-    ComicalCanvas(ComicalFrame *parent, COMICAL_MODE, COMICAL_DIRECTION, wxInt32 scrollbarThickness);
+    ComicalCanvas(ComicalFrame *parent, COMICAL_MODE, COMICAL_DIRECTION);
     ~ComicalCanvas();
 
     void FirstPage();
@@ -49,19 +53,34 @@ class ComicalCanvas : public wxScrolledWindow
     void SetMode(COMICAL_MODE);
 	void SetDirection(COMICAL_DIRECTION newDirection) { direction = newDirection; }
 	void SetZoomEnable(bool);
+	void ShowCursor();
 	void SetComicBook(ComicBook *book);	
 	void ClearCanvas();
 	void ResetView();
 	
 	wxUint32 GetLeftNum() { return leftNum; }
 	wxUint32 GetRightNum() { return rightNum; }
+	bool IsFirstPage();
+	bool IsLastPage();	
 	bool IsLeftPageOk();
 	bool IsRightPageOk();
 	bool IsCenterPageOk();
+	bool IsScrolling(int orient);
+	bool IsScrollTop();
+	bool IsScrollBottom();
+	void ScrollLeft(wxUint32 len = 20);
+	void ScrollRight(wxUint32 len = 20);
+	void ScrollUp(wxUint32 len = 20);
+	void ScrollDown(wxUint32 len = 20);
+	void ScrollLeftmost();
+	void ScrollRightmost();
+	void ScrollTop();
+	void ScrollBottom();
 
   private:
 	void clearBitmaps();
-	void createBitmaps();
+	void UpdatePage();
+	void ResetSize();
 	void setPage(wxInt32 pagenumber);
 
 	void OnFirst(wxCommandEvent& event) { FirstPage(); }
@@ -71,11 +90,17 @@ class ComicalCanvas : public wxScrolledWindow
 	void OnPrevTurn(wxCommandEvent& event) { PrevPageTurn(); }
 	void OnNextTurn(wxCommandEvent& event) { NextPageTurn(); }
 	void OnPaint(wxPaintEvent &event);
+	void OnEraseBackground(wxEraseEvent &event);
 	void OnKeyDown(wxKeyEvent &event);
+	void OnKeyUp(wxKeyEvent &event);
 	void OnLeftDown(wxMouseEvent &event);
 	void OnLeftUp(wxMouseEvent &event);
 	void OnMouseMove(wxMouseEvent &event);
 	void OnLeftDClick(wxMouseEvent &event);
+	void OnMouseWheel(wxMouseEvent &event);
+	void SetDisallowWheelChangePage();
+	void OnWheelTimer(wxTimerEvent& event);
+	void OnScroll(wxScrollWinEvent &event);
 	void OnRightClick(wxContextMenuEvent &event);
 	void OnOpen(wxCommandEvent& event);
 	void OnOpenDir(wxCommandEvent& event);
@@ -92,23 +117,37 @@ class ComicalCanvas : public wxScrolledWindow
 	void NextPageSlide();
 
 	void SendPageShownEvent();
+	
+	virtual void Scroll(int x, int y);
+#if !wxCHECK_VERSION(2, 9, 0)
+	#if SIZEOF_INT == 4
+		#define wxINT32_MAX INT_MAX
+	#elif SIZEOF_LONG == 4
+		#define wxINT32_MAX LONG_MAX
+	#endif
+	void GetViewStart(int *x, int *y) const { wxScrolledWindow::GetViewStart(x, y); }
+	wxPoint GetViewStart() const {
+		wxPoint pt;
+		wxScrolledWindow::GetViewStart(&pt.x, &pt.y);
+		return pt;
+	}
+#endif
 
     wxBitmap leftPage, rightPage, centerPage;
+	wxCursor m_grab, m_grabbing;
     wxUint32 leftNum, rightNum;
     COMICAL_PAGETYPE leftPart, rightPart;
 	wxMenu *contextMenu, *contextRotate;
+	wxTimer m_timerWheel;
 
-	ComicalFrame *m_frameParent;
+	ComicalFrame *parent;
     ComicBook *theBook;
 	wxPoint pointerOrigin;
-	bool zoomEnabled, zoomOn;
+	bool zoomEnabled, zoomOn, scrollBottom, allowChangePage, allowWheelChangePage;
 	COMICAL_MODE mode;
 	COMICAL_DIRECTION direction;
-	wxInt32 scrollbarThickness;
 	
 	wxMutex paintingMutex;
-	
-    wxWindow *parent;
 
     DECLARE_EVENT_TABLE()
 };

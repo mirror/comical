@@ -97,7 +97,7 @@ end:
 	return (wxThread::ExitCode)0;
 }
 
-ComicBookRAR::ComicBookRAR(wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, long zoomLevel, bool fitOnlyOversize, COMICAL_MODE mode, FREE_IMAGE_FILTER filter, COMICAL_DIRECTION direction) : ComicBook(file, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction)
+ComicBookRAR::ComicBookRAR(ComicalFrame *parent, wxString file, wxUint32 cacheLen, COMICAL_ZOOM zoom, long zoomLevel, bool fitOnlyOversize, COMICAL_MODE mode, FREE_IMAGE_FILTER filter, COMICAL_DIRECTION direction) : ComicBook(parent, file, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction)
 {
 	Open = new ComicBookRAROpen(this);
 	Create(); // create the wxThread
