@@ -1,6 +1,6 @@
 /*
  * ComicalApp.cpp
- * Copyright (c) 2005-2011, James Athey
+ * Copyright (c) 2005-2011, James Athey. 2012, John Peterson.
  */
 
 /***************************************************************************
@@ -25,11 +25,10 @@
 #include "ComicalBrowser.h"
 
 ComicalBrowser::ComicalBrowser(wxWindow *prnt, wxInt32 startingWidth):
-wxVListBox(prnt, -1, wxDefaultPosition, wxSize(startingWidth,SPACING), wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE | wxLB_SINGLE),
+wxVListBox(prnt, -1, wxDefaultPosition, wxSize(startingWidth,SPACING), wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE | wxLB_SINGLE | wxALWAYS_SHOW_SB),
 parent(prnt),
 theBook(NULL),
-theCanvas(NULL),
-m_iThumbMaxWidth(startingWidth - (MARGINS * 2))
+theCanvas(NULL)
 {
 	SetMargins(MARGINS, SPACING);
 	SetBackgroundColour(*wxBLACK);
@@ -42,18 +41,26 @@ END_EVENT_TABLE()
 
 wxCoord ComicalBrowser::OnMeasureItem(size_t n) const
 {
-	return wxCoord(m_iThumbMaxWidth * 0.6f);
+	if (!theBook) return wxCoord(0);
+	
+	if (theBook->GetPageCount() > n) {
+		wxCoord y = theBook->GetThumbnailSize(n).y;
+		if (y) return y;
+	}	
+	
+	wxASSERT(theBook->GetPageCount() > n);
 }
 
 void ComicalBrowser::OnDrawItem(wxDC& dc, const wxRect& rect, size_t n) const
 {
-	if (theBook) {
-		wxBitmap thumbnail = theBook->GetThumbnail(n);
-		wxUint32 xPos = (rect.width / 2) - (thumbnail.GetWidth() / 2) + rect.x;
-		if (xPos < 0)
-			xPos = 0;
-		dc.DrawBitmap(thumbnail, xPos, rect.y, false);
-	}
+	if (!theBook) return;
+	if (theBook->GetPageCount() <= n) return;
+	
+	wxBitmap thumbnail = theBook->GetThumbnail(n);
+	wxUint32 xPos = (rect.width / 2) - (thumbnail.GetWidth() / 2) + rect.x;
+	if (xPos < 0)
+		xPos = 0;
+	if (thumbnail.IsOk()) dc.DrawBitmap(thumbnail, xPos, rect.y, false);
 }
 
 void ComicalBrowser::OnItemSelected(wxCommandEvent &event)
@@ -68,9 +75,17 @@ void ComicalBrowser::OnThumbnailReady(wxCommandEvent &event)
 	Refresh();
 }
 
+void ComicalBrowser::UpdateItemCount()
+{
+	if (!theBook) return;
+
+	SetItemCount(theBook->GetPageCount());
+	if (GetSelection() < 0 && GetItemCount()) SetSelection(0);
+}
+
 void ComicalBrowser::OnCurrentPageChanged(wxCommandEvent &event)
 {
-	SetSelection(event.GetInt());
+	if (GetItemCount() > event.GetInt()) SetSelection(event.GetInt());
 }
 
 void ComicalBrowser::SetComicBook(ComicBook *book)
@@ -93,16 +108,17 @@ void ComicalBrowser::SetComicalCanvas(ComicalCanvas *canvas)
 
 void ComicalBrowser::ClearBrowser()
 {
-	SetComicBook(NULL);
 	Clear();
-	SetItemCount(1);
+	SetComicBook(NULL);
 }
 
+wxInt32 ComicalBrowser::GetThumbnailMaxWidth()
+{
+	return GetClientSize().x - (MARGINS * 2);
+}
 
 void ComicalBrowser::OnSize(wxSizeEvent &event)
 {
-	wxSize size = GetClientSize();
-	m_iThumbMaxWidth = size.x - (MARGINS * 2);
 	if (theBook)
-		theBook->SetThumbnailMaxWidth(m_iThumbMaxWidth);
+		theBook->SetThumbnailMaxWidth(GetThumbnailMaxWidth());
 }

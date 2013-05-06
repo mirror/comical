@@ -54,7 +54,7 @@
 #if defined(_WIN32) || defined(WIN32)
  #define fopen _tfopen
  #define fopen64 _tfopen
- #if defined(__GNUC__) || ((_MSC_VER >= 1400) && (!(defined(NO_MSCVER_FILE64_FUNC))))
+ #if (defined(__GNUC__) && !defined(__MINGW32__)) || ((_MSC_VER >= 1400) && (!(defined(NO_MSCVER_FILE64_FUNC))))
   #define ftello64 _ftelli64
   #define fseeko64 _fseeki64
  #else // old MSC

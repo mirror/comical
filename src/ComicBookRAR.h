@@ -1,6 +1,6 @@
 /*
  * ComicBookRAR.h
- * Copyright (c) 2003-2011, James Athey
+ * Copyright (c) 2003-2011, James Athey. 2012, John Peterson.
  */
 
 /***************************************************************************
@@ -25,28 +25,42 @@
 #ifndef _ComicBookRAR_h_
 #define _ComicBookRAR_h_
 
+#include "ComicalFrame.h"
 #include "ComicBook.h"
 #ifdef _WIN32
 #include <windef.h>
 #endif
 #include "dll.hpp"
- 
-class ComicBookRAR : public ComicBook {
 
+class ComicBookRAROpen;
+
+class ComicBookRAR : public ComicBook {
+	friend class ComicBookRAROpen;
 public:
-	ComicBookRAR(wxString _filename, wxUint32 _cacheLen, COMICAL_ZOOM _zoom, long _zoomLevel, bool _fitOnlyOversize, COMICAL_MODE _mode, FREE_IMAGE_FILTER _filter, COMICAL_DIRECTION _direction, wxInt32 _scrollbarThickness);
-	~ComicBookRAR() {};
+	ComicBookRAR(ComicalFrame *parent, wxString _filename, wxUint32 _cacheLen, COMICAL_ZOOM _zoom, long _zoomLevel, bool _fitOnlyOversize, COMICAL_MODE _mode, FREE_IMAGE_FILTER _filter, COMICAL_DIRECTION _direction);
+	~ComicBookRAR();
 
 protected:
 	virtual wxInputStream * ExtractStream(wxUint32 pageindex);
 	virtual wxInputStream * ExtractStream(wxString path);
 	virtual bool TestPassword();
+	virtual void ResumeOpen();
 
 private:
 	wxString OpenArchiveError(int Error);
 	wxString ProcessFileError(int Error, wxString compressedFile);
+	ComicBookRAROpen *Open;
 	HANDLE openRar(RAROpenArchiveDataEx *flags, RARHeaderDataEx *header, wxUint8 mode);
 	void closeRar(HANDLE rarFile, RAROpenArchiveDataEx *flags);
+};
+
+class ComicBookRAROpen : public ComicBookOpen {
+	friend class ComicBookRAR;
+	ComicBookRAR *p;
+
+public:
+	ComicBookRAROpen(ComicBookRAR *parent) : p(parent) {};
+	virtual ExitCode Entry();
 };
 
 #endif

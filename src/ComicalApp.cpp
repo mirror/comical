@@ -39,6 +39,7 @@ bool ComicalApp::OnInit()
 	wxLogStderr *log = new wxLogStderr();
 	wxLog::SetActiveTarget(log);
 	
+	wxImage::AddHandler(new wxCURHandler);
 	wxImage::AddHandler(new wxJPEGHandler);
 	wxImage::AddHandler(new wxPNGHandler);
 	wxImage::AddHandler(new wxGIFHandler);
@@ -64,6 +65,7 @@ bool ComicalApp::OnInit()
 
 	frame->Show(true);
 	SetTopWindow(frame);
+	if (config->Read(wxT("Fullscreen"), 0l)) frame->Full();
 	
 #if !defined(__WXMAC__) && !defined(__WXCOCOA__)
 	if (argc == 1)

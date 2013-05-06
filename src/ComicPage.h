@@ -33,6 +33,7 @@
 #include <wx/bitmap.h>
 
 #include "enums.h"
+#include "Common.h"
 
 class ComicPage
 {

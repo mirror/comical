@@ -25,6 +25,7 @@
 #ifndef _ComicalFrame_h
 #define _ComicalFrame_h
 
+#include <wx/aui/aui.h>
 #include <wx/frame.h>
 #include <wx/menu.h>
 #include <wx/config.h>
@@ -34,14 +35,14 @@
 #include <wx/mstream.h>
 #include <wx/timer.h>
 
-#include <wx/aui/aui.h>
-
 #include "ComicalBrowser.h"
 #include "ComicalCanvas.h"
 #include "ComicBook.h"
 
 class ComicalFrame : public wxFrame
 {
+	friend class ComicalApp;
+	friend class ComicalCanvas;
   public:
 
     ComicalFrame(const wxString& title,
@@ -54,13 +55,17 @@ class ComicalFrame : public wxFrame
     void OnOpen(wxCommandEvent& event);
     void OnOpenDir(wxCommandEvent& event);
 
+	void UpdateToolbar();
 	void RepositionToolbar();
 	void ShowToolbar();
 
+	wxSize canvasSize;
+	wxInt32 scrollbarThickness; wxSize scrollbarSize;
+
   private:
 
-	void OnFull(wxCommandEvent& event);
-	void OnQuit(wxCommandEvent& event);
+	void OnFull(wxCommandEvent& event); void Full();
+	void OnQuit(wxCommandEvent& event); void Quit();
 	void OnAbout(wxCommandEvent& event);
 	void OnClose(wxCloseEvent& event);
 	void OnGoTo(wxCommandEvent& event);
@@ -68,22 +73,29 @@ class ComicalFrame : public wxFrame
 	void OnBuffer(wxCommandEvent& event);
 	void OnZoomBox(wxCommandEvent& event);
 	void OnBrowser(wxCommandEvent& event);
-	void OnPageError(wxCommandEvent& event);
+	void OnCustomEvent(wxCommandEvent& event);
 	void OnHomepage(wxCommandEvent& event);
 	void OnZoom(wxCommandEvent& event);
 	void OnSetCustom(wxCommandEvent& event);
 	void OnFilter(wxCommandEvent& event);
+	void OnShowScrollbars(wxCommandEvent& event); void ShowScrollbars(bool);
 	void OnFitOnlyOversize(wxCommandEvent& event);
 	void OnDirection(wxCommandEvent& event);
 	void OnPageShown(wxCommandEvent& event);
 	void OnMove(wxMoveEvent& event);
 	void OnToolbarHideTimer(wxTimerEvent& event);
+	void OnPageTimer(wxTimerEvent& event);
 
+	void SavePage();
+	wxUint32 ReadPage(wxString filename);
+	
 	void startBook();
 	void setComicBook(ComicBook *newBook);
 	void clearComicBook();
+	bool SetCanvasSize(wxSize size);
+	void SetScrollbarSize(wxInt32 scrollbarThickness);
 	
-	wxFrame *m_frameNav;
+	wxMiniFrame *toolbarFrame;
 	wxToolBar *toolBarNav;
 	wxMenuBar *menuBar;
 	wxMenu *menuFile, *menuGo, *menuView, *menuHelp, *menuZoom, *menuMode, *menuFilter, *menuDirection, *menuRotate, *menuRotateLeft, *menuRotateRight;
@@ -93,22 +105,22 @@ class ComicalFrame : public wxFrame
 	wxBoxSizer *toolbarSizer;
 
 	wxAuiManager m_auiManager;
-	wxTimer m_timerToolbarHide;
+	wxTimer m_timerToolbarHide, m_timerPage;
 
 	bool browserActive;
 	ComicalCanvas *theCanvas;
 	ComicBook *theBook;
 	ComicalBrowser *theBrowser;
 
-	wxUint32 cacheLen;
+	wxUint32 cacheLen, pageNum;
 	COMICAL_MODE mode;
 	FREE_IMAGE_FILTER filter;
 	COMICAL_ZOOM zoom;
+	bool showScrollbars;
 	bool fitOnlyOversize;
 	long zoomLevel;
 	COMICAL_DIRECTION direction;
-	wxInt32 scrollbarThickness;
-
+	
 	DECLARE_EVENT_TABLE()
 };
 
@@ -121,6 +133,12 @@ inline wxBitmap _wxGetBitmapFromMemory(const unsigned char *data, int length) {
 
 enum
 {
+//Events
+ID_Error,
+ID_SetPassword,
+ID_PageAdded,
+ID_Opened,
+//Input
 ID_S,
 ID_M,
 ID_D,
@@ -133,17 +151,20 @@ ID_ZoomBox,
 ID_Browser,
 ID_Homepage,
 ID_HideTimer,
+ID_PageTimer,
 //Zooms
 ID_Fit,
 ID_FitV,
 ID_FitH,
 ID_Unzoomed,
 ID_Custom,
+ID_ShowScrollbars,
 ID_FitOnlyOversize,
 ID_SetCustom,
 //Modes
 ID_Single,
 ID_Double,
+ID_Continuous,
 //Filters
 ID_Box,
 ID_Bicubic,

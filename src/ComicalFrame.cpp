@@ -1,6 +1,6 @@
 /*
  * ComicalFrame.cpp
- * Copyright (c) 2003-2011 James Athey
+ * Copyright (c) 2003-2011 James Athey. 2012, John Peterson.
  */
 
 /***************************************************************************
@@ -32,10 +32,12 @@
 #include <wx/dirdlg.h>
 #include <wx/event.h>
 #include <wx/filedlg.h>
+#include <wx/filename.h>
 #include <wx/log.h>
 #include <wx/mimetype.h>
 #include <wx/minifram.h>
 #include <wx/msgdlg.h>
+#include <wx/numdlg.h>
 #include <wx/scrolbar.h>
 #include <wx/textdlg.h>
 #include <wx/utils.h>
@@ -55,10 +57,12 @@
 ComicalFrame::ComicalFrame(const wxString& title, const wxPoint& pos, const wxSize& size):
 wxFrame(NULL, -1, title, pos, size, wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE),
 m_timerToolbarHide(this, ID_HideTimer),
+m_timerPage(this, ID_PageTimer),
 theCanvas(NULL),
 theBook(NULL),
 theBrowser(NULL),
 toolBarNav(NULL),
+toolbarFrame(NULL),
 labelLeft(NULL),
 labelRight(NULL),
 toolbarSizer(new wxBoxSizer(wxHORIZONTAL))
@@ -66,9 +70,8 @@ toolbarSizer(new wxBoxSizer(wxHORIZONTAL))
 	m_auiManager.SetManagedWindow(this);
 
 	config = wxConfig::Get();
-	
-	// Get the thickness of scrollbars.  Knowing this, we can precalculate
-	// whether the current page(s) will need scrollbars.
+
+	// Get the thickness of scrollbars. Knowing this, we can precalculate whether the current page(s) will need scrollbars.
 	wxScrollBar *tempBar = new wxScrollBar(this, -1);
 	scrollbarThickness = tempBar->GetSize().y;
 	tempBar->Destroy();
@@ -124,6 +127,7 @@ toolbarSizer(new wxBoxSizer(wxHORIZONTAL))
 	menuZoom->AppendRadioItem(ID_Unzoomed, wxT("Original Size"), wxT("Show pages without resizing them."));
 	menuZoom->AppendRadioItem(ID_Custom, wxT("Custom Zoom"), wxT("Scale pages to a custom percentage of their original size."));
 	menuZoom->AppendSeparator();
+	wxMenuItem *showScrollbarsMenu = menuZoom->AppendCheckItem(ID_ShowScrollbars, wxT("Show Scrollbars"), wxT("Show/hide Scrollbars."));
 	wxMenuItem *fitOnlyOversizeMenu = menuZoom->AppendCheckItem(ID_FitOnlyOversize, wxT("Fit Oversized Pages Only"), wxT("Check to see if a page will fit on screen before resizing it."));
 	menuZoom->Append(ID_SetCustom, wxT("Set Custom Zoom Level..."), wxT("Choose the percentage that the Custom Zoom mode will use."));
 	menuView->Append(ID_S, wxT("&Zoom"), menuZoom);
@@ -152,6 +156,7 @@ toolbarSizer(new wxBoxSizer(wxHORIZONTAL))
 	menuMode = new wxMenu();
 	menuMode->AppendRadioItem(ID_Single, wxT("Single Page"), wxT("Show only a single page at a time."));
 	menuMode->AppendRadioItem(ID_Double, wxT("Double Page"), wxT("Show two pages at a time."));
+	menuMode->AppendRadioItem(ID_Continuous, wxT("Continuous Page"), wxT("Show a continuous page."));
 	menuView->Append(ID_M, wxT("&Mode"), menuMode);
 
 	menuDirection = new wxMenu();
@@ -168,7 +173,7 @@ toolbarSizer(new wxBoxSizer(wxHORIZONTAL))
 	menuFilter->AppendRadioItem(ID_Lanczos, wxT("Lanczos 3"), wxT("Use the Box filter."));
 	menuView->Append(ID_S, wxT("&Image Filter"), menuFilter);
 
-	wxMenuItem *fsMenu = new wxMenuItem(menuView, ID_Full, wxT("Full &Screen\tAlt-Return"), wxT("Display Full Screen."));
+	wxMenuItem *fsMenu = new wxMenuItem(menuView, ID_Full, wxT("Full &Screen\tReturn"), wxT("Display Full Screen."));
 	fsMenu->SetBitmap(wxGetBitmapFromMemory(fullscreen));
 	
 	menuView->AppendSeparator();
@@ -195,6 +200,7 @@ toolbarSizer(new wxBoxSizer(wxHORIZONTAL))
 	mode = (COMICAL_MODE) config->Read(wxT("Mode"), 1l); // Double-Page is default
 	filter = (FREE_IMAGE_FILTER) config->Read(wxT("Filter"), 4l); // Catmull-Rom is default
 	direction = (COMICAL_DIRECTION) config->Read(wxT("Direction"), 0l); // Left-To-Right by default
+	showScrollbars = (bool) config->Read(wxT("ShowScrollbars"), 1l); // Shown by default
 	fitOnlyOversize = (bool) config->Read(wxT("FitOnlyOversize"), 0l); // off by default
 	browserActive = (bool) config->Read(wxT("BrowserActive"), 1l); // Shown by default
 
@@ -203,6 +209,12 @@ toolbarSizer(new wxBoxSizer(wxHORIZONTAL))
 	menuMode->FindItemByPosition(mode)->Check(true);
 	menuFilter->FindItemByPosition(filter)->Check(true);
 	menuDirection->FindItemByPosition(direction)->Check(true);
+#if !wxCHECK_VERSION(2, 9, 0)
+	showScrollbarsMenu->Check(true);
+	showScrollbarsMenu->Enable(false);
+#else
+	showScrollbarsMenu->Check(showScrollbars);
+#endif
 	fitOnlyOversizeMenu->Check(fitOnlyOversize);
 	browserMenu->Check(browserActive);
 	if (mode == ONEPAGE) {
@@ -212,15 +224,17 @@ toolbarSizer(new wxBoxSizer(wxHORIZONTAL))
 
 	theBrowser = new ComicalBrowser(this, 110);
 	
-	theCanvas = new ComicalCanvas(this, mode, direction, scrollbarThickness);
+	theCanvas = new ComicalCanvas(this, mode, direction);
+#if wxCHECK_VERSION(2, 9, 0)
+	ShowScrollbars(showScrollbars);
+#endif
 	theCanvas->Connect(EVT_PAGE_SHOWN, wxCommandEventHandler(ComicalFrame::OnPageShown), NULL, this);
 	theCanvas->Connect(ID_ContextFull, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(ComicalFrame::OnFull), NULL, this);
 
 	theBrowser->SetComicalCanvas(theCanvas);
 
-	wxMiniFrame *toolbarFrame = new wxMiniFrame(this, wxID_ANY, wxT(""), wxDefaultPosition, wxDefaultSize,
+	toolbarFrame = new wxMiniFrame(this, wxID_ANY, wxT(""), wxDefaultPosition, wxDefaultSize,
 			wxCLIP_CHILDREN | wxFRAME_NO_TASKBAR | wxFRAME_FLOAT_ON_PARENT | wxFRAME_TOOL_WINDOW);
-	m_frameNav = toolbarFrame;
 
 	toolBarNav = new wxToolBar(toolbarFrame, -1, wxDefaultPosition, wxDefaultSize,
 			wxNO_BORDER | wxTB_HORIZONTAL | wxTB_FLAT);
@@ -231,9 +245,10 @@ toolbarSizer(new wxBoxSizer(wxHORIZONTAL))
 	toolBarNav->AddTool(ID_First, wxT("First Page"), wxGetBitmapFromMemory(firstpage), wxT("First Page"));
 	toolBarNav->AddTool(ID_PrevTurn, wxT("Previous Page Turn"), wxGetBitmapFromMemory(prevpage), wxT("Previous Page Turn"));
 	toolBarNav->AddTool(ID_PrevSlide, wxT("Previous Page"), wxGetBitmapFromMemory(prev), wxT("Previous Page"));
-//	toolBarNav->AddSeparator();
-//	toolBarNav->AddTool(ID_ZoomBox, wxT("Zoom"), wxGetBitmapFromMemory(rot_cw), wxT("Zoom"), wxITEM_CHECK); // Zoom Box disabled for now
-//	toolBarNav->AddSeparator();
+	toolBarNav->AddSeparator();
+	// toolBarNav->AddTool(ID_ZoomBox, wxT("Zoom"), wxGetBitmapFromMemory(rot_cw), wxT("Zoom"), wxITEM_CHECK); // Zoom Box disabled for now
+	toolBarNav->AddTool(ID_Full, wxT("Full Screen"), wxGetBitmapFromMemory(fullscreen), wxT("Full Screen"), wxITEM_CHECK);	
+	toolBarNav->AddSeparator();
 	toolBarNav->AddTool(ID_NextSlide, wxT("Next Page"), wxGetBitmapFromMemory(next), wxT("Next Page"));
 	toolBarNav->AddTool(ID_NextTurn, wxT("Next Page Turn"), wxGetBitmapFromMemory(nextpage), wxT("Next Page Turn"));
 	toolBarNav->AddTool(ID_Last, wxT("Last Page"), wxGetBitmapFromMemory(lastpage), wxT("Last Page"));
@@ -244,18 +259,16 @@ toolbarSizer(new wxBoxSizer(wxHORIZONTAL))
 	toolBarNav->Fit();
 	toolBarNav->Realize();
 
-	labelLeft = new wxStaticText(this, -1, wxT(""), wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT | wxST_NO_AUTORESIZE);
-	labelRight = new wxStaticText(this, -1, wxT(""), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT | wxST_NO_AUTORESIZE);
+	labelLeft = new wxStaticText(toolbarFrame, -1, wxT(""), wxDefaultPosition, wxDefaultSize, wxST_NO_AUTORESIZE);
+	labelRight = new wxStaticText(toolbarFrame, -1, wxT(""), wxDefaultPosition, wxDefaultSize, wxST_NO_AUTORESIZE);
 	wxFont font = labelLeft->GetFont();
 	font.SetPointSize(10);
 	labelLeft->SetFont(font);
 	labelRight->SetFont(font);
 	
-	toolbarSizer->Add(labelLeft, 1, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
-	toolbarSizer->AddSpacer(10);
+	toolbarSizer->Add(labelLeft, 0, wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT, 10);	
 	toolbarSizer->Add(toolBarNav, 0, wxALIGN_CENTER, 0);
-	toolbarSizer->AddSpacer(10);
-	toolbarSizer->Add(labelRight, 1, wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 0);
+	toolbarSizer->Add(labelRight, 0, wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT, 10);
 	toolbarSizer->Layout();
 	
 	toolbarFrame->SetSizer(toolbarSizer);
@@ -264,7 +277,8 @@ toolbarSizer(new wxBoxSizer(wxHORIZONTAL))
 	wxAuiPaneInfo canvasPaneInfo;
 	canvasPaneInfo.CenterPane()
 		.DestroyOnClose(true)
-		.Resizable(true);
+		.Resizable(true)
+		.PaneBorder(false);
 	m_auiManager.AddPane(theCanvas, canvasPaneInfo);
 
 	wxAuiPaneInfo browserPaneInfo;
@@ -293,8 +307,9 @@ BEGIN_EVENT_TABLE(ComicalFrame, wxFrame)
 	EVT_MENU(ID_GoTo,	ComicalFrame::OnGoTo)
 	EVT_MENU(ID_Buffer,	ComicalFrame::OnBuffer)
 	EVT_MENU(ID_Full,	ComicalFrame::OnFull)
-	EVT_MENU_RANGE(ID_Single, ID_Double, ComicalFrame::OnMode)
+	EVT_MENU_RANGE(ID_Single, ID_Continuous, ComicalFrame::OnMode)
 	EVT_MENU_RANGE(ID_Fit, ID_Custom, ComicalFrame::OnZoom)
+	EVT_MENU(ID_ShowScrollbars, ComicalFrame::OnShowScrollbars)
 	EVT_MENU(ID_FitOnlyOversize, ComicalFrame::OnFitOnlyOversize)
 	EVT_MENU(ID_SetCustom, ComicalFrame::OnSetCustom)
 	EVT_MENU_RANGE(ID_Box, ID_Lanczos, ComicalFrame::OnFilter)
@@ -305,6 +320,7 @@ BEGIN_EVENT_TABLE(ComicalFrame, wxFrame)
 	EVT_CLOSE(ComicalFrame::OnClose)
 	EVT_MOVE(ComicalFrame::OnMove)
 	EVT_TIMER(ID_HideTimer, ComicalFrame::OnToolbarHideTimer)
+	EVT_TIMER(ID_PageTimer, ComicalFrame::OnPageTimer)
 END_EVENT_TABLE()
 
 
@@ -316,27 +332,37 @@ ComicalFrame::~ComicalFrame()
 
 void ComicalFrame::OnClose(wxCloseEvent& event)
 {
+	wxRect frameDim = GetRect();
+	config->Write(wxT("CacheLength"), (int) cacheLen);
+	config->Write(wxT("Zoom"), (int) zoom);
+	config->Write(wxT("ZoomLevel"), zoomLevel);
+	config->Write(wxT("ShowScrollbars"), showScrollbars);
+	config->Write(wxT("FitOnlyOversize"), fitOnlyOversize);
+	config->Write(wxT("Filter"), (int) filter);
+	config->Write(wxT("Mode"), (int) mode);
+	config->Write(wxT("Direction"), (int) direction);
+	if (!IsFullScreen()) {
+		config->Write(wxT("FrameWidth"), frameDim.width);
+		config->Write(wxT("FrameHeight"), frameDim.height);
+		config->Write(wxT("FrameX"), frameDim.x);
+		config->Write(wxT("FrameY"), frameDim.y);
+	}
+	config->Write(wxT("Fullscreen"), IsFullScreen());
+	config->Write(wxT("BrowserActive"), browserActive);
+	SavePage();
+	
 	clearComicBook();
 	theCanvas->ClearCanvas();
 	delete theCanvas;
-
-	wxRect frameDim = GetRect();
-	config->Write(wxT("CacheLength"), (int) cacheLen);
-	config->Write(wxT("Zoom"), zoom);
-	config->Write(wxT("ZoomLevel"), zoomLevel);
-	config->Write(wxT("FitOnlyOversize"), fitOnlyOversize);
-	config->Write(wxT("Filter"), filter);
-	config->Write(wxT("Mode"), mode);
-	config->Write(wxT("Direction"), direction);
-	config->Write(wxT("FrameWidth"), frameDim.width);
-	config->Write(wxT("FrameHeight"), frameDim.height);
-	config->Write(wxT("FrameX"), frameDim.x);
-	config->Write(wxT("FrameY"), frameDim.y);
-	config->Write(wxT("BrowserActive"), browserActive);
+	
 	Destroy();	// Close the window
 }
 
 void ComicalFrame::OnQuit(wxCommandEvent& event)
+{
+	Quit();
+}
+void ComicalFrame::Quit()
 {
 	Close(TRUE);
 }
@@ -347,11 +373,62 @@ void ComicalFrame::OnAbout(wxCommandEvent& event)
 	AboutDlg.ShowModal();
 }
 
+void ComicalFrame::SavePage()
+{
+	if (!theBook) return;
+	// don't save for directory
+	if (!wxFileExists(theBook->filename)) return;
+
+	wxString pages, filename = wxFileName(theBook->filename).GetFullName();
+	
+	// read existing
+	config->Read(wxT("Page"), &pages);
+	wxArrayString arrPages = wxArrayStringEx::FromString(pages, wxT(":"));
+	
+	// remove existing
+	for (int i = 0; i < arrPages.GetCount(); i++) {
+		wxString name, item = arrPages.Item(i);
+		wxArrayString itemArr = wxArrayStringEx::FromString(item, wxT("="));
+		if (itemArr.GetCount() < 1) continue;
+		name = itemArr.Item(0);
+		if (name == filename) {
+			arrPages.RemoveAt(i);
+			i--;
+		}
+	}
+		
+	// save
+	arrPages.Add(filename + wxT("=") + wxString::Format(wxT("%u"), theBook->GetCurrentPage()));
+	config->Write(wxT("Page"), wxArrayStringEx::ToString(wxT(":"), arrPages));
+}
+
+wxUint32 ComicalFrame::ReadPage(wxString filename)
+{
+	wxString pages;
+	wxUint32 page;
+	filename = wxFileName(filename).GetFullName();
+	config->Read(wxT("Page"), &pages);
+	wxArrayString arrPages = wxArrayStringEx::FromString(pages, wxT(":"));
+
+	for (int i = 0; i < arrPages.GetCount(); i++) {
+		wxString name, item = arrPages.Item(i);
+		wxArrayString itemArr = wxArrayStringEx::FromString(item, wxT("="));
+		if (itemArr.GetCount() < 2) continue;
+		name = itemArr.Item(0);
+
+		if (name == filename) {
+			itemArr.Item(1).ToULong((unsigned long*)&page);
+			return page;
+		}
+	}
+	return 0;
+}
+
 void ComicalFrame::OnOpen(wxCommandEvent& event)
 {
 	wxString cwd;
 	config->Read(wxT("CWD"), &cwd);
-	wxString filename = wxFileSelector(wxT("Open a Comic Book"), cwd, wxT(""), wxT(""), wxT("Comic Books (*.cbr,*.cbz,*.rar,*.zip)|*.cbr;*.CBR;*.cbz;*.CBZ;*.rar;*.RAR;*.zip;*.ZIP"), wxOPEN | wxCHANGE_DIR | wxFILE_MUST_EXIST, this);
+	wxString filename = wxFileSelector(wxT("Open a Comic Book"), cwd, wxT(""), wxT(""), wxT("Comic Books (*.cbr,*.cbz,*.rar,*.zip)|*.cbr;*.CBR;*.cbz;*.CBZ;*.rar;*.RAR;*.zip;*.ZIP"), wxFD_OPEN | wxFD_CHANGE_DIR | wxFD_FILE_MUST_EXIST, this);
 
 	if (!filename.empty())
 		OpenFile(filename);
@@ -378,7 +455,7 @@ void ComicalFrame::OpenFile(const wxString& filename)
 
 	if (filename.empty())
 		return;
-		
+
 	clearComicBook();
 	try {
 		wxFileInputStream filestream(filename);
@@ -390,25 +467,22 @@ void ComicalFrame::OpenFile(const wxString& filename)
 			throw ArchiveException(filename, wxString(wxT("Not a valid comic book archive.")));
 
 		if (memcmp(fileHeader, rarHeader, sizeof(rarHeader)) == 0)
-			newBook = new ComicBookRAR(filename, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness);
+			newBook = new ComicBookRAR(this, filename, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction);
 		else if (memcmp(fileHeader, zipHeader, sizeof(zipHeader)) == 0)
-			newBook = new ComicBookZIP(filename, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness);
+			newBook = new ComicBookZIP(this, filename, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction);
 		else
 			throw ArchiveException(filename, wxString(wxT("Not a valid comic book archive.")));
 		
-		if (newBook->GetPageCount() == 0) {
-			wxLogError(wxT("The archive \"") + filename + wxT("\" does not contain any pages."));
-			wxLog::FlushActive();
-			return;
-		}
+		pageNum = ReadPage(filename);
+		m_timerPage.Start(1);
+		
 		setComicBook(newBook);
 		startBook();
 		SetTitle(wxT("Comical - " + filename));
 		config->Write(wxT("CWD"), wxPathOnly(filename));
 	} catch (ArchiveException &ae) {
 		clearComicBook();
-		wxMessageDialog errDlg(this, ae.Message, wxT("Open Failed"), wxOK | wxICON_ERROR);
-		errDlg.ShowModal();
+		wxMessageError(this, ae.Message, wxT("Open Failed"));
 	}
 }
 
@@ -421,7 +495,7 @@ void ComicalFrame::OpenDir(const wxString& directory)
 		
 	clearComicBook();
 	try {
-		newBook = new ComicBookDir(directory, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction, scrollbarThickness);
+		newBook = new ComicBookDir(this, directory, cacheLen, zoom, zoomLevel, fitOnlyOversize, mode, filter, direction);
 		setComicBook(newBook);
 		startBook();
 		SetTitle(wxT("Comical - " + directory));
@@ -439,14 +513,9 @@ void ComicalFrame::startBook()
 
 	theCanvas->SetComicBook(theBook);
 	theBrowser->SetComicBook(theBook);
-	theBrowser->SetItemCount(theBook->GetPageCount());
-
 	toolBarNav->Enable(true);
 
 	theBook->Run(); // start the thread
-
-	theCanvas->FirstPage();
-	theCanvas->Scroll(-1, 0); // scroll to the top for the first page
 }
 
 void ComicalFrame::OnGoTo(wxCommandEvent& event)
@@ -481,14 +550,21 @@ void ComicalFrame::OnBuffer(wxCommandEvent& event)
 
 void ComicalFrame::OnFull(wxCommandEvent& event)
 {
+	Full();
+}
+void ComicalFrame::Full()
+{
 	if (IsFullScreen()) {
-		//if (theBrowser)
-			//frameSizer->Show(theBrowser, browserActive);
+		if (theBrowser) {
+			m_auiManager.GetPane(theBrowser).Show(true);
+			m_auiManager.Update();
+		}
 		ShowFullScreen(false, wxFULLSCREEN_ALL);
 	} else {
-		//bookPanelSizer->Show(toolbarSizer, false, true);
-		//if (theBrowser)
-			//frameSizer->Show(theBrowser, false);
+		if (theBrowser) {
+			m_auiManager.GetPane(theBrowser).Show(false);
+			m_auiManager.Update();
+		}
 		ShowFullScreen(true, wxFULLSCREEN_ALL);		
 	}
 }
@@ -511,11 +587,19 @@ void ComicalFrame::OnMode(wxCommandEvent& event)
 		next->Enable(true);
 		mode = TWOPAGE;
 		break;
+		
+	case ID_Continuous:
+		prev->Enable(true);
+		next->Enable(true);
+		mode = CONTINUOUS;
+		break;
 	
 	default:
 		return;
 	}
 
+	menuMode->Check(event.GetId(), true);
+	
 	if (theBook)
 		theBook->SetMode(mode);
 	if (theCanvas)
@@ -535,10 +619,36 @@ void ComicalFrame::OnBrowser(wxCommandEvent &event)
 	m_auiManager.Update();
 }
 
-void ComicalFrame::OnPageError(wxCommandEvent &event)
+void ComicalFrame::OnCustomEvent(wxCommandEvent &event)
 {
-	wxLogError(event.GetString());
-	wxLog::FlushActive();
+	switch(event.GetInt()) {
+	case ID_Error: 
+		wxLogError(event.GetString());
+		wxLog::FlushActive();
+		break;
+		
+	case ID_SetPassword:
+		while (!theBook->TestPassword()) {
+			if (!theBook->SetPassword()) {
+				theBook->NoPasswordProvided();
+				break;
+			}
+		}
+		theBook->ResumeOpen();
+		break;
+
+	case ID_PageAdded:
+		if (theBrowser) theBrowser->UpdateItemCount();
+		break;
+		
+	case ID_Opened:
+		if (!theBook->GetPageCount()) {
+			clearComicBook();
+			wxMessageError(this, wxT("No pages could be opened."), wxT("Open Failed"));
+		} else
+			theBook->SetReady();
+		break;
+	}
 }
 
 void ComicalFrame::OnHomepage(wxCommandEvent &event)
@@ -552,34 +662,26 @@ void ComicalFrame::OnZoom(wxCommandEvent& event)
 	{
 	case ID_Fit:
 		zoom = ZOOM_FIT;
-		if (theCanvas)
-			theCanvas->EnableScrolling(false, false); // Fit, no scrolling
 		break;
 	case ID_FitV:
 		zoom = ZOOM_HEIGHT;
-		if (theCanvas)
-			theCanvas->EnableScrolling(true, false); // Vertical fit, no vertical scrolling
 		break;
 	case ID_FitH:
 		zoom = ZOOM_WIDTH;
-		if (theCanvas)
-			theCanvas->EnableScrolling(false, true); // Horizontal fit, no horizontal scrolling
 		break;
 	case ID_Unzoomed:
 		zoom = ZOOM_FULL;
-		if (theCanvas)
-			theCanvas->EnableScrolling(true, true);	
 		break;
 	case ID_Custom:
 		zoom = ZOOM_CUSTOM;
-		if (theCanvas)
-			theCanvas->EnableScrolling(true, true);	
 		break;
 	default:
 		wxLogError(wxT("Zoom mode %d is undefined."), event.GetId()); // we shouldn't be here... honest!
 		return;
 	}
-
+	
+	menuZoom->Check(event.GetId(), true);
+	
 	if (theBook && theBook->SetZoom(zoom) && theBook->IsRunning())
 		theCanvas->ResetView();
 }
@@ -654,8 +756,15 @@ void ComicalFrame::OnDirection(wxCommandEvent& event)
 
 void ComicalFrame::OnPageShown(wxCommandEvent& event)
 {
+	UpdateToolbar();
+	RepositionToolbar();
+}
+
+void ComicalFrame::UpdateToolbar()
+{
 	wxUint32 leftNum = theCanvas->GetLeftNum();
 	wxUint32 rightNum = theCanvas->GetRightNum();
+	if (leftNum >= theBook->GetPageCount()) leftNum = theBook->GetPageCount() - 1;
 	
 	if (mode == ONEPAGE || theBook->GetPageCount() == 1 || leftNum == rightNum) {
 		menuView->Enable(ID_RotateLeft, false);
@@ -668,7 +777,8 @@ void ComicalFrame::OnPageShown(wxCommandEvent& event)
 		toolBarNav->EnableTool(ID_CW, true);
 		
 		labelLeft->SetLabel(wxT(""));
-		labelRight->SetLabel(wxString::Format(wxT("%d of %d"), theBook->GetCurrentPage() + 1, theBook->GetPageCount()));
+		labelRight->SetLabel(wxString::Format(wxT("%d / %d"), theBook->GetCurrentPage() + 1, theBook->GetPageCount()));
+	
 	} else {
 		menuView->Enable(ID_Rotate, false);
 
@@ -678,9 +788,9 @@ void ComicalFrame::OnPageShown(wxCommandEvent& event)
 			toolBarNav->EnableTool(ID_CCW, true);
 			toolBarNav->EnableTool(ID_CW, true);
 			if (direction == COMICAL_LTR)
-				labelRight->SetLabel(wxString::Format(wxT("%d of %d"), rightNum + 1, theBook->GetPageCount()));
+				labelRight->SetLabel(wxString::Format(wxT("%d / %d"), rightNum + 1, theBook->GetPageCount()));
 			else // direction == COMICAL_RTL
-				labelLeft->SetLabel(wxString::Format(wxT("%d of %d"), rightNum + 1, theBook->GetPageCount()));
+				labelLeft->SetLabel(wxString::Format(wxT("%d / %d"), rightNum + 1, theBook->GetPageCount()));
 		} else {
 			menuView->Enable(ID_RotateRight, false);
 			toolBarNav->EnableTool(ID_CCW, false);
@@ -698,9 +808,9 @@ void ComicalFrame::OnPageShown(wxCommandEvent& event)
 			toolBarNav->EnableTool(ID_CWL, true);
 			
 			if (direction == COMICAL_LTR)
-				labelLeft->SetLabel(wxString::Format(wxT("%d of %d"), leftNum + 1, theBook->GetPageCount()));
+				labelLeft->SetLabel(wxString::Format(wxT("%d / %d"), leftNum + 1, theBook->GetPageCount()));
 			else // direction == COMICAL_RTL
-				labelRight->SetLabel(wxString::Format(wxT("%d of %d"), leftNum + 1, theBook->GetPageCount()));
+				labelRight->SetLabel(wxString::Format(wxT("%d / %d"), leftNum + 1, theBook->GetPageCount()));
 		} else {
 			menuView->Enable(ID_RotateLeft, false);
 			toolBarNav->EnableTool(ID_CCWL, false);
@@ -712,10 +822,19 @@ void ComicalFrame::OnPageShown(wxCommandEvent& event)
 		}
 	}
 
-	toolBarNav->Realize();
-
+	// label size
+	labelLeft->SetMinSize(wxSize(-1, -1));
+	labelLeft->InvalidateBestSize();
+	labelLeft->SetSize(wxDefaultCoord, wxDefaultCoord, wxDefaultCoord, wxDefaultCoord, wxSIZE_AUTO_WIDTH|wxSIZE_AUTO_HEIGHT);
+	labelRight->SetMinSize(wxSize(-1, -1));
+	labelRight->InvalidateBestSize();
+	labelRight->SetSize(wxDefaultCoord, wxDefaultCoord, wxDefaultCoord, wxDefaultCoord, wxSIZE_AUTO_WIDTH|wxSIZE_AUTO_HEIGHT);
+	if (labelLeft->GetSize().x > labelRight->GetSize().x)
+		labelRight->SetMinSize(wxSize(labelLeft->GetSize().x, -1));
+	else
+		labelLeft->SetMinSize(wxSize(labelRight->GetSize().x, -1));
+	toolbarFrame->Fit();
 }
-
 
 void ComicalFrame::OnMove(wxMoveEvent& event)
 {
@@ -724,41 +843,68 @@ void ComicalFrame::OnMove(wxMoveEvent& event)
 
 void ComicalFrame::RepositionToolbar()
 {
-	if (!m_frameNav)
+	if (!toolbarFrame)
 		return;
 
 	wxSize canvasSize = theCanvas->GetClientSize();
 	wxPoint canvasPos = theCanvas->GetScreenPosition();
 
-	wxSize toolbarSize = m_frameNav->GetSize();
+	wxSize toolbarSize = toolbarFrame->GetSize();
 
-	m_frameNav->Move(wxPoint(canvasPos.x + ((canvasSize.x - toolbarSize.x) / 2),
+	toolbarFrame->Move(wxPoint(canvasPos.x + ((canvasSize.x - toolbarSize.x) / 2),
 			canvasPos.y + canvasSize.y - (toolbarSize.y * 2)));
 }
 
 
 void ComicalFrame::ShowToolbar()
 {
-	m_frameNav->Show();
-	m_frameNav->SetTransparent(255);
+	toolbarFrame->Show();
+	toolbarFrame->SetTransparent(255);
 
 	// hide the toolbar after 2 seconds, only fire the event once
 	m_timerToolbarHide.Start(2000, true);
 }
 
-
 void ComicalFrame::OnToolbarHideTimer(wxTimerEvent& event)
 {
 	// Only start hiding if the mouse is not hovering over the toolbar
 	wxPoint mousePos = wxGetMousePosition();
-	wxPoint framePos = m_frameNav->GetScreenPosition();
-	wxSize frameSize = m_frameNav->GetSize();
+	wxPoint framePos = toolbarFrame->GetScreenPosition();
+	wxSize frameSize = toolbarFrame->GetSize();
 
 	if (mousePos.x < framePos.x || mousePos.x > framePos.x + frameSize.x ||
 			mousePos.y < framePos.y || mousePos.y > framePos.y + frameSize.y)
-		m_frameNav->Hide();
+		toolbarFrame->Hide();
+	
+	if (IsFullScreen() && !wxGetMouseState().LeftIsDown() && !theCanvas->contextMenu)
+	theCanvas->SetCursor(wxCURSOR_BLANK);
 }
 
+void ComicalFrame::OnPageTimer(wxTimerEvent& event)
+{
+	if (!theBook) return;
+
+	bool pageLoaded;
+	
+	switch (mode) {
+		case ONEPAGE:
+		case CONTINUOUS:
+			pageLoaded = theBook->GetPageCount() > pageNum;
+			break;
+			
+		case TWOPAGE:
+			pageLoaded = theBook->GetPageCount() > pageNum + 1 || (theBook->IsReady() && theBook->GetPageCount() > pageNum);
+			break;
+	}
+
+	if (pageLoaded) {
+		m_timerPage.Stop();
+		if (pageNum) {
+			theBrowser->UpdateItemCount();
+			theCanvas->GoToPage(pageNum);
+		}
+	}
+}
 
 void ComicalFrame::setComicBook(ComicBook *newBook)
 {
@@ -766,18 +912,20 @@ void ComicalFrame::setComicBook(ComicBook *newBook)
 		clearComicBook();
 	theBook = newBook;
 	if (theBook) {
-		theBook->Connect(EVT_PAGE_ERROR, wxCommandEventHandler(ComicalFrame::OnPageError), NULL, this);
+		theBook->Connect(EVT_CUSTOM_EVENT, wxCommandEventHandler(ComicalFrame::OnCustomEvent), NULL, this);
+		theBook->SetThumbnailMaxWidth(theBrowser->GetThumbnailMaxWidth());
 	}
 }
 
 void ComicalFrame::clearComicBook()
 {
+	m_timerPage.Stop();
 	if (theCanvas)
 		theCanvas->SetComicBook(NULL);
 	if (theBrowser)
 		theBrowser->SetComicBook(NULL);
 	if (theBook) {
-		theBook->Disconnect(EVT_PAGE_ERROR, wxCommandEventHandler(ComicalFrame::OnPageError), NULL, this);
+		theBook->Disconnect(EVT_CUSTOM_EVENT, wxCommandEventHandler(ComicalFrame::OnCustomEvent), NULL, this);
 		theBook->Delete(); // delete the ComicBook thread
 		delete theBook; // clear out the rest of the ComicBook
 		theBook = NULL;
@@ -786,4 +934,57 @@ void ComicalFrame::clearComicBook()
 		theCanvas->ClearCanvas();
 	if (theBrowser)
 		theBrowser->ClearBrowser();
+}
+
+void ComicalFrame::OnShowScrollbars(wxCommandEvent& event)
+{
+	ShowScrollbars(event.IsChecked());
+}
+void ComicalFrame::ShowScrollbars(bool show)
+{
+	showScrollbars = show;
+	if (theBook) {
+		for (wxUint32 i = 0; i < theBook->Pages.size(); i++)
+			theBook->Pages.at(i)->DestroyResample();
+	}
+	if (show) {
+		SetScrollbarSize(scrollbarThickness);
+		theCanvas->ShowScrollbars(wxSHOW_SB_DEFAULT, wxSHOW_SB_DEFAULT);
+	}
+	else {
+		SetScrollbarSize(0);
+		theCanvas->ShowScrollbars(wxSHOW_SB_NEVER, wxSHOW_SB_NEVER);
+	}
+}
+
+/* returns TRUE if parameters were different, FALSE if parameters were the same and no changes were made */
+bool ComicalFrame::SetCanvasSize(wxSize _canvasSize)
+{
+	_canvasSize.x -= scrollbarSize.x;
+	_canvasSize.y -= scrollbarSize.y;
+	if (canvasSize.x != _canvasSize.x || canvasSize.y != _canvasSize.y) {
+		for (wxUint32 i = 0; i < theBook->Pages.size(); i++) {
+			theBook->Pages.at(i)->DestroyResample();
+		}
+
+		canvasSize.x = _canvasSize.x;
+		canvasSize.y = _canvasSize.y;
+		return TRUE;
+	} else
+		return FALSE;
+}
+
+void ComicalFrame::SetScrollbarSize(wxInt32 _scrollbarThickness)
+{
+	switch (mode) {
+	case ONEPAGE:
+	case TWOPAGE:
+		scrollbarSize.x = _scrollbarThickness;
+		scrollbarSize.y = 0;
+		break;
+	case CONTINUOUS:
+		scrollbarSize.x = 0;
+		scrollbarSize.y = _scrollbarThickness;
+		break;
+	}
 }

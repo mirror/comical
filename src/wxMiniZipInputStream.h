@@ -1,6 +1,6 @@
 /*
  * wxMiniZipInputStream.h
- * Copyright (c) 2011 James Athey
+ * Copyright (c) 2011 James Athey. 2012, John Peterson.
  */
 
 /***************************************************************************
@@ -27,6 +27,7 @@
 
 #include <wx/stream.h>
 #include "unzip.h"
+#include "Common.h"
 
 /**
  * The built-in wxZipInputStream does not support password-protected ZIP
@@ -35,7 +36,7 @@
 class wxMiniZipInputStream : public wxInputStream
 {
 public:
-	wxMiniZipInputStream(const wxString& filename, const wxString& entry, const char* password=NULL);
+	wxMiniZipInputStream(const wxString& filename, const wxString& entry, const wxString password = wxEmptyString);
 	~wxMiniZipInputStream();
 
 	int GetMiniZipError() const { return m_iMiniZipError; }
@@ -43,6 +44,8 @@ public:
 	virtual wxFileOffset GetLength() const;
 
 protected:
+	virtual bool IsSeekable() const { return true; }
+	virtual wxFileOffset OnSysSeek(wxFileOffset pos, wxSeekMode mode);
 	virtual wxFileOffset OnSysTell() const;
 	virtual size_t OnSysRead(void *buffer, size_t size);
 
@@ -50,8 +53,12 @@ private:
 	unzFile m_zipFile;
 	unz_file_info64 m_fileInfo;
 	int m_iMiniZipError;
+	wxString m_filename;
+	wxString m_entry;
+	wxString password;
 
-	void cleanup();
+	bool Open();
+	void Close();
 
 	static wxStreamError convertMiniZipError(int error);
 };

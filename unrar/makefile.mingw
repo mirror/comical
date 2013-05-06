@@ -27,14 +27,7 @@ OBJECTS=strlist.o strfn.o pathfn.o savepos.o global.o file.o filefn.o filcreat.o
 all:	unrar.exe
 
 clean:
-
-	-if exist *.o del *.o
-	-if exist *.d del *.d
-	-if exist *.bak del *.bak
-	-if exist *~ del *~
-	-if exist unrar.dll del unrar.dll
-	-if exist libunrar.a del libunrar.a
-	-if exist unrar.exe del unrar.exe
+	@rm -f *.o *.d *.bak *~ *.a *.dll *.exe
 
 unrar.exe:	WHAT=UNRAR
 unrar.exe:	$(OBJECTS) $(UNRAR_OBJ)
